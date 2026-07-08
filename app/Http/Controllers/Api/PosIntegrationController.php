@@ -168,4 +168,132 @@ class PosIntegrationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search Customers
+     */
+    public function searchCustomers(Request $request)
+    {
+        $term = $request->input('term');
+        
+        $query = \App\Models\Customer::query();
+        if ($term) {
+            $query->where('name', 'LIKE', "%{$term}%")
+                  ->orWhere('document_id', 'LIKE', "%{$term}%")
+                  ->orWhere('phone', 'LIKE', "%{$term}%");
+        }
+        
+        return response()->json([
+            'success' => true,
+            'customers' => $query->limit(20)->get()
+        ]);
+    }
+
+    /**
+     * Store a new Customer
+     */
+    public function storeCustomer(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'document_id' => 'nullable|string|max:255|unique:customers',
+            'phone' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'address' => 'nullable|string',
+        ]);
+
+        $customer = \App\Models\Customer::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'customer' => $customer
+        ]);
+    }
+
+    /**
+     * Withdraw Cash (F11 - Retiro de Efectivo)
+     */
+    public function withdrawCash(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $session = CashSession::where('user_id', $userId)
+                ->where('status', 'open')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$session) {
+                throw new \Exception('No hay turno abierto.');
+            }
+
+            \App\Models\CashMovement::create([
+                'cash_session_id' => $session->id,
+                'user_id' => $userId,
+                'type' => 'withdrawal',
+                'amount' => $request->amount,
+                'reason' => $request->reason,
+            ]);
+
+            $session->expected_amount -= $request->amount;
+            $session->total_withdrawals += 1;
+            $session->save();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Retiro registrado.']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Close Session (F11 - Reporte Z / Cierre)
+     */
+    public function closeSession(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        
+        $request->validate([
+            'actual_amount' => 'required|numeric|min:0',
+            'closing_notes' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $session = CashSession::where('user_id', $userId)
+                ->where('status', 'open')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$session) {
+                throw new \Exception('No hay turno abierto.');
+            }
+
+            $session->status = 'closed';
+            $session->actual_amount = $request->actual_amount;
+            $session->difference = $request->actual_amount - $session->expected_amount;
+            $session->closed_at = now();
+            $session->closing_notes = $request->closing_notes;
+            $session->save();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Turno de caja cerrado exitosamente.', 'difference' => $session->difference]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

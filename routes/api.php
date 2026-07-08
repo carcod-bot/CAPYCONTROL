@@ -7,6 +7,15 @@ use App\Http\Controllers\Api\PosIntegrationController;
 
 // CapyPOS Integration Routes
 Route::prefix('pos')->group(function () {
+    // Sesiones
     Route::get('/session-status', [PosIntegrationController::class, 'checkSession']);
+    Route::post('/session/close', [PosIntegrationController::class, 'closeSession']);
+    Route::post('/session/withdraw', [PosIntegrationController::class, 'withdrawCash']);
+    
+    // Ventas
     Route::post('/sales', [PosIntegrationController::class, 'storeSale']);
+    
+    // Clientes
+    Route::get('/customers', [PosIntegrationController::class, 'searchCustomers']);
+    Route::post('/customers', [PosIntegrationController::class, 'storeCustomer']);
 });
