@@ -22,7 +22,7 @@
         </div>
         <div style="flex: 1; min-width: 200px;">
             <label class="form-label">Tipo de Ajuste</label>
-            <select name="type" class="form-control">
+            <select name="type" class="form-control select2-filter" style="width: 100%;">
                 <option value="">Todos</option>
                 <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>Entrada (Suma)</option>
                 <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Salida (Resta)</option>
@@ -102,13 +102,9 @@
         <form id="adjustmentForm" onsubmit="event.preventDefault(); submitAdjustment();">
             <div class="form-group">
                 <label class="form-label">Buscar Producto <span class="text-danger">*</span></label>
-                <div style="position: relative;">
-                    <input type="text" id="productSearch" class="form-control" placeholder="Escribe el nombre o código del producto..." autocomplete="off">
-                    <input type="hidden" name="product_id" id="productId" required>
-                    <div id="productSearchResults" style="position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-md); z-index: 10; display: none; max-height: 200px; overflow-y: auto;">
-                        <!-- Results injected here -->
-                    </div>
-                </div>
+                <select id="productId" name="product_id" class="form-control select2-ajax" style="width: 100%;" required>
+                    <option value="">Buscar producto...</option>
+                </select>
                 <div id="selectedProductInfo" style="margin-top: 10px; display: none; padding: 10px; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
                     <div class="font-bold" id="spName"></div>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">Código: <span id="spCode"></span> | Stock Actual: <strong id="spStock" class="text-primary"></strong></div>
@@ -118,7 +114,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
                     <label class="form-label">Tipo de Movimiento <span class="text-danger">*</span></label>
-                    <select name="type" id="adjType" class="form-control" required onchange="updateQtyLabel()">
+                    <select name="type" id="adjType" class="form-control select2-modal" required style="width: 100%;">
                         <option value="in">Entrada (Sumar al stock)</option>
                         <option value="out">Salida (Restar al stock)</option>
                         <option value="set">Conteo Físico (Reemplazar stock)</option>
@@ -151,60 +147,47 @@
 
 @push('scripts')
 <script>
-    let searchTimeout = null;
+    $(document).ready(function() {
+        $('.select2-filter').select2();
 
-    document.getElementById('productSearch').addEventListener('input', function(e) {
-        clearTimeout(searchTimeout);
-        const term = e.target.value.trim();
-        const resultsContainer = document.getElementById('productSearchResults');
-        
-        if (term.length < 2) {
-            resultsContainer.style.display = 'none';
-            return;
-        }
+        $('#adjType').select2({
+            dropdownParent: $('#adjustmentModal')
+        }).on('change', function() {
+            updateQtyLabel();
+        });
 
-        searchTimeout = setTimeout(() => {
-            fetch(`{{ route('inventory-adjustments.search-products') }}?term=${encodeURIComponent(term)}`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                resultsContainer.innerHTML = '';
-                if (data.length === 0) {
-                    resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-muted); text-align: center;">No se encontraron productos</div>';
-                } else {
-                    data.forEach(prod => {
-                        const div = document.createElement('div');
-                        div.style.padding = '10px 15px';
-                        div.style.cursor = 'pointer';
-                        div.style.borderBottom = '1px solid var(--border)';
-                        div.innerHTML = `<strong>${prod.name}</strong> <span style="font-size:0.8rem; color:var(--text-muted);">(${prod.private_code}) - Stock: ${parseFloat(prod.stock)}</span>`;
-                        
-                        div.addEventListener('mouseover', () => div.style.background = 'var(--primary-light)');
-                        div.addEventListener('mouseout', () => div.style.background = 'transparent');
-                        
-                        div.addEventListener('click', () => {
-                            selectProduct(prod);
-                            resultsContainer.style.display = 'none';
-                            document.getElementById('productSearch').value = '';
-                        });
-                        resultsContainer.appendChild(div);
-                    });
-                }
-                resultsContainer.style.display = 'block';
-            });
-        }, 300);
-    });
-
-    // Cierra resultados al hacer clic fuera
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#productSearch') && !e.target.closest('#productSearchResults')) {
-            document.getElementById('productSearchResults').style.display = 'none';
-        }
+        $('.select2-ajax').select2({
+            dropdownParent: $('#adjustmentModal'),
+            ajax: {
+                url: '{{ route('inventory-adjustments.search-products') }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { term: params.term };
+                },
+                processResults: function (data) {
+                    return {
+                        results: $.map(data, function (item) {
+                            return {
+                                text: item.name + ' (' + item.private_code + ')',
+                                id: item.id,
+                                stock: item.stock,
+                                name: item.name,
+                                private_code: item.private_code
+                            }
+                        })
+                    };
+                },
+                cache: true
+            },
+            placeholder: 'Escribe para buscar un producto...',
+            minimumInputLength: 2,
+        }).on('select2:select', function (e) {
+            selectProduct(e.params.data);
+        });
     });
 
     function selectProduct(prod) {
-        document.getElementById('productId').value = prod.id;
         document.getElementById('spName').textContent = prod.name;
         document.getElementById('spCode').textContent = prod.private_code;
         document.getElementById('spStock').textContent = parseFloat(prod.stock);
