@@ -360,9 +360,8 @@ body.dark-mode .table tr:hover td { background-color: rgba(255,255,255,0.03); }
 .select2-container--default .select2-selection--single { 
     border: 1px solid var(--border) !important; 
     border-radius: var(--radius) !important; 
-    height: auto !important; 
-    min-height: 48px;
-    padding: 0.35rem 0.5rem;
+    height: 48px !important; 
+    padding: 0 1rem !important;
     background-color: var(--surface) !important; 
     display: flex; 
     align-items: center; 
@@ -376,16 +375,16 @@ body.dark-mode .table tr:hover td { background-color: rgba(255,255,255,0.03); }
 }
 .select2-container--default .select2-selection--single .select2-selection__rendered { 
     color: var(--text-main) !important; 
-    line-height: normal !important; 
-    padding-left: 0.5rem !important; 
+    line-height: 46px !important; 
+    padding: 0 !important; 
     font-size: 0.95rem; 
     width: 100%; 
     text-align: left; 
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow { 
-    height: 100% !important; 
+    height: 46px !important; 
     top: 0 !important;
-    right: 10px !important; 
+    right: 12px !important; 
     display: flex;
     align-items: center;
 }
