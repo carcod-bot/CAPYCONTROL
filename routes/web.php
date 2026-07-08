@@ -9,6 +9,8 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\CashRegisterController;
+use App\Http\Controllers\CashSessionController;
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -41,4 +43,18 @@ Route::middleware('auth')->group(function () {
     Route::post('api/payment-methods', [App\Http\Controllers\PaymentMethodController::class, 'store']);
     Route::put('api/payment-methods/{paymentMethod}', [App\Http\Controllers\PaymentMethodController::class, 'update']);
     Route::delete('api/payment-methods/{paymentMethod}', [App\Http\Controllers\PaymentMethodController::class, 'destroy']);
+
+    // POS Control Module
+    Route::get('/pos-control', [CashRegisterController::class, 'index'])->name('pos-control.index');
+    Route::post('/pos-control/registers', [CashRegisterController::class, 'store'])->name('pos-control.registers.store');
+    Route::put('/pos-control/registers/{cashRegister}', [CashRegisterController::class, 'update'])->name('pos-control.registers.update');
+    Route::delete('/pos-control/registers/{cashRegister}', [CashRegisterController::class, 'destroy'])->name('pos-control.registers.destroy');
+    Route::get('/pos-control/registers/{cashRegister}/sessions', [CashRegisterController::class, 'sessions'])->name('pos-control.registers.sessions');
+
+    // Cash Sessions
+    Route::get('/pos-control/sessions/{cashSession}', [CashSessionController::class, 'show'])->name('pos-control.sessions.show');
+    Route::post('/pos-control/sessions/open', [CashSessionController::class, 'open'])->name('pos-control.sessions.open');
+    Route::post('/pos-control/sessions/{cashSession}/close', [CashSessionController::class, 'close'])->name('pos-control.sessions.close');
+    Route::post('/pos-control/sessions/{cashSession}/withdraw', [CashSessionController::class, 'withdraw'])->name('pos-control.sessions.withdraw');
+    Route::post('/pos-control/sessions/{cashSession}/deposit', [CashSessionController::class, 'deposit'])->name('pos-control.sessions.deposit');
 });

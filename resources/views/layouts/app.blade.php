@@ -67,6 +67,17 @@
                                 </a>
                             </div>
                         </div>
+
+                        <div class="topbar-dropdown" id="posControlDropdown">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('pos-control.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('posControlDropdown')">
+                                <i class="fa-solid fa-cash-register"></i> Control POS <i class="fa-solid fa-chevron-down chevron"></i>
+                            </button>
+                            <div class="topbar-dropdown-menu">
+                                <a href="{{ route('pos-control.index') }}" class="topbar-dropdown-item {{ request()->routeIs('pos-control.index') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-desktop"></i> Monitoreo de Cajas
+                                </a>
+                            </div>
+                        </div>
                     </nav>
                 </div>
 
