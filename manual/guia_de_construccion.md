@@ -190,6 +190,30 @@ capycontrol/
 
 ---
 
+## 🧾 Módulo de Control POS (Puntos de Venta)
+
+### CashRegisterController (`app/Http/Controllers/CashRegisterController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `index()` | `/pos-control` | GET | Muestra el dashboard de monitoreo de cajas con estadísticas y listado. |
+| `store(Request $request)` | `/pos-control/registers` | POST | Crea una nueva caja registradora. |
+| `update(Request $request, CashRegister)` | `/pos-control/registers/{cashRegister}` | PUT | Actualiza información de una caja. |
+| `destroy(Request $request, CashRegister)` | `/pos-control/registers/{cashRegister}` | DELETE | Elimina una caja. |
+| `sessions(CashRegister)` | `/pos-control/registers/{cashRegister}/sessions` | GET | Retorna el historial de sesiones de una caja en formato JSON. |
+
+### CashSessionController (`app/Http/Controllers/CashSessionController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `open(Request $request)` | `/pos-control/sessions/open` | POST | Abre un nuevo turno en una caja registradora con un fondo inicial. |
+| `close(Request $request, CashSession)` | `/pos-control/sessions/{cashSession}/close` | POST | Cierra el turno actual, registrando monto real y diferencia. |
+| `withdraw(Request $request, CashSession)` | `/pos-control/sessions/{cashSession}/withdraw` | POST | Registra un retiro de dinero en efectivo de la caja. |
+| `deposit(Request $request, CashSession)` | `/pos-control/sessions/{cashSession}/deposit` | POST | Registra un depósito de dinero en la caja. |
+| `show(CashSession)` | `/pos-control/sessions/{cashSession}` | GET | Devuelve los detalles de una sesión específica. |
+
+---
+
 ## 📦 Modelos
 
 ### User (`app/Models/User.php`)
@@ -373,6 +397,106 @@ capycontrol/
 | Relación | Tipo | Modelo relacionado |
 |----------|------|--------------------|
 | `currency()` | belongsTo | Currency |
+
+---
+
+### CashRegister (`app/Models/CashRegister.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `number` | string |
+| `name` | string |
+| `location` | string |
+| `active` | boolean |
+
+**Relaciones:**
+
+| Relación | Tipo | Modelo relacionado |
+|----------|------|--------------------|
+| `sessions()` | hasMany | CashSession |
+| `activeSession()` | hasOne | CashSession |
+
+---
+
+### CashSession (`app/Models/CashSession.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `cash_register_id` | integer (FK) |
+| `user_id` | integer (FK) |
+| `status` | enum |
+| `turn_number` | integer |
+| `opening_amount` | decimal:2 |
+| `expected_amount` | decimal:2 |
+| `actual_amount` | decimal:2 |
+| `difference` | decimal:2 |
+| `total_sales` | integer |
+| `total_returns` | integer |
+| `total_withdrawals` | integer |
+| `pending_invoices` | integer |
+| `opened_at` | datetime |
+| `closed_at` | datetime |
+| `closing_notes` | text |
+
+**Relaciones:**
+
+| Relación | Tipo | Modelo relacionado |
+|----------|------|--------------------|
+| `cashRegister()` | belongsTo | CashRegister |
+| `user()` | belongsTo | User |
+| `movements()` | hasMany | CashMovement |
+
+---
+
+### CashMovement (`app/Models/CashMovement.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `cash_session_id` | integer (FK) |
+| `user_id` | integer (FK) |
+| `type` | enum |
+| `amount` | decimal:2 |
+| `reason` | string |
+| `notes` | text |
+
+**Relaciones:**
+
+| Relación | Tipo | Modelo relacionado |
+|----------|------|--------------------|
+| `cashSession()` | belongsTo | CashSession |
+| `user()` | belongsTo | User |
+
+---
+
+### InventoryAdjustment (`app/Models/InventoryAdjustment.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `product_id` | integer (FK) |
+| `user_id` | integer (FK) |
+| `type` | enum (`in`, `out`, `set`) |
+| `quantity` | decimal:3 |
+| `previous_stock` | decimal:3 |
+| `new_stock` | decimal:3 |
+| `reason` | string |
+| `notes` | text |
+
+**Relaciones:**
+
+| Relación | Tipo | Modelo relacionado |
+|----------|------|--------------------|
+| `product()` | belongsTo | Product |
+| `user()` | belongsTo | User |
+
+---
+
+### InventoryAdjustmentController (`app/Http/Controllers/InventoryAdjustmentController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `index(Request $request)` | `/inventory-adjustments` | GET | Muestra el historial de ajustes y conteos físicos. Permite filtrar por tipo y producto. |
+| `store(Request $request)` | `/inventory-adjustments` | POST | Registra un nuevo ajuste (entrada, salida) o conteo físico, y actualiza el stock del producto de forma atómica (usando DB Transaction). |
+| `searchProducts(Request $request)` | `/inventory-adjustments/search-products` | GET | Retorna resultados de búsqueda JSON (AJAX) para seleccionar productos en el formulario de ajuste. |
 
 ---
 

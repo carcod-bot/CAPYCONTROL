@@ -54,6 +54,10 @@
                                 <a href="{{ route('settings.index') }}" class="topbar-dropdown-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-cog"></i> Configuración
                                 </a>
+                                <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+                                <a href="{{ route('inventory-adjustments.index') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory-adjustments.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-scale-balanced"></i> Ajustes y Conteo
+                                </a>
                             </div>
                         </div>
 

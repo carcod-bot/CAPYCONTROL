@@ -18,6 +18,7 @@ class Product extends Model
         'department_id',
         'category_id',
         'price_usd',
+        'stock',
         'image',
         'active',
     ];
@@ -27,6 +28,7 @@ class Product extends Model
         return [
             'price_usd' => 'decimal:2',
             'active' => 'boolean',
+            'stock' => 'decimal:3',
         ];
     }
 

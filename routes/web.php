@@ -11,6 +11,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionController;
+use App\Http\Controllers\InventoryAdjustmentController;
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -29,6 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::resource('providers', ProviderController::class)->except(['create', 'show']);
     Route::get('departments/{department}/categories', [CategoryController::class, 'getByDepartment'])->name('departments.categories');
     Route::resource('products', ProductController::class)->except(['show']);
+    
+    // Inventory Adjustments
+    Route::get('/inventory-adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory-adjustments.index');
+    Route::post('/inventory-adjustments', [InventoryAdjustmentController::class, 'store'])->name('inventory-adjustments.store');
+    Route::get('/inventory-adjustments/search-products', [InventoryAdjustmentController::class, 'searchProducts'])->name('inventory-adjustments.search-products');
+
     // Settings
     Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');

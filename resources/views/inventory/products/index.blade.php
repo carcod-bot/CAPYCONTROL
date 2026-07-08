@@ -257,6 +257,7 @@
                     <th>Nombre</th>
                     <th>Dept/Cat</th>
                     <th>Tamaño</th>
+                    <th>Stock</th>
                     <th>Precio</th>
                     <th>Acciones</th>
                 </tr>
@@ -281,6 +282,7 @@
                         <span class="badge" style="background:#fef3c7; color:#92400e; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-truck"></i> {{ optional($product->provider)->name ?? 'Genérico' }}</span>
                     </td>
                     <td><span style="text-transform: capitalize;">{{ $product->size_type }}</span></td>
+                    <td style="font-weight: 700; color: {{ $product->stock <= 0 ? 'var(--danger)' : 'var(--text-main)' }};">{{ floatval($product->stock) }}</td>
                     <td style="font-weight: 700; color: #10b981;">${{ number_format($product->price_usd, 2) }}</td>
                     <td>
                         <button type="button" class="btn btn-secondary" onclick="editProduct({{ $product->id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-edit"></i></button>
