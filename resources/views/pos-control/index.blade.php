@@ -139,10 +139,10 @@
     </div>
 </div>
 
-<!-- Today's Sessions Summary -->
-@if($todaySessions->count() > 0)
+<!-- Active Sessions Summary -->
+@if($activeSessions->count() > 0)
 <div style="margin-top: 2rem;">
-    <h2 class="pos-section-title"><i class="fa-solid fa-clock"></i> Sesiones del Día</h2>
+    <h2 class="pos-section-title"><i class="fa-solid fa-clock"></i> Sesiones Activas</h2>
     <div class="card" style="padding: 0; overflow: hidden; margin-top: 1rem;">
         <div class="table-container" style="border: none; margin: 0; box-shadow: none;">
             <table class="table">
@@ -161,7 +161,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($todaySessions as $s)
+                    @foreach($activeSessions as $s)
                     <tr>
                         <td><span class="register-number">{{ $s->cashRegister->number }}</span></td>
                         <td class="font-bold">{{ strtoupper($s->user->username) }}</td>

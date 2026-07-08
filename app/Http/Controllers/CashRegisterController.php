@@ -24,17 +24,17 @@ class CashRegisterController extends Controller
         $openRegisters = $registers->filter(fn($r) => $r->activeSession)->count();
         $closedRegisters = $totalRegisters - $openRegisters;
 
-        $todaySessions = CashSession::whereDate('opened_at', today())
+        $activeSessions = CashSession::where('status', 'open')
             ->with(['cashRegister', 'user'])
             ->orderBy('opened_at', 'desc')
             ->get();
 
-        $totalSalesToday = $todaySessions->sum('total_sales');
-        $totalWithdrawalsToday = $todaySessions->sum('total_withdrawals');
+        $totalSalesToday = CashSession::whereDate('opened_at', today())->sum('total_sales');
+        $totalWithdrawalsToday = CashSession::whereDate('opened_at', today())->sum('total_withdrawals');
 
         return view('pos-control.index', compact(
             'registers', 'totalRegisters', 'openRegisters', 'closedRegisters',
-            'todaySessions', 'totalSalesToday', 'totalWithdrawalsToday'
+            'activeSessions', 'totalSalesToday', 'totalWithdrawalsToday'
         ));
     }
 
