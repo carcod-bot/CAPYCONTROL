@@ -508,6 +508,7 @@ capycontrol/
 |-------|------|
 | `cash_session_id` | integer (FK) |
 | `user_id` | integer (FK) |
+| `customer_id` | integer (FK) - Nullable |
 | `payment_method` | string |
 | `total_amount` | decimal:2 |
 | `tendered_amount` | decimal:2 |
@@ -519,7 +520,23 @@ capycontrol/
 **Relaciones:**
 `cashSession()` -> `CashSession`
 `user()` -> `User`
+`customer()` -> `Customer`
 `items()` -> `SaleItem` (hasMany)
+
+---
+
+### Customer (`app/Models/Customer.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `name` | string |
+| `document_id` | string (Único) |
+| `phone` | string |
+| `email` | string |
+| `address` | text |
+
+**Relaciones:**
+`sales()` -> `Sale` (hasMany)
 
 ---
 
@@ -541,8 +558,12 @@ capycontrol/
 
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
-| `checkSession(Request)` | `/api/pos/session-status` | GET | Verifica si el usuario (`X-User-Id`) tiene un turno de caja abierto en `CapyControl`. |
-| `storeSale(Request)` | `/api/pos/sales` | POST | Recibe el carrito, valida la caja, registra la venta, descuenta el stock, y actualiza los montos del turno de caja. Funciona bajo transacciones DB. |
+| `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto. |
+| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, descuenta stock y registra la venta y sus ítems. |
+| `searchCustomers` | `/api/pos/customers` | GET | Busca clientes por nombre o DNI. |
+| `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma rápida desde la caja. |
+| `withdrawCash` | `/api/pos/session/withdraw` | POST | Registra un retiro de efectivo en la caja actual. |
+| `closeSession` | `/api/pos/session/close` | POST | Cierra el turno del cajero validando el efectivo físico (Reporte Z). |
 
 ---
 
