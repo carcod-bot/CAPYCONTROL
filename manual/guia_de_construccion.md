@@ -500,7 +500,53 @@ capycontrol/
 
 ---
 
-## 🗺️ Rutas (`routes/web.php`)
+## 🛒 Módulo de Ventas (Integración CapyPOS)
+
+### Sale (`app/Models/Sale.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `cash_session_id` | integer (FK) |
+| `user_id` | integer (FK) |
+| `payment_method` | string |
+| `total_amount` | decimal:2 |
+| `tendered_amount` | decimal:2 |
+| `change_amount` | decimal:2 |
+| `status` | enum (`completed`, `voided`, `refunded`) |
+| `ticket_number` | string (Único) |
+| `notes` | text |
+
+**Relaciones:**
+`cashSession()` -> `CashSession`
+`user()` -> `User`
+`items()` -> `SaleItem` (hasMany)
+
+---
+
+### SaleItem (`app/Models/SaleItem.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `sale_id` | integer (FK) |
+| `product_id` | integer (FK) |
+| `product_name` | string |
+| `product_code` | string |
+| `quantity` | decimal:3 |
+| `unit_price` | decimal:2 |
+| `subtotal` | decimal:2 |
+
+---
+
+### PosIntegrationController (`app/Http/Controllers/Api/PosIntegrationController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `checkSession(Request)` | `/api/pos/session-status` | GET | Verifica si el usuario (`X-User-Id`) tiene un turno de caja abierto en `CapyControl`. |
+| `storeSale(Request)` | `/api/pos/sales` | POST | Recibe el carrito, valida la caja, registra la venta, descuenta el stock, y actualiza los montos del turno de caja. Funciona bajo transacciones DB. |
+
+---
+
+## 🗺️ Rutas (`routes/web.php` y `routes/api.php`)
 
 ### Rutas Públicas
 | Método HTTP | URI | Controlador | Nombre |
