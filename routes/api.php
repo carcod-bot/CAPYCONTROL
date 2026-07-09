@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PosIntegrationController;
 Route::prefix('pos')->group(function () {
     // Sesiones
     Route::get('/session-status', [PosIntegrationController::class, 'checkSession']);
+    Route::post('/session/open', [PosIntegrationController::class, 'openSession']);
     Route::post('/session/close', [PosIntegrationController::class, 'closeSession']);
     Route::post('/session/withdraw', [PosIntegrationController::class, 'withdrawCash']);
     

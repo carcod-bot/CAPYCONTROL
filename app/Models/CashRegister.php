@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CashRegister extends Model
 {
-    protected $fillable = ['number', 'name', 'location', 'active'];
+    protected $fillable = ['number', 'name', 'location', 'hostname', 'ip_address', 'active'];
 
     protected function casts(): array
     {

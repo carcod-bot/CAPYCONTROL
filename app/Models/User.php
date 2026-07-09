@@ -14,6 +14,7 @@ class User extends Authenticatable
         'username',
         'password',
         'role',
+        'role_id',
         'permissions',
         'dark_mode',
     ];
@@ -26,12 +27,47 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password' => 'hashed',
+            'password'    => 'hashed',
             'permissions' => 'array',
-            'dark_mode' => 'boolean',
+            'dark_mode'   => 'boolean',
         ];
     }
 
+    // ── Relationships ──────────────────────────────────────────────────────
+    public function roleModel()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    // ── Permission Helpers ─────────────────────────────────────────────────
+
+    /**
+     * Get all effective permissions: role permissions + user extra permissions.
+     */
+    public function effectivePermissions(): array
+    {
+        if ($this->isAdmin()) {
+            return \App\Http\Controllers\UserController::ALL_PERMISSIONS;
+        }
+
+        $rolePerms  = $this->roleModel ? ($this->roleModel->permissions ?? []) : [];
+        $extraPerms = $this->permissions ?? [];
+
+        return array_values(array_unique(array_merge($rolePerms, $extraPerms)));
+    }
+
+    /**
+     * Check if the user has a specific permission.
+     */
+    public function hasPermission(string $permission): bool
+    {
+        if ($this->isAdmin()) return true;
+        return in_array($permission, $this->effectivePermissions());
+    }
+
+    /**
+     * Legacy helper — still works everywhere.
+     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

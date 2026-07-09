@@ -14,6 +14,8 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
 </head>
 <body class="{{ Auth::user() && Auth::user()->dark_mode ? 'dark-mode' : '' }}">
@@ -27,10 +29,13 @@
                         <span><span style="color: var(--text-main);">Capy</span><span style="color: var(--primary);">control</span></span>
                     </a>
                     <nav class="topbar-nav">
+                        @if(Auth::user()->hasPermission('dashboard.view'))
                         <a href="{{ route('home') }}" class="topbar-link {{ request()->routeIs('home') ? 'active' : '' }}">
                             <i class="fa-solid fa-chart-line"></i> Dashboard
                         </a>
+                        @endif
 
+                        @if(Auth::user()->hasPermission('inventory.view'))
                         <div class="topbar-dropdown" id="inventarioDropdown">
                             <button class="topbar-dropdown-toggle {{ request()->routeIs('products.*', 'categories.*', 'departments.*', 'settings.*', 'brands.*', 'providers.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('inventarioDropdown')">
                                 <i class="fa-solid fa-box"></i> Inventario <i class="fa-solid fa-chevron-down chevron"></i>
@@ -60,7 +65,9 @@
                                 </a>
                             </div>
                         </div>
+                        @endif
 
+                        @if(Auth::user()->hasPermission('finances.view'))
                         <div class="topbar-dropdown" id="finanzasDropdown">
                             <button class="topbar-dropdown-toggle {{ request()->routeIs('currencies.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('finanzasDropdown')">
                                 <i class="fa-solid fa-money-bill-transfer"></i> Finanzas <i class="fa-solid fa-chevron-down chevron"></i>
@@ -71,7 +78,9 @@
                                 </a>
                             </div>
                         </div>
+                        @endif
 
+                        @if(Auth::user()->hasPermission('pos_control.view'))
                         <div class="topbar-dropdown" id="posControlDropdown">
                             <button class="topbar-dropdown-toggle {{ request()->routeIs('pos-control.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('posControlDropdown')">
                                 <i class="fa-solid fa-cash-register"></i> Control POS <i class="fa-solid fa-chevron-down chevron"></i>
@@ -80,8 +89,30 @@
                                 <a href="{{ route('pos-control.index') }}" class="topbar-dropdown-item {{ request()->routeIs('pos-control.index') ? 'active' : '' }}">
                                     <i class="fa-solid fa-desktop"></i> Monitoreo de Cajas
                                 </a>
+                                @if(Auth::user()->hasPermission('pos_control.manage'))
+                                <a href="{{ route('pos-control.registers') }}" class="topbar-dropdown-item {{ request()->routeIs('pos-control.registers') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-server"></i> Gestión de Cajas
+                                </a>
+                                @endif
                             </div>
                         </div>
+                        @endif
+
+                        @if(Auth::user()->hasPermission('configuraciones.view'))
+                        <div class="topbar-dropdown" id="configDropdown">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('config.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('configDropdown')">
+                                <i class="fa-solid fa-gear"></i> Configuraciones <i class="fa-solid fa-chevron-down chevron"></i>
+                            </button>
+                            <div class="topbar-dropdown-menu">
+                                <a href="{{ route('config.parametros') }}" class="topbar-dropdown-item {{ request()->routeIs('config.parametros') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-sliders"></i> Parámetros
+                                </a>
+                                <a href="{{ route('config.usuarios') }}" class="topbar-dropdown-item {{ request()->routeIs('config.usuarios') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-users"></i> Usuarios y Roles
+                                </a>
+                            </div>
+                        </div>
+                        @endif
                     </nav>
                 </div>
 

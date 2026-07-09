@@ -5,16 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CashSession;
+use App\Models\CashRegister;
+use App\Models\User;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\InventoryAdjustment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class PosIntegrationController extends Controller
 {
     /**
-     * Check if the user has an active cash session
+     * Check if the user has an active cash session AND the client PC is authorized by IP
      */
     public function checkSession(Request $request)
     {
@@ -31,17 +34,172 @@ class PosIntegrationController extends Controller
             ->first();
 
         if (!$session) {
+            // No open session — tell CapyPOS to show the "Open Session" screen
+            $user = User::find($userId);
+
+            // Try to auto-detect the register for this PC by IP / Hostname
+            $clientIp       = $request->ip();
+            $clientHostname = $request->header('X-Hostname', '');
+
+            $register = CashRegister::where('active', true)
+                ->where(function ($q) use ($clientIp, $clientHostname) {
+                    $q->where('ip_address', $clientIp)
+                      ->orWhere(function ($q2) use ($clientHostname) {
+                          if ($clientHostname) {
+                              $q2->whereRaw('LOWER(hostname) = ?', [strtolower($clientHostname)]);
+                          }
+                      });
+                })
+                ->whereDoesntHave('sessions', fn($q) => $q->where('status', 'open'))
+                ->first();
+
+            // Fallback: any active register without open session
+            if (!$register) {
+                $allFreeRegisters = CashRegister::where('active', true)
+                    ->whereDoesntHave('sessions', fn($q) => $q->where('status', 'open'))
+                    ->orderBy('number')
+                    ->get(['id', 'number', 'name']);
+            } else {
+                $allFreeRegisters = collect();
+            }
+
             return response()->json([
-                'success' => false,
-                'message' => 'No tienes un turno de caja abierto. Por favor, abre uno en CapyControl.'
-            ], 403);
+                'success'          => false,
+                'needs_opening'    => true,
+                'user_role'        => $user ? $user->role : 'cashier',
+                'register'         => $register ? ['id' => $register->id, 'number' => $register->number, 'name' => $register->name] : null,
+                'free_registers'   => $allFreeRegisters->values(),
+                'message'          => 'Sin turno abierto.',
+            ], 200);
+        }
+
+        // Access Control: validate IP and/or Hostname if registered on the cash register
+        $register = $session->cashRegister;
+        if ($register) {
+            $clientIp       = $request->ip();
+            $clientHostname = $request->header('X-Hostname', '');
+
+            // When CapyPOS and CapyControl run on the same PC (XAMPP local),
+            // Laravel sees the request as coming from loopback (::1 / 127.0.0.1).
+            // In that case, skip IP validation and rely only on hostname.
+            $isLoopback = in_array($clientIp, ['::1', '127.0.0.1', '::ffff:127.0.0.1']);
+
+            $hasIp       = !empty($register->ip_address) && !$isLoopback;
+            $hasHostname = !empty($register->hostname);
+
+            if ($hasIp || $hasHostname) {
+                $ipOk       = !$hasIp       || (trim($register->ip_address) === $clientIp);
+                $hostnameOk = !$hasHostname  || (strtolower(trim($register->hostname)) === strtolower(trim($clientHostname)));
+
+                if (!$ipOk || !$hostnameOk) {
+                    $expected = [];
+                    if (!empty($register->ip_address)) $expected[] = "IP: {$register->ip_address}";
+                    if ($hasHostname)                  $expected[] = "Hostname: {$register->hostname}";
+
+                    $got = [];
+                    if (!empty($register->ip_address)) $got[] = "IP: {$clientIp}" . ($isLoopback ? ' (loopback — validación omitida)' : '');
+                    if ($hasHostname)                  $got[] = "Hostname: " . ($clientHostname ?: 'no enviado');
+
+                    return response()->json([
+                        'success'  => false,
+                        'message'  => "Este PC no está autorizado para la Caja {$register->number}. Esperado: " . implode(', ', $expected) . ". Recibido: " . implode(', ', $got) . ".",
+                        'ip_error' => true,
+                    ], 403);
+                }
+            }
         }
 
         return response()->json([
+            'success'   => true,
+            'user_role' => optional(User::find($userId))->role ?? 'cashier',
+            'session'   => [
+                'id'             => $session->id,
+                'register'       => $register ? ($register->name ?? $register->number) : '—',
+                'register_number'=> $register ? $register->number : '—',
+                'hostname'       => $register ? $register->hostname : null,
+                'turn_number'    => $session->turn_number,
+            ]
+        ]);
+    }
+
+    /**
+     * Open a new cash session from CapyPOS.
+     * - Admin users: open directly.
+     * - Cashier users: require supervisor credentials (admin username + password).
+     */
+    public function openSession(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'Usuario no identificado.'], 401);
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
+        $request->validate([
+            'cash_register_id' => 'required|exists:cash_registers,id',
+            'opening_amount'   => 'required|numeric|min:0',
+        ]);
+
+        // --- CASHIER: needs supervisor authorization ---
+        if (!$user->isAdmin()) {
+            $request->validate([
+                'supervisor_username' => 'required|string',
+                'supervisor_password' => 'required|string',
+            ]);
+
+            $supervisor = User::where('username', $request->supervisor_username)
+                ->where('role', 'admin')
+                ->first();
+
+            if (!$supervisor || !Hash::check($request->supervisor_password, $supervisor->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Credenciales del supervisor incorrectas o el usuario no es administrador.',
+                ], 403);
+            }
+        }
+
+        // --- Check register is available ---
+        $register = CashRegister::where('id', $request->cash_register_id)
+            ->where('active', true)
+            ->first();
+
+        if (!$register) {
+            return response()->json(['success' => false, 'message' => 'Caja no encontrada o inactiva.'], 404);
+        }
+
+        $alreadyOpen = CashSession::where('cash_register_id', $register->id)
+            ->where('status', 'open')
+            ->exists();
+
+        if ($alreadyOpen) {
+            return response()->json(['success' => false, 'message' => 'Esta caja ya tiene una sesión abierta.'], 409);
+        }
+
+        // --- Create session ---
+        $lastTurn = CashSession::where('cash_register_id', $register->id)
+            ->max('turn_number') ?? 0;
+
+        $session = CashSession::create([
+            'cash_register_id' => $register->id,
+            'user_id'          => $userId,
+            'status'           => 'open',
+            'turn_number'      => $lastTurn + 1,
+            'opening_amount'   => $request->opening_amount,
+            'expected_amount'  => $request->opening_amount,
+            'opened_at'        => now(),
+        ]);
+
+        return response()->json([
             'success' => true,
+            'message' => 'Turno abierto exitosamente.',
             'session' => [
-                'id' => $session->id,
-                'register' => $session->cashRegister->name,
+                'id'          => $session->id,
+                'register'    => $register->name ?? $register->number,
                 'turn_number' => $session->turn_number,
             ]
         ]);

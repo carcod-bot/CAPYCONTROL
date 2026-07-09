@@ -2,7 +2,7 @@
 
 > **Sistema**: CapyControl (Panel de Administración e Inventario)  
 > **Framework**: Laravel 11  
-> **Última actualización**: 2026-07-08
+> **Última actualización**: 2026-07-09
 
 ---
 
@@ -22,7 +22,10 @@ capycontrol/
 │   │   ├── ProductController.php
 │   │   ├── SettingController.php
 │   │   ├── CurrencyController.php
-│   │   └── PaymentMethodController.php
+│   │   ├── PaymentMethodController.php
+│   │   ├── CashRegisterController.php
+│   │   ├── CashSessionController.php
+│   │   └── Api/PosIntegrationController.php
 │   ├── Models/
 │   │   ├── User.php
 │   │   ├── Department.php
@@ -32,7 +35,11 @@ capycontrol/
 │   │   ├── Product.php
 │   │   ├── Setting.php
 │   │   ├── Currency.php
-│   │   └── PaymentMethod.php
+│   │   ├── PaymentMethod.php
+│   │   ├── CashRegister.php
+│   │   ├── CashSession.php
+│   │   ├── CashMovement.php
+│   │   └── Sale.php
 │   └── Providers/
 ├── database/migrations/
 ├── resources/views/
@@ -40,6 +47,9 @@ capycontrol/
 │   ├── layouts/
 │   ├── inventory/
 │   ├── finances/
+│   ├── pos-control/
+│   │   ├── index.blade.php        ← Monitoreo (solo sesiones abiertas)
+│   │   └── registers.blade.php   ← Gestión de Cajas (CRUD con IP/Hostname)
 │   ├── home.blade.php
 │   └── welcome.blade.php
 ├── routes/
@@ -643,6 +653,8 @@ capycontrol/
 | `2026_06_30_023402_add_brand_and_provider_to_products_table.php` | Agrega `brand_id` y `provider_id` a productos |
 | `2026_07_01_003835_create_currencies_table.php` | Tabla de monedas |
 | `2026_07_01_003844_create_payment_methods_table.php` | Tabla de métodos de pago |
+| `2026_07_08_000001_create_pos_control_tables.php` | Tablas `cash_registers`, `cash_sessions`, `cash_movements` |
+| `2026_07_09_000001_add_ip_to_cash_registers.php` | Agrega `hostname` e `ip_address` a `cash_registers` |
 
 ---
 
@@ -683,3 +695,115 @@ User (independiente con roles y permisos)
 - ✅ Carga dinámica de categorías por departamento
 - ✅ Protección de rutas con middleware `auth`
 - ✅ Mensajes y validaciones en español
+
+---
+
+## 🖥️ Módulo Control POS (2026-07-08 / 2026-07-09)
+
+### Descripción
+Módulo de monitoreo y gestión de cajas registradoras conectadas a CapyPOS.
+
+### Pantallas
+
+| Ruta | Vista | Descripción |
+|---|---|---|
+| `GET /pos-control` | `pos-control/index` | **Monitoreo**: muestra solo cajas con sesión abierta en tiempo real |
+| `GET /pos-control/registers` | `pos-control/registers` | **Gestión de Cajas**: CRUD completo de cajas físicas |
+
+### Modelo de Datos
+
+```
+CashRegister (cajas físicas)
+  ├── number       → Nº de caja (único, ej: 003)
+  ├── name         → Nombre descriptivo
+  ├── location     → Ubicación física
+  ├── hostname     → Nombre del PC asignado (ej: CAJA-01)
+  ├── ip_address   → IP del PC en la red local (ej: 192.168.1.100)
+  └── active       → Activa/inactiva
+
+CashSession (turnos de caja)
+  ├── cash_register_id, user_id
+  ├── status (open/closed), turn_number
+  ├── opening_amount, expected_amount, actual_amount, difference
+  ├── total_sales, total_returns, total_withdrawals, pending_invoices
+  └── opened_at, closed_at, closing_notes
+
+CashMovement (retiros/depósitos dentro de un turno)
+  ├── cash_session_id, user_id
+  ├── type (withdrawal/deposit/adjustment)
+  ├── amount, reason, notes
+```
+
+### Control de Acceso por IP y Hostname
+
+Cuando se registra una caja en **Gestión de Cajas**, se puede asignar:
+- **Hostname**: nombre del PC (ej: `CAJA-01`). PHP obtiene el hostname real con `gethostname()` en el servidor CapyPOS.
+- **IP del PC**: dirección IP en la red local (ej: `192.168.1.100`).
+
+**Lógica de validación** (en `PosIntegrationController@checkSession`):
+- Si la caja tiene **IP registrada** → se valida contra `$request->ip()`
+- Si la caja tiene **Hostname registrado** → se valida contra el header `X-Hostname` (enviado automáticamente por CapyPOS desde `gethostname()`)
+- Si **ambos** están registrados → **ambos deben coincidir**
+- Si **ninguno** está registrado → cualquier PC puede acceder
+- **Excepción de Loopback (Localhost)**: Si la IP entrante es `127.0.0.1` o `::1` (CapyPOS y CapyControl están en la misma PC), la validación de IP se omite automáticamente y se confía únicamente en la validación de `X-Hostname` para identificar la caja de forma segura.
+- Si no coinciden → CapyPOS muestra pantalla "Acceso No Autorizado" con detalle de qué se esperaba vs. lo recibido
+
+### Integración CapyControl ↔ CapyPOS (API)
+
+```
+GET  /api/pos/session-status   → checkSession() — valida sesión + IP + Hostname
+POST /api/pos/session/open     → openSession()  — abre turno directamente desde CapyPOS
+POST /api/pos/sales            → storeSale()    — procesa venta y actualiza stock
+POST /api/pos/session/close    → closeSession() — cierra turno
+POST /api/pos/session/withdraw → withdrawCash() — retiro parcial
+GET  /api/pos/customers        → searchCustomers()
+POST /api/pos/customers        → storeCustomer()
+```
+
+Headers requeridos en cada llamada de CapyPOS:
+- `X-User-Id`: ID del usuario autenticado en CapyPOS
+- `X-Hostname`: hostname del PC (leído de `<meta name="pc-hostname">` puesto por `gethostname()`)
+
+### Seeders de Prueba
+
+El archivo `PosControlSeeder.php` crea cajas **003, 004, 009, 010, 014** con sesiones de ejemplo para demostración. Para eliminarlo en producción, remover la llamada al seeder en `DatabaseSeeder.php`.
+
+---
+
+## ⚙️ Módulo Configuraciones (Usuarios y Roles) - 2026-07-09
+
+### Descripción
+Gestión centralizada del Acceso Basado en Roles (RBAC) con un enfoque híbrido: Los usuarios heredan permisos de un **Rol Base**, pero pueden tener **Permisos Extras** aditivos.
+
+### Modelos y Controladores
+- **Role (`app/Models/Role.php`)**: Guarda `name`, `description`, `permissions` (array JSON) y `is_system` (boolean).
+- **User (`app/Models/User.php`)**: Actualizado con `role_id` y `permissions` (JSON). Tiene métodos combinados:
+  - `effectivePermissions()`: Fusiona permisos del Rol con permisos propios del Usuario.
+  - `hasPermission($permission)`: Retorna `true` si el usuario o su rol tienen el permiso (los admins siempre retornan true).
+- **UserController**: CRUD de usuarios con asignación de Rol y Permisos extra. Define la constante `ALL_PERMISSIONS` y sus etiquetas amigables.
+- **RoleController**: CRUD de roles. Protege los roles con `is_system = true` (como Administrador) de ser eliminados o modificar sus permisos.
+
+### Vistas e Interfaz
+- `resources/views/configuraciones/usuarios.blade.php`: Vista unificada con pestañas dinámicas (JS) para gestionar tanto Usuarios como Roles. Usa modales nativos de CapyControl (`modal-overlay`) y carga dinámica.
+- `resources/views/configuraciones/parametros.blade.php`: Vista "placeholder" para futuras configuraciones generales.
+
+### Características Especiales
+- **Protección del Admin**: No se puede eliminar al último Administrador del sistema.
+- **Auto-protección**: El usuario logueado no puede eliminarse a sí mismo.
+- **Seguridad de Roles**: No se pueden eliminar roles que tengan usuarios asignados, forzando la reasignación primero.
+
+
+## 🔒 Seguridad RBAC y Experiencia de Usuario - 2026-07-09
+
+### Control de Acceso (Middleware)
+- Se implementó el middleware `CheckPermission` registrado bajo el alias `permission`.
+- Protege todas las rutas del backend agrupándolas según los permisos (`inventory.view`, `pos_control.manage`, `configuraciones.edit`, etc.).
+- Las peticiones web no autorizadas retornan 403 (Acceso Denegado), y las peticiones AJAX retornan un JSON de error 403.
+
+### Interfaz Adaptativa en el Frontend
+- El archivo `app.blade.php` ha sido actualizado para usar directivas de blade `@if(Auth::user()->hasPermission(...))`.
+- Los dropdowns y enlaces del Topbar (Inventario, Finanzas, Control POS, Configuraciones) se ocultan físicamente si el usuario no posee el permiso respectivo, garantizando una UI limpia.
+
+### Mejoras en Validación de Formularios
+- Se ajustaron `UserController` y `RoleController` para forzar la validación de peticiones mediante `Validator::make` y el retorno estricto de JSON. Esto solucionó un conflicto nativo de Laravel 11 donde los errores de validación redireccionaban devolviendo HTML en lugar de avisos de error.
+- Se implementó un diccionario de traducciones al español localmente en los Controladores para solventar el renderizado en crudo de mensajes como `validation.min.string` en las alertas nativas de SweetAlert2.
