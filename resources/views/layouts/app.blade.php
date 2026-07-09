@@ -243,7 +243,16 @@
                     body: formData
                 });
                 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    console.error("Non-JSON response from server:", responseText);
+                    alert("El servidor no devolvió una respuesta válida (ver consola).");
+                    hideGlobalLoader();
+                    return;
+                }
                 
                 if (response.ok && data.success) {
                     if(successCallback) successCallback(data);
@@ -252,7 +261,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión con el servidor.');
+                alert('Error de servidor. Revisa la consola o recarga la página. ' + error.message);
             }
             hideGlobalLoader();
         }

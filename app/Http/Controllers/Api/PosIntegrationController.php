@@ -63,6 +63,14 @@ class PosIntegrationController extends Controller
                 $allFreeRegisters = collect();
             }
 
+            // Load Currencies and Payment Methods for POS early
+            $currencies = \App\Models\Currency::where('is_active', true)
+                ->where('used_in_pos', true)
+                ->get();
+            $paymentMethods = \App\Models\PaymentMethod::with('currency')
+                ->where('used_in_pos', true)
+                ->get();
+
             return response()->json([
                 'success'          => false,
                 'needs_opening'    => true,
@@ -70,6 +78,10 @@ class PosIntegrationController extends Controller
                 'register'         => $register ? ['id' => $register->id, 'number' => $register->number, 'name' => $register->name] : null,
                 'free_registers'   => $allFreeRegisters->values(),
                 'message'          => 'Sin turno abierto.',
+                'pos_config'       => [
+                    'currencies'      => $currencies,
+                    'payment_methods' => $paymentMethods,
+                ]
             ], 200);
         }
 
@@ -109,6 +121,14 @@ class PosIntegrationController extends Controller
             }
         }
 
+        // Load Currencies and Payment Methods for POS
+        $currencies = \App\Models\Currency::where('is_active', true)
+            ->where('used_in_pos', true)
+            ->get();
+        $paymentMethods = \App\Models\PaymentMethod::with('currency')
+            ->where('used_in_pos', true)
+            ->get();
+
         return response()->json([
             'success'   => true,
             'user_role' => optional(User::find($userId))->role ?? 'cashier',
@@ -118,6 +138,12 @@ class PosIntegrationController extends Controller
                 'register_number'=> $register ? $register->number : '—',
                 'hostname'       => $register ? $register->hostname : null,
                 'turn_number'    => $session->turn_number,
+            ],
+            'pos_config' => [
+                'currencies'      => $currencies,
+                'payment_methods' => $paymentMethods,
+                'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
+                'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
             ]
         ]);
     }
@@ -194,15 +220,28 @@ class PosIntegrationController extends Controller
             'opened_at'        => now(),
         ]);
 
+        // Load Currencies and Payment Methods for POS
+        $currencies = \App\Models\Currency::where('is_active', true)
+            ->where('used_in_pos', true)
+            ->get();
+        $paymentMethods = \App\Models\PaymentMethod::with('currency')
+            ->where('used_in_pos', true)
+            ->get();
+        
+        $posConfig = [
+            'currencies'      => $currencies,
+            'payment_methods' => $paymentMethods,
+        ];
+
         return response()->json([
-            'success' => true,
-            'message' => 'Turno abierto exitosamente.',
-            'session' => [
-                'id'          => $session->id,
-                'register'    => $register->name ?? $register->number,
-                'turn_number' => $session->turn_number,
-            ]
-        ]);
+            'success'     => true,
+            'session_id'  => $session->id,
+            'turn_number' => $session->turn_number,
+            'user'        => $session->user->name,
+            'user_role'   => $session->user->role ?? 'cashier',
+            'register'    => $register ? $register->name : 'N/A',
+            'pos_config'  => $posConfig
+        ], 200);
     }
 
     /**
@@ -222,8 +261,15 @@ class PosIntegrationController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.001',
             'items.*.price' => 'required|numeric|min:0',
             'total_amount' => 'required|numeric|min:0',
-            'tendered_amount' => 'required|numeric|min:0',
-            'payment_method' => 'required|string',
+            'payments' => 'required|array|min:1',
+            'payments.*.payment_method_id' => 'required|exists:payment_methods,id',
+            'payments.*.currency_id' => 'required|exists:currencies,id',
+            'payments.*.amount_base' => 'required|numeric|min:0',
+            'payments.*.amount_local' => 'required|numeric|min:0',
+            'payments.*.exchange_rate' => 'required|numeric|min:0',
+            'new_customer' => 'nullable|array',
+            'new_customer.name' => 'required_with:new_customer|string|max:255',
+            'new_customer.document_id' => 'required_with:new_customer|string|max:100',
         ]);
 
         try {
@@ -239,18 +285,61 @@ class PosIntegrationController extends Controller
                 throw new \Exception('No se encontró un turno abierto activo.');
             }
 
-            // 2. Create Sale
-            $changeAmount = max(0, $request->tendered_amount - $request->total_amount);
+            // 2. Process Payments
+            $totalTenderedBase = 0;
+            $paymentMethodNames = [];
+            
+            foreach ($request->payments as $p) {
+                $totalTenderedBase += $p['amount_base'];
+                $paymentMethodNames[] = $p['payment_method_name'] ?? 'Desconocido';
+            }
+
+            $paymentMethodString = count($paymentMethodNames) > 1 
+                ? 'Pago Mixto (' . implode(', ', array_unique($paymentMethodNames)) . ')' 
+                : $paymentMethodNames[0];
+
+            // 2.5 Handle Customer
+            $customerId = $request->customer_id;
+
+            if ($request->has('new_customer') && !empty($request->new_customer)) {
+                $newCust = \App\Models\Customer::firstOrCreate(
+                    ['document_id' => $request->new_customer['document_id']],
+                    [
+                        'name' => $request->new_customer['name'],
+                        'phone' => $request->new_customer['phone'] ?? null,
+                        'email' => $request->new_customer['email'] ?? null,
+                    ]
+                );
+                $customerId = $newCust->id;
+            }
+
+            // 3. Create Sale
+            $changeAmount = max(0, $totalTenderedBase - $request->total_amount);
 
             $sale = Sale::create([
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
-                'payment_method' => $request->payment_method,
+                'customer_id' => $customerId,
+                'payment_method' => $paymentMethodString,
                 'total_amount' => $request->total_amount,
-                'tendered_amount' => $request->tendered_amount,
+                'tax_amount' => $request->tax_amount ?? 0,
+                'tendered_amount' => $totalTenderedBase,
                 'change_amount' => $changeAmount,
                 'ticket_number' => Sale::generateTicketNumber(),
             ]);
+
+            // Save individual payments
+            foreach ($request->payments as $p) {
+                \App\Models\SalePayment::create([
+                    'sale_id' => $sale->id,
+                    'payment_method_id' => $p['payment_method_id'],
+                    'currency_id' => $p['currency_id'],
+                    'payment_method_name' => $p['payment_method_name'] ?? 'Desconocido',
+                    'amount_base' => $p['amount_base'],
+                    'amount_local' => $p['amount_local'],
+                    'exchange_rate' => $p['exchange_rate'],
+                ]);
+            }
 
             $calculatedTotal = 0;
 
@@ -284,6 +373,11 @@ class PosIntegrationController extends Controller
                 // Update Stock
                 $previousStock = $product->stock;
                 $newStock = $previousStock - $qty;
+                
+                if ($newStock < 0) {
+                    throw new \Exception("Stock insuficiente para el producto: {$product->name}. Disponible: {$previousStock}");
+                }
+
                 $product->stock = $newStock;
                 $product->save();
 
@@ -354,13 +448,21 @@ class PosIntegrationController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'document_id' => 'nullable|string|max:255|unique:customers',
+            'document_id' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
         ]);
 
-        $customer = \App\Models\Customer::create($request->all());
+        $customer = \App\Models\Customer::firstOrCreate(
+            ['document_id' => $request->document_id],
+            [
+                'name' => $request->name,
+                'phone' => $request->phone ?? null,
+                'email' => $request->email ?? null,
+                'address' => $request->address ?? null,
+            ]
+        );
 
         return response()->json([
             'success' => true,

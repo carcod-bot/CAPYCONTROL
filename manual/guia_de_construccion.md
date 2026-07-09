@@ -173,8 +173,8 @@ capycontrol/
 
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
-| `index()` | `/settings` | GET | Muestra la configuración actual: `private_code_start` y `private_code_mode`. |
-| `update(Request $request)` | `/settings` | POST | Actualiza la configuración. Valida que `private_code_start` sea entero ≥ 1 y `private_code_mode` sea `incremental` o `personalizado`. |
+| `index()` | `/settings` | GET | Muestra la configuración actual: `private_code_start`, `private_code_mode`, `tax_type` y `tax_amount`. |
+| `update(Request $request)` | `/settings` | POST | Actualiza la configuración global, incluyendo el comportamiento del IVA (Porcentaje o Fijo) para que el punto de venta (CapyPOS) lo aplique dinámicamente. |
 
 ---
 
@@ -185,7 +185,7 @@ capycontrol/
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
 | `index()` | `/currencies` | GET | Renderiza la vista `finances.currencies.index`. |
-| `fetchAll()` | `/api/currencies` | GET | Retorna JSON con todas las monedas y sus métodos de pago asociados (eager loading). Ordenadas por código. |
+| `fetchAll()` | `/api/currencies` | GET | Retorna JSON con todas las monedas y sus métodos de pago. Las tasas de cambio se calculan de manera inversa (Ej: Para el Bolívar (Base = 1), el USD se almacena como el equivalente en Bolívares de 1 USD, para facilitar el cálculo contable). |
 | `store(Request $request)` | `/api/currencies` | POST | Crea una nueva moneda. Valida código (único), descripción, símbolo, decimales, tasa de cambio, código ISO, observación y flags (`is_default`, `is_active`, `used_in_pos`). Si se marca como predeterminada, desmarca las demás. |
 | `update(Request $request, Currency)` | `/api/currencies/{currency}` | PUT | Actualiza una moneda. Misma validación que `store`. Gestiona la moneda predeterminada. |
 | `destroy(Currency)` | `/api/currencies/{currency}` | DELETE | Elimina una moneda. |
@@ -569,7 +569,7 @@ capycontrol/
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
 | `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto. |
-| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, descuenta stock y registra la venta y sus ítems. |
+| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, valida estrictamente el inventario disponible, descuenta stock y registra la venta y sus ítems. Lanza excepción si el stock es insuficiente. |
 | `searchCustomers` | `/api/pos/customers` | GET | Busca clientes por nombre o DNI. |
 | `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma rápida desde la caja. |
 | `withdrawCash` | `/api/pos/session/withdraw` | POST | Registra un retiro de efectivo en la caja actual. |

@@ -13,6 +13,11 @@ use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\InventoryAdjustmentController;
 
+Route::get('/run-migrations', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate');
+    return \Illuminate\Support\Facades\Artisan::output();
+});
+
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -85,9 +90,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/pos-control/sessions/{cashSession}/deposit', [CashSessionController::class, 'deposit'])->name('pos-control.sessions.deposit');
     });
 
-    // --- Configuraciones Module ---
+    // Configuraciones Module
     Route::middleware('permission:configuraciones.view')->group(function () {
         Route::get('/configuraciones/parametros', [App\Http\Controllers\ParameterController::class, 'index'])->name('config.parametros');
+        Route::post('/configuraciones/parametros', [App\Http\Controllers\ParameterController::class, 'update'])->name('config.parametros.update');
         Route::get('/configuraciones/usuarios', [App\Http\Controllers\UserController::class, 'index'])->name('config.usuarios');
         Route::get('/api/roles', [App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
     });
