@@ -13,6 +13,7 @@ class Sale extends Model
         'customer_id',
         'payment_method',
         'total_amount',
+        'tax_amount',
         'tendered_amount',
         'change_amount',
         'status',
