@@ -44,6 +44,7 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="mt-4">{{ $brands->links('pagination::bootstrap-4') }}</div>
     </div>
 </div>
 

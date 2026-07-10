@@ -65,5 +65,6 @@
             @endforelse
         </tbody>
     </table>
+    <div class="mt-4">{{ $departments->links('pagination::bootstrap-4') }}</div>
 </div>
 @endsection

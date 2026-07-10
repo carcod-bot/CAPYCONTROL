@@ -9,7 +9,7 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        $departments = Department::orderBy('name')->get();
+        $departments = Department::orderBy('name')->paginate(20)->withQueryString();
         return view('inventory.departments.index', compact('departments'));
     }
 

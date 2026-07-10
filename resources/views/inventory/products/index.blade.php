@@ -273,6 +273,10 @@
             </tbody>
         </table>
     </div>
+    
+    <div class="mt-4" style="padding: 0 1.5rem 1.5rem;">
+        {{ $products->links('pagination::bootstrap-4') }}
+    </div>
 </div>
 @endsection
 

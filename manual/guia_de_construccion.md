@@ -844,3 +844,6 @@ Se ha rediseñado el módulo de Ajustes de Inventario para soportar la visualiza
 ### Adaptaciones en el Controlador
 - `InventoryAdjustmentController@store`: El endpoint ahora procesa un array estructurado (`products`) y ejecuta las transacciones y validaciones en bucle dentro de un `DB::beginTransaction()`, garantizando la atomicidad. Genera entradas múltiples en `InventoryAdjustments` pero compartiendo el mismo contexto (fecha, tipo, motivo).
 - `InventoryAdjustmentController@getBatchLifecycle`: Nuevo método encargado de leer las relaciones pivote entre Lotes y Ajustes para desglosar la historia cronológica del lote ("Vendidas" leyendo la palabra "Venta" en el motivo, "Daños/Mermas" en el resto de salidas).
+
+### Optimización de Rendimiento
+- **Paginación Global en Inventario:** Se implementó paginación (`paginate(20)`) en las vistas principales de Productos, Departamentos, Categorías, Marcas y Proveedores para mejorar el rendimiento del sistema y evitar cuellos de botella al cargar grandes volúmenes de datos. Se incluyeron enlaces de navegación estilo Bootstrap 4 en todas las tablas.

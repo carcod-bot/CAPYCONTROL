@@ -39,7 +39,7 @@ class ProductController extends Controller
             $query->where('price_usd', '<=', $request->price_max);
         }
 
-        $products = $query->orderBy('name')->get();
+        $products = $query->orderBy('name')->paginate(20)->withQueryString();
         
         // Modal variables
         $departments = Department::where('active', true)->orderBy('name')->get();

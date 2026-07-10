@@ -9,7 +9,7 @@ class ProviderController extends Controller
 {
     public function index()
     {
-        $providers = Provider::orderBy('name')->get();
+        $providers = Provider::orderBy('name')->paginate(20)->withQueryString();
         return view('inventory.providers.index', compact('providers'));
     }
 

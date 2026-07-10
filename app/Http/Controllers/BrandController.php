@@ -9,7 +9,7 @@ class BrandController extends Controller
 {
     public function index()
     {
-        $brands = Brand::orderBy('name')->get();
+        $brands = Brand::orderBy('name')->paginate(20)->withQueryString();
         return view('inventory.brands.index', compact('brands'));
     }
 
