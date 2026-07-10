@@ -319,7 +319,6 @@ capycontrol/
 | `description` | string |
 | `ean_code` | string |
 | `private_code` | string |
-| `size_type` | string |
 | `department_id` | integer (FK) |
 | `category_id` | integer (FK) |
 | `price_usd` | decimal:2 |
