@@ -11,7 +11,7 @@ class Sale extends Model
         'cash_session_id',
         'user_id',
         'customer_id',
-        'payment_method',
+        'payment_method_id',
         'total_amount',
         'tax_amount',
         'tendered_amount',
@@ -55,5 +55,18 @@ class Sale extends Model
     public function items()
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function getPaymentMethodAttribute()
+    {
+        if ($this->payment_method_id) {
+            return $this->paymentMethod->description ?? 'Desconocido';
+        }
+        return 'Pago Mixto';
     }
 }

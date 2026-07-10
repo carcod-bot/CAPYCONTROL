@@ -294,16 +294,14 @@ class PosIntegrationController extends Controller
 
             // 2. Process Payments
             $totalTenderedBase = 0;
-            $paymentMethodNames = [];
+            $paymentMethodIds = [];
             
             foreach ($request->payments as $p) {
                 $totalTenderedBase += $p['amount_base'];
-                $paymentMethodNames[] = $p['payment_method_name'] ?? 'Desconocido';
+                $paymentMethodIds[] = $p['payment_method_id'];
             }
 
-            $paymentMethodString = count($paymentMethodNames) > 1 
-                ? 'Pago Mixto (' . implode(', ', array_unique($paymentMethodNames)) . ')' 
-                : $paymentMethodNames[0];
+            $primaryPaymentMethodId = count($paymentMethodIds) === 1 ? $paymentMethodIds[0] : null;
 
             // 2.5 Handle Customer
             $customerId = $request->customer_id;
@@ -327,7 +325,7 @@ class PosIntegrationController extends Controller
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
                 'customer_id' => $customerId,
-                'payment_method' => $paymentMethodString,
+                'payment_method_id' => $primaryPaymentMethodId,
                 'total_amount' => $request->total_amount,
                 'tax_amount' => $request->tax_amount ?? 0,
                 'tendered_amount' => $totalTenderedBase,
