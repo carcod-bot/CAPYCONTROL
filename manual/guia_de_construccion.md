@@ -847,3 +847,9 @@ Se ha rediseñado el módulo de Ajustes de Inventario para soportar la visualiza
 
 ### Optimización de Rendimiento
 - **Paginación Global en Inventario:** Se implementó paginación (`paginate(20)`) en las vistas principales de Productos, Departamentos, Categorías, Marcas y Proveedores para mejorar el rendimiento del sistema y evitar cuellos de botella al cargar grandes volúmenes de datos. Se incluyeron enlaces de navegación estilo Bootstrap 4 en todas las tablas.
+
+### Funcionalidades Extendidas (2026-07-10)
+- **Trazabilidad de Ventas:** Al hacer clic en un ajuste de tipo Salida asociado a una Venta desde el POS, el sistema despliega automáticamente un modal con los **Detalles de la Venta** (Ticket, Fecha, Cajero, Método de Pago y Total).
+- **Edición de Lotes:** Se habilitó la posibilidad de modificar atributos clave (como números de lote y fechas de vencimiento) directamente sobre las Entradas, desde el panel principal de Ajustes.
+- **Sincronización Transaccional POS:** Se actualizó \PosIntegrationController\ para que no solo descuente las unidades del inventario global, sino que ahora asocia estrictamente las deducciones a nivel de lote usando la tabla pivote \inventory_adjustment_batch\. Este proceso sigue de forma automática y estricta el método FIFO.
+- **Filtro de Lotes Terminados:** Se integró un nuevo filtro en el dropdown de Tipos de Ajuste que permite visualizar exclusivamente las entradas de inventario en donde el lote generado haya alcanzado un stock actual de cero unidades (0).
