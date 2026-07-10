@@ -660,11 +660,11 @@
                 currentCurrencyId = json.currency.id;
                 await loadData();
             } else {
-                alert(json.message || "Error al guardar");
+                showToast(json.message || "Error al guardar");
             }
         } catch (e) {
             console.error(e);
-            alert("Error de conexión");
+            showToast("Error de conexión");
         }
         hideLoader();
     }

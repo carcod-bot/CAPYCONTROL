@@ -227,14 +227,28 @@
             document.getElementById('globalLoaderApp').style.display = 'none';
         }
 
+        function showToast(title, type = 'error') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: type,
+                    title: title,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                alert(title);
+            }
+        }
+
         async function submitAjaxForm(formElement, url, successCallback) {
             showGlobalLoader();
             const formData = new FormData(formElement);
-            // Si el form tiene _method, ya va en formData
             
             try {
                 const response = await fetch(url, {
-                    method: 'POST', // Siempre POST para Fetch con FormData (Laravel spoofing)
+                    method: 'POST',
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
@@ -249,7 +263,7 @@
                     data = JSON.parse(responseText);
                 } catch (e) {
                     console.error("Non-JSON response from server:", responseText);
-                    alert("El servidor no devolvió una respuesta válida (ver consola).");
+                    showToast("El servidor no devolvió una respuesta válida.");
                     hideGlobalLoader();
                     return;
                 }
@@ -257,11 +271,11 @@
                 if (response.ok && data.success) {
                     if(successCallback) successCallback(data);
                 } else {
-                    alert(data.message || 'Error en la operación');
+                    showToast(data.message || 'Error en la operación');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de servidor. Revisa la consola o recarga la página. ' + error.message);
+                showToast('Error de servidor. Revisa la consola o recarga la página.');
             }
             hideGlobalLoader();
         }
@@ -282,11 +296,12 @@
                 if (response.ok && data.success) {
                     if(successCallback) successCallback(data);
                 } else {
-                    alert(data.message || 'Error al eliminar');
+                    showToast(data.message || 'Error al eliminar');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error de conexión.');
+                showToast('Error de conexión.');
+
             }
             hideGlobalLoader();
         }

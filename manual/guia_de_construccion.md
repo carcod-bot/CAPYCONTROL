@@ -173,8 +173,8 @@ capycontrol/
 
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
-| `index()` | `/settings` | GET | Muestra la configuración actual: `private_code_start`, `private_code_mode`, `tax_type` y `tax_amount`. |
-| `update(Request $request)` | `/settings` | POST | Actualiza la configuración global, incluyendo el comportamiento del IVA (Porcentaje o Fijo) para que el punto de venta (CapyPOS) lo aplique dinámicamente. |
+| `index()` | `/settings` | GET | Muestra la configuración actual: `private_code_start`, `private_code_mode`, `tax_type`, `tax_amount` y `tax_included`. |
+| `update(Request $request)` | `/settings` | POST | Actualiza la configuración global, incluyendo el comportamiento del IVA (Porcentaje o Fijo, e inclusión en precio base) para que el punto de venta (CapyPOS) lo aplique dinámicamente. |
 
 ---
 
@@ -590,7 +590,7 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
-| `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto. |
+| `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto y devuelve la configuración global `pos_config` (`tax_type`, `tax_amount`, `tax_included`, `currencies`, `payment_methods`). |
 | `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, descuenta stock global y **descuenta de lotes (FIFO)**, registra la venta y sus ítems. |
 | `searchCustomers` | `/api/pos/customers` | GET | Busca clientes por nombre o DNI. |
 | `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma rápida desde la caja. |

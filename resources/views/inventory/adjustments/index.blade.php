@@ -372,16 +372,18 @@
         
         const selects = document.querySelectorAll('.product-select');
         if (selects.length === 0) {
-            alert('Debes añadir al menos un producto.');
+            showToast('Debes añadir al menos un producto.');
             return;
         }
 
-        for(let s of selects) {
+        let valid = true;
+        selects.forEach(s => {
             if(!s.value) {
-                alert('Asegúrate de seleccionar un producto en todas las filas.');
-                return;
+                showToast('Asegúrate de seleccionar un producto en todas las filas.');
+                valid = false;
             }
-        }
+        });
+        if(!valid) return;
 
         submitAjaxForm(form, '{{ route("inventory-adjustments.store") }}', () => {
             closeModal('adjustmentModal');
@@ -472,7 +474,7 @@
         .catch(err => {
             hideGlobalLoader();
             console.error(err);
-            alert('Error al cargar la información del lote.');
+            showToast('Error al cargar la información del lote.');
         });
     }
     function editAdjustmentBatches(id) {
@@ -567,7 +569,7 @@
         .catch(err => {
             hideGlobalLoader();
             console.error(err);
-            alert('Error al cargar la información para edición.');
+            showToast('Error al cargar la información para edición.');
         });
     }
 

@@ -93,7 +93,12 @@
                     
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Precio (USD) *</label>
-                        <input type="number" step="0.01" name="price_usd" class="form-control" required>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" step="0.01" name="price_usd" id="create_price_usd" class="form-control" required style="flex: 1;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleVat('create_price_usd', this)" title="Sumar IVA a este monto" style="white-space: nowrap; transition: 0.3s;">
+                                + IVA
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group" style="flex: 1; min-width: 200px;">
@@ -175,7 +180,12 @@
                     
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Precio (USD) *</label>
-                        <input type="number" step="0.01" name="price_usd" id="edit_price_usd" class="form-control" required>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" step="0.01" name="price_usd" id="edit_price_usd" class="form-control" required style="flex: 1;">
+                            <button type="button" class="btn btn-outline-secondary" onclick="toggleVat('edit_price_usd', this)" title="Sumar IVA a este monto" style="white-space: nowrap; transition: 0.3s;">
+                                + IVA
+                            </button>
+                        </div>
                     </div>
 
                     <div class="form-group" style="flex: 1; min-width: 200px;">
@@ -321,13 +331,61 @@
                 
                 openModal('editProductModal');
             } else {
-                alert('No se pudo cargar el producto');
+                showToast('No se pudo cargar el producto');
             }
         })
         .catch(err => {
             hideGlobalLoader();
-            alert('Error de conexión al cargar el producto');
+            showToast('Error de conexión al cargar el producto');
             console.error(err);
+        });
+    }
+
+    let originalPrices = {};
+
+    function toggleVat(inputId, btn) {
+        let input = document.getElementById(inputId);
+        if (!input || !input.value) return;
+        
+        let currentPrice = parseFloat(input.value);
+        if (isNaN(currentPrice)) return;
+        
+        let taxType = '{{ \App\Models\Setting::get("tax_type", "percentage") }}';
+        let taxAmount = parseFloat('{{ \App\Models\Setting::get("tax_amount", "16") }}');
+        
+        let isBlue = btn.classList.contains('btn-primary');
+
+        if (isBlue) {
+            // Revertir (Quitar IVA) - Poner Gris
+            if (originalPrices[inputId]) {
+                input.value = parseFloat(originalPrices[inputId]).toFixed(2);
+            }
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-secondary');
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+        } else {
+            // Sumar IVA - Poner Azul
+            originalPrices[inputId] = input.value;
+            
+            if (taxType === 'percentage') {
+                currentPrice = currentPrice * (1 + (taxAmount / 100));
+            } else if (taxType === 'fixed') {
+                currentPrice = currentPrice + taxAmount;
+            }
+            
+            input.value = currentPrice.toFixed(2);
+            
+            btn.classList.remove('btn-outline-secondary');
+            btn.classList.add('btn-primary');
+        }
+
+        // Si el usuario edita el campo manualmente, resetear a gris
+        input.addEventListener('input', function handler() {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-secondary');
+            originalPrices[inputId] = null;
+            input.removeEventListener('input', handler);
         });
     }
 </script>

@@ -9,6 +9,7 @@ class ParameterController extends Controller
         $settings = [
             'tax_type' => \App\Models\Setting::get('tax_type', 'percentage'),
             'tax_amount' => \App\Models\Setting::get('tax_amount', '16.00'),
+            'tax_included' => \App\Models\Setting::get('tax_included', 'false'),
             'local_currency' => \App\Models\Setting::get('local_currency', ''),
         ];
         return view('configuraciones.parametros', compact('settings'));
@@ -21,10 +22,12 @@ class ParameterController extends Controller
         $request->validate([
             'tax_type' => 'required|in:percentage,fixed',
             'tax_amount' => 'required|numeric|min:0',
+            'tax_included' => 'required|in:true,false',
         ]);
 
         \App\Models\Setting::set('tax_type', $request->tax_type);
         \App\Models\Setting::set('tax_amount', $request->tax_amount);
+        \App\Models\Setting::set('tax_included', $request->tax_included);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Parámetros actualizados exitosamente']);

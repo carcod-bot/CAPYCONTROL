@@ -81,6 +81,9 @@ class PosIntegrationController extends Controller
                 'pos_config'       => [
                     'currencies'      => $currencies,
                     'payment_methods' => $paymentMethods,
+                    'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
+                    'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
+                    'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
                 ]
             ], 200);
         }
@@ -144,6 +147,7 @@ class PosIntegrationController extends Controller
                 'payment_methods' => $paymentMethods,
                 'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
                 'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
+                'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
             ]
         ]);
     }
@@ -231,6 +235,9 @@ class PosIntegrationController extends Controller
         $posConfig = [
             'currencies'      => $currencies,
             'payment_methods' => $paymentMethods,
+            'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
+            'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
+            'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
         ];
 
         return response()->json([

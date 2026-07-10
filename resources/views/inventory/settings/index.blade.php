@@ -6,7 +6,7 @@
     <h3>Generación de Código Privado</h3>
     <p class="text-muted mb-4">Configura cómo se generan los códigos privados para los nuevos productos.</p>
     
-    <form action="{{ route('settings.update') }}" method="POST" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { alert('Configuración guardada exitosamente'); })">
+    <form action="{{ route('settings.update') }}" method="POST" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { showToast('Configuración guardada exitosamente', 'success'); })">
         @csrf
         
         <div class="form-group">

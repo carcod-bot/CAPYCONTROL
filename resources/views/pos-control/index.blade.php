@@ -283,10 +283,10 @@
                 closeModal('closeSessionModal');
                 window.location.reload();
             } else {
-                alert(data.message || 'Error al cerrar sesión');
+                showToast(data.message || 'Error al cerrar sesión');
             }
         })
-        .catch(() => alert('Error de conexión'))
+        .catch(() => showToast('Error de conexión'))
         .finally(() => hideGlobalLoader());
     }
 

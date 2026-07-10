@@ -377,10 +377,10 @@
                 closeModal('openSessionModal');
                 window.location.reload();
             } else {
-                alert(data.message || 'Error al abrir sesión');
+                showToast(data.message || 'Error al abrir sesión');
             }
         })
-        .catch(() => alert('Error de conexión'))
+        .catch(() => showToast('Error de conexión'))
         .finally(() => hideGlobalLoader());
     }
 
