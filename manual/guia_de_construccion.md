@@ -542,6 +542,7 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 | `customer_id` | integer (FK) - Nullable |
 | `payment_method` | string |
 | `total_amount` | decimal:2 |
+| `tax_amount` | decimal:2 |
 | `tendered_amount` | decimal:2 |
 | `change_amount` | decimal:2 |
 | `status` | enum (`completed`, `voided`, `refunded`) |
