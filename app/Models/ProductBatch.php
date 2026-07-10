@@ -36,4 +36,11 @@ class ProductBatch extends Model
     {
         return $this->belongsTo(Brand::class);
     }
+
+    public function inventoryAdjustments()
+    {
+        return $this->belongsToMany(InventoryAdjustment::class, 'inventory_adjustment_batch')
+                    ->withPivot('quantity')
+                    ->withTimestamps();
+    }
 }

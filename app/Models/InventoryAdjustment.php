@@ -35,4 +35,11 @@ class InventoryAdjustment extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function batches()
+    {
+        return $this->belongsToMany(ProductBatch::class, 'inventory_adjustment_batch')
+                    ->withPivot('quantity')
+                    ->withTimestamps();
+    }
 }

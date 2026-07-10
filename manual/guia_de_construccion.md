@@ -828,3 +828,19 @@ Gestión centralizada del Acceso Basado en Roles (RBAC) con un enfoque híbrido:
 ### Mejoras en Validación de Formularios
 - Se ajustaron `UserController` y `RoleController` para forzar la validación de peticiones mediante `Validator::make` y el retorno estricto de JSON. Esto solucionó un conflicto nativo de Laravel 11 donde los errores de validación redireccionaban devolviendo HTML en lugar de avisos de error.
 - Se implementó un diccionario de traducciones al español localmente en los Controladores para solventar el renderizado en crudo de mensajes como `validation.min.string` en las alertas nativas de SweetAlert2.
+
+---
+
+## 📦 Gestión Avanzada de Lotes y Ajustes Multi-Producto - 2026-07-10
+
+### Descripción
+Se ha rediseñado el módulo de Ajustes de Inventario para soportar la visualización y gestión avanzada de Lotes (ProductBatches), permitiendo procesar múltiples productos de manera simultánea en una sola operación de ajuste.
+
+### Novedades
+- **Tabla Principal de Ajustes:** Se incluyó la columna "Lote" para visualización rápida de los lotes afectados en cada movimiento, formateado como insignias en texto para facilitar la identificación. Al hacer hover sobre el botón de ciclo de vida se previsualiza la información del lote.
+- **Modal Multi-Producto (Entradas/Salidas Masivas):** El formulario fue refactorizado para permitir la adición dinámica de múltiples filas (productos). El "Motivo" y el "Tipo de Movimiento" (Entrada/Salida/Conteo) aplican globalmente a toda la tanda.
+- **Trazabilidad Extendida (Ciclo de Vida):** Al hacer clic sobre una fila de la tabla, se abre un modal interactivo que muestra el historial de vida del lote vinculado (Cantidad inicial ingresada, cuántas se vendieron en CapyPOS, cuántas se restaron por daños y si hubo algún reconteo físico).
+
+### Adaptaciones en el Controlador
+- `InventoryAdjustmentController@store`: El endpoint ahora procesa un array estructurado (`products`) y ejecuta las transacciones y validaciones en bucle dentro de un `DB::beginTransaction()`, garantizando la atomicidad. Genera entradas múltiples en `InventoryAdjustments` pero compartiendo el mismo contexto (fecha, tipo, motivo).
+- `InventoryAdjustmentController@getBatchLifecycle`: Nuevo método encargado de leer las relaciones pivote entre Lotes y Ajustes para desglosar la historia cronológica del lote ("Vendidas" leyendo la palabra "Venta" en el motivo, "Daños/Mermas" en el resto de salidas).

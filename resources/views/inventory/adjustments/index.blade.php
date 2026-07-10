@@ -7,7 +7,7 @@
         <h2 class="pos-section-title"><i class="fa-solid fa-scale-balanced"></i> Ajustes de Inventario</h2>
     </div>
     <div class="pos-action-bar-right">
-        <button class="btn btn-primary" onclick="openModal('adjustmentModal')">
+        <button class="btn btn-primary" onclick="openAdjustmentModal()">
             <i class="fa-solid fa-plus"></i> Nuevo Ajuste / Conteo
         </button>
     </div>
@@ -19,6 +19,10 @@
         <div style="flex: 1; min-width: 250px;">
             <label class="form-label">Buscar Producto</label>
             <input type="text" name="search" class="form-control" placeholder="Nombre o código..." value="{{ request('search') }}">
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <label class="form-label">Número de Lote</label>
+            <input type="text" name="batch" class="form-control" placeholder="Buscar lote..." value="{{ request('batch') }}">
         </div>
         <div style="flex: 1; min-width: 200px;">
             <label class="form-label">Tipo de Ajuste</label>
@@ -45,16 +49,18 @@
                     <th>Fecha</th>
                     <th>Producto</th>
                     <th>Tipo</th>
+                    <th>Lote</th>
                     <th>Cant.</th>
                     <th>Stock Anterior</th>
                     <th>Nuevo Stock</th>
                     <th>Motivo</th>
                     <th>Usuario</th>
+                    <th>Detalles</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($adjustments as $adj)
-                <tr>
+                <tr style="cursor: pointer;" onclick="loadLifecycle({{ $adj->id }})" class="hover-bg">
                     <td>{{ $adj->created_at->format('d/m/Y h:i a') }}</td>
                     <td>
                         <div class="font-bold">{{ $adj->product->name }}</div>
@@ -69,11 +75,25 @@
                             <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe;"><i class="fa-solid fa-check-double"></i> Conteo</span>
                         @endif
                     </td>
+                    <td>
+                        @if($adj->batches->count() > 0)
+                            <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $adj->batches->pluck('batch_number')->unique()->implode(', ') }}</span>
+                        @else
+                            <span class="text-muted" style="font-size: 0.8rem;">-</span>
+                        @endif
+                    </td>
                     <td class="font-bold text-center">{{ number_format($adj->quantity, 2) }}</td>
                     <td class="text-center text-muted">{{ number_format($adj->previous_stock, 2) }}</td>
                     <td class="font-bold text-center">{{ number_format($adj->new_stock, 2) }}</td>
                     <td>{{ $adj->reason }}</td>
                     <td>{{ $adj->user->username }}</td>
+                    <td>
+                        @if($adj->batches->count() > 0)
+                            <span class="text-primary"><i class="fa-solid fa-eye"></i> Ver Ciclo</span>
+                        @else
+                            <span class="text-muted" style="font-size: 0.8rem;">Sin lote</span>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>
@@ -94,174 +114,241 @@
 
 <!-- Modal Adjustment -->
 <div class="modal-overlay" id="adjustmentModal">
-    <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-content" style="max-width: 900px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-scale-balanced"></i> Registrar Ajuste / Conteo</h3>
-            <button class="modal-close" onclick="closeModal('adjustmentModal')"><i class="fa-solid fa-xmark"></i></button>
+            <h3><i class="fa-solid fa-scale-balanced"></i> Registrar Ajustes Multi-Producto</h3>
+            <button type="button" class="modal-close" onclick="closeModal('adjustmentModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="adjustmentForm" onsubmit="event.preventDefault(); submitAdjustment();">
-            <div class="form-group">
-                <label class="form-label">Buscar Producto <span class="text-danger">*</span></label>
-                <select id="productId" name="product_id" class="form-control select2-ajax" style="width: 100%;" required>
-                    <option value="">Buscar producto...</option>
-                </select>
-                <div id="selectedProductInfo" style="margin-top: 10px; display: none; padding: 10px; background: var(--background); border-radius: 8px; border: 1px solid var(--border);">
-                    <div class="font-bold" id="spName"></div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">Código: <span id="spCode"></span> | Stock Actual: <strong id="spStock" class="text-primary"></strong></div>
-                </div>
-            </div>
-
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
-                    <label class="form-label">Tipo de Movimiento <span class="text-danger">*</span></label>
-                    <select name="type" id="adjType" class="form-control select2-modal" required style="width: 100%;">
+                    <label class="form-label">Tipo de Movimiento Global <span class="text-danger">*</span></label>
+                    <select name="type" id="adjType" class="form-control" required style="width: 100%;">
                         <option value="in">Entrada (Sumar al stock)</option>
                         <option value="out">Salida (Restar al stock)</option>
                         <option value="set">Conteo Físico (Reemplazar stock)</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" id="qtyLabel">Cantidad a Ingresar <span class="text-danger">*</span></label>
-                    <input type="number" name="quantity" class="form-control" step="0.001" min="0.001" required>
+                    <label class="form-label">Motivo Global <span class="text-danger">*</span></label>
+                    <input type="text" name="reason" class="form-control" placeholder="Ej: Compra, Merma, Daño, Conteo Anual" required>
                 </div>
-            </div>
-
-            <!-- Batch Details (only for IN) -->
-            <div id="batchFieldsContainer" style="background: var(--background); padding: 15px; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 1rem;">
-                <h4 style="font-size: 0.9rem; margin-top: 0; margin-bottom: 15px; color: var(--text-main);"><i class="fa-solid fa-box-open"></i> Datos del Lote</h4>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 10px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Nro de Lote (Opcional)</label>
-                        <input type="text" name="batch_number" class="form-control" placeholder="Autogenerado si vacío">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Vencimiento (Opcional)</label>
-                        <input type="date" name="expiry_date" class="form-control">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Marca (Opcional)</label>
-                        <select name="brand_id" class="form-control select2-modal" style="width: 100%;">
-                            <option value="">Por defecto del producto</option>
-                            @foreach($brands as $brand)
-                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Proveedor (Opcional)</label>
-                        <select name="provider_id" class="form-control select2-modal" style="width: 100%;">
-                            <option value="">Por defecto del producto</option>
-                            @foreach($providers as $prov)
-                                <option value="{{ $prov->id }}">{{ $prov->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Motivo <span class="text-danger">*</span></label>
-                <input type="text" name="reason" class="form-control" placeholder="Ej: Compra, Merma, Daño, Conteo Anual" required>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Notas Adicionales</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Observaciones opcionales..."></textarea>
+                <textarea name="notes" class="form-control" rows="1" placeholder="Observaciones opcionales..."></textarea>
+            </div>
+
+            <h4 style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                Productos a Ajustar
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addProductRow()" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">
+                    <i class="fa-solid fa-plus"></i> Añadir Fila
+                </button>
+            </h4>
+
+            <div class="table-container" style="border: none; box-shadow: none; overflow-x: auto; margin-bottom: 1rem;">
+                <table class="table" id="productsTable" style="min-width: 700px; margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%;">Producto</th>
+                            <th style="width: 15%;">Cantidad</th>
+                            <th style="width: 20%;" class="batch-col">Nro Lote</th>
+                            <th style="width: 20%;" class="batch-col">Vencimiento</th>
+                            <th style="width: 10%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsBody">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
             </div>
 
             <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('adjustmentModal')">Cancelar</button>
-                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar Ajuste</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Procesar Ajustes</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Detalles de Lote (Ciclo de Vida) -->
+<div class="modal-overlay" id="batchDetailsModal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-route"></i> Trazabilidad del Lote</h3>
+            <button class="modal-close" onclick="closeModal('batchDetailsModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="table-container" style="border: none; margin: 0; box-shadow: none; overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Lote</th>
+                        <th>Vencimiento</th>
+                        <th class="text-center" title="Cantidad Inicial Ingresada">Inicial</th>
+                        <th class="text-center" title="Ventas Acumuladas">Vendidas</th>
+                        <th class="text-center" title="Daños o Mermas">Restadas</th>
+                        <th class="text-center" title="Ajustes Físicos">Reconteo</th>
+                        <th class="text-center text-primary" title="Stock Actual en el Sistema">Quedan</th>
+                    </tr>
+                </thead>
+                <tbody id="batchDetailsBody">
+                    <!-- Dinámico -->
+                </tbody>
+            </table>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+            <button class="btn btn-secondary" onclick="closeModal('batchDetailsModal')">Cerrar</button>
+        </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
 <script>
+    let rowCount = 0;
+
     $(document).ready(function() {
         $('.select2-filter').select2();
 
-        $('#adjType').select2({
-            dropdownParent: $('#adjustmentModal')
-        }).on('change', function() {
+        $('#adjType').on('change', function() {
             updateQtyLabel();
         });
+    });
 
-        $('.select2-modal').select2({
-            dropdownParent: $('#adjustmentModal')
-        });
+    function updateQtyLabel() {
+        const type = document.getElementById('adjType').value;
+        const batchCols = document.querySelectorAll('.batch-col');
+        
+        if (type === 'in') {
+            batchCols.forEach(col => col.style.display = '');
+        } else {
+            batchCols.forEach(col => col.style.display = 'none');
+        }
+    }
 
-        $('.select2-ajax').select2({
+    function addProductRow() {
+        rowCount++;
+        const tr = document.createElement('tr');
+        tr.id = `row-${rowCount}`;
+        
+        tr.innerHTML = `
+            <td>
+                <select class="form-control product-select" name="products[${rowCount}][product_id]" required style="width:100%;"></select>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="products[${rowCount}][quantity]" step="0.001" min="0.001" required placeholder="0.00">
+            </td>
+            <td class="batch-col">
+                <input type="text" class="form-control" name="products[${rowCount}][batch_number]" placeholder="Opcional">
+            </td>
+            <td class="batch-col">
+                <input type="date" class="form-control" name="products[${rowCount}][expiry_date]">
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn text-danger" style="background:none; border:none; padding: 0.5rem;" onclick="removeRow(${rowCount})">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        `;
+        document.getElementById('productsBody').appendChild(tr);
+
+        // Initialize Select2 on the new row
+        $(`#row-${rowCount} .product-select`).select2({
             dropdownParent: $('#adjustmentModal'),
             ajax: {
                 url: '{{ route('inventory-adjustments.search-products') }}',
                 dataType: 'json',
                 delay: 250,
-                data: function (params) {
-                    return { term: params.term };
-                },
+                data: function (params) { return { term: params.term }; },
                 processResults: function (data) {
                     return {
                         results: $.map(data, function (item) {
-                            return {
-                                text: item.name + ' (' + item.private_code + ')',
-                                id: item.id,
-                                stock: item.stock,
-                                name: item.name,
-                                private_code: item.private_code
-                            }
+                            return { text: item.name + ' (' + item.private_code + ') - Stock: ' + parseFloat(item.stock), id: item.id }
                         })
                     };
                 },
                 cache: true
             },
-            placeholder: 'Escribe para buscar un producto...',
+            placeholder: 'Buscar...',
             minimumInputLength: 2,
-        }).on('select2:select', function (e) {
-            selectProduct(e.params.data);
         });
-    });
 
-    function selectProduct(prod) {
-        document.getElementById('spName').textContent = prod.name;
-        document.getElementById('spCode').textContent = prod.private_code;
-        document.getElementById('spStock').textContent = parseFloat(prod.stock);
-        document.getElementById('selectedProductInfo').style.display = 'block';
+        updateQtyLabel();
     }
 
-    function updateQtyLabel() {
-        const type = document.getElementById('adjType').value;
-        const label = document.getElementById('qtyLabel');
-        const batchFields = document.getElementById('batchFieldsContainer');
-        
-        if (type === 'in') {
-            label.innerHTML = 'Cantidad a Ingresar <span class="text-danger">*</span>';
-            batchFields.style.display = 'block';
-        } else if (type === 'out') {
-            label.innerHTML = 'Cantidad a Restar <span class="text-danger">*</span>';
-            batchFields.style.display = 'none';
-        } else {
-            label.innerHTML = 'Cantidad Física Real <span class="text-danger">*</span>';
-            batchFields.style.display = 'none';
-        }
+    function removeRow(id) {
+        document.getElementById(`row-${id}`).remove();
+    }
+
+    function openAdjustmentModal() {
+        document.getElementById('productsBody').innerHTML = '';
+        document.getElementById('adjustmentForm').reset();
+        rowCount = 0;
+        addProductRow();
+        openModal('adjustmentModal');
     }
 
     function submitAdjustment() {
-        if (!document.getElementById('productId').value) {
-            alert('Debes seleccionar un producto.');
+        const form = document.getElementById('adjustmentForm');
+        
+        const selects = document.querySelectorAll('.product-select');
+        if (selects.length === 0) {
+            alert('Debes añadir al menos un producto.');
             return;
         }
 
-        const form = document.getElementById('adjustmentForm');
+        for(let s of selects) {
+            if(!s.value) {
+                alert('Asegúrate de seleccionar un producto en todas las filas.');
+                return;
+            }
+        }
+
         submitAjaxForm(form, '{{ route("inventory-adjustments.store") }}', () => {
             closeModal('adjustmentModal');
             window.location.reload();
+        });
+    }
+
+    function loadLifecycle(id) {
+        showGlobalLoader();
+        fetch(`{{ url('inventory-adjustments') }}/${id}/lifecycle`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(batches => {
+            hideGlobalLoader();
+            const tbody = document.getElementById('batchDetailsBody');
+            tbody.innerHTML = '';
+            
+            if (batches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Este ajuste no afectó ningún lote.</td></tr>';
+            } else {
+                batches.forEach(b => {
+                    const tr = document.createElement('tr');
+                    
+                    let expiry = b.expiry_date ? b.expiry_date : '<span class="text-muted">N/A</span>';
+                    
+                    tr.innerHTML = `
+                        <td class="font-bold" style="font-family: monospace;">${b.batch_number}</td>
+                        <td>${expiry}</td>
+                        <td class="text-center">${b.initial}</td>
+                        <td class="text-center text-success">${b.sold > 0 ? b.sold : '-'}</td>
+                        <td class="text-center text-danger">${b.damaged > 0 ? b.damaged : '-'}</td>
+                        <td class="text-center text-info">${b.recounted ? '<i class="fa-solid fa-check"></i> Sí' : '-'}</td>
+                        <td class="text-center font-bold text-primary">${b.current}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            openModal('batchDetailsModal');
+        })
+        .catch(err => {
+            hideGlobalLoader();
+            console.error(err);
+            alert('Error al cargar la información del lote.');
         });
     }
 </script>

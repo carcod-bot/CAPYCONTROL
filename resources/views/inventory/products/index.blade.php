@@ -95,7 +95,6 @@
                         <label class="form-label">Precio (USD) *</label>
                         <input type="number" step="0.01" name="price_usd" class="form-control" required>
                     </div>
-                </div>
 
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Categoría *</label>
@@ -178,7 +177,6 @@
                         <label class="form-label">Precio (USD) *</label>
                         <input type="number" step="0.01" name="price_usd" id="edit_price_usd" class="form-control" required>
                     </div>
-                </div>
 
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Categoría *</label>

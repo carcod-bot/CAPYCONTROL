@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/inventory-adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory-adjustments.index');
         Route::get('/inventory-adjustments/search-products', [InventoryAdjustmentController::class, 'searchProducts'])->name('inventory-adjustments.search-products');
+        Route::get('/inventory-adjustments/{id}/lifecycle', [InventoryAdjustmentController::class, 'getBatchLifecycle'])->name('inventory-adjustments.lifecycle');
         
         Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
     });
