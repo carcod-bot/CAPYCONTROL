@@ -79,7 +79,7 @@ class InventoryAdjustmentController extends Controller
                 if ($request->type === 'in') {
                     $newStock = $previousStock + $qty;
                     
-                    $batchNumber = !empty($prodInput['batch_number']) ? $prodInput['batch_number'] : 'LOTE-' . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4));
+                    $batchNumber = !empty($prodInput['batch_number']) ? $prodInput['batch_number'] : \App\Models\Setting::get('default_batch_prefix', 'LOTE-') . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4));
                     
                     // Create a batch
                     $batch = $product->batches()->create([

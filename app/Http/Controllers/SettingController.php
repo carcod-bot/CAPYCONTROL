@@ -12,8 +12,7 @@ class SettingController extends Controller
         $settings = [
             'private_code_start' => Setting::get('private_code_start', '1'),
             'private_code_mode' => Setting::get('private_code_mode', 'incremental'),
-            'tax_type' => Setting::get('tax_type', 'percentage'),
-            'tax_amount' => Setting::get('tax_amount', '16.00'),
+            'default_batch_prefix' => Setting::get('default_batch_prefix', 'LOTE-'),
         ];
         return view('inventory.settings.index', compact('settings'));
     }
@@ -23,14 +22,12 @@ class SettingController extends Controller
         $request->validate([
             'private_code_start' => 'required|integer|min:1',
             'private_code_mode' => 'required|in:incremental,personalizado',
-            'tax_type' => 'required|in:percentage,fixed',
-            'tax_amount' => 'required|numeric|min:0',
+            'default_batch_prefix' => 'required|string|max:20',
         ]);
 
         Setting::set('private_code_start', $request->private_code_start);
         Setting::set('private_code_mode', $request->private_code_mode);
-        Setting::set('tax_type', $request->tax_type);
-        Setting::set('tax_amount', $request->tax_amount);
+        Setting::set('default_batch_prefix', $request->default_batch_prefix);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Configuración actualizada exitosamente']);
