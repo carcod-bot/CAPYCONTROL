@@ -67,4 +67,14 @@ class Product extends Model
 
         return (string) $nextCode;
     }
+
+    public function batches()
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
+    public function getActiveBatches()
+    {
+        return $this->batches()->where('current_quantity', '>', 0)->orderBy('created_at', 'asc')->get();
+    }
 }

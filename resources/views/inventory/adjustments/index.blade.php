@@ -126,6 +126,43 @@
                 </div>
             </div>
 
+            <!-- Batch Details (only for IN) -->
+            <div id="batchFieldsContainer" style="background: var(--background); padding: 15px; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 1rem;">
+                <h4 style="font-size: 0.9rem; margin-top: 0; margin-bottom: 15px; color: var(--text-main);"><i class="fa-solid fa-box-open"></i> Datos del Lote</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 10px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Nro de Lote (Opcional)</label>
+                        <input type="text" name="batch_number" class="form-control" placeholder="Autogenerado si vacío">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Vencimiento (Opcional)</label>
+                        <input type="date" name="expiry_date" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Marca (Opcional)</label>
+                        <select name="brand_id" class="form-control select2-modal" style="width: 100%;">
+                            <option value="">Por defecto del producto</option>
+                            @foreach($brands as $brand)
+                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Proveedor (Opcional)</label>
+                        <select name="provider_id" class="form-control select2-modal" style="width: 100%;">
+                            <option value="">Por defecto del producto</option>
+                            @foreach($providers as $prov)
+                                <option value="{{ $prov->id }}">{{ $prov->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label class="form-label">Motivo <span class="text-danger">*</span></label>
                 <input type="text" name="reason" class="form-control" placeholder="Ej: Compra, Merma, Daño, Conteo Anual" required>
@@ -154,6 +191,10 @@
             dropdownParent: $('#adjustmentModal')
         }).on('change', function() {
             updateQtyLabel();
+        });
+
+        $('.select2-modal').select2({
+            dropdownParent: $('#adjustmentModal')
         });
 
         $('.select2-ajax').select2({
@@ -197,12 +238,17 @@
     function updateQtyLabel() {
         const type = document.getElementById('adjType').value;
         const label = document.getElementById('qtyLabel');
+        const batchFields = document.getElementById('batchFieldsContainer');
+        
         if (type === 'in') {
             label.innerHTML = 'Cantidad a Ingresar <span class="text-danger">*</span>';
+            batchFields.style.display = 'block';
         } else if (type === 'out') {
             label.innerHTML = 'Cantidad a Restar <span class="text-danger">*</span>';
+            batchFields.style.display = 'none';
         } else {
             label.innerHTML = 'Cantidad Física Real <span class="text-danger">*</span>';
+            batchFields.style.display = 'none';
         }
     }
 

@@ -381,6 +381,23 @@ class PosIntegrationController extends Controller
                 $product->stock = $newStock;
                 $product->save();
 
+                // FIFO Batch Deduction
+                $remainingToDeduct = $qty;
+                $activeBatches = $product->getActiveBatches();
+                foreach ($activeBatches as $batch) {
+                    if ($remainingToDeduct <= 0) break;
+                    
+                    if ($batch->current_quantity >= $remainingToDeduct) {
+                        $batch->current_quantity -= $remainingToDeduct;
+                        $batch->save();
+                        $remainingToDeduct = 0;
+                    } else {
+                        $remainingToDeduct -= $batch->current_quantity;
+                        $batch->current_quantity = 0;
+                        $batch->save();
+                    }
+                }
+
                 // Record Inventory Adjustment for the sale
                 InventoryAdjustment::create([
                     'product_id' => $product->id,

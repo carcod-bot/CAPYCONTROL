@@ -32,7 +32,10 @@ class InventoryAdjustmentController extends Controller
 
         $adjustments = $query->paginate(20)->withQueryString();
 
-        return view('inventory.adjustments.index', compact('adjustments'));
+        $brands = \App\Models\Brand::where('active', true)->orderBy('name')->get();
+        $providers = \App\Models\Provider::where('active', true)->orderBy('name')->get();
+
+        return view('inventory.adjustments.index', compact('adjustments', 'brands', 'providers'));
     }
 
     /**
@@ -46,6 +49,10 @@ class InventoryAdjustmentController extends Controller
             'quantity' => 'required|numeric|min:0.001',
             'reason' => 'required|string|max:255',
             'notes' => 'nullable|string',
+            'batch_number' => 'nullable|string|max:100',
+            'brand_id' => 'nullable|exists:brands,id',
+            'provider_id' => 'nullable|exists:providers,id',
+            'expiry_date' => 'nullable|date',
         ]);
 
         try {
@@ -58,11 +65,72 @@ class InventoryAdjustmentController extends Controller
 
             if ($request->type === 'in') {
                 $newStock = $previousStock + $qty;
+                
+                // Create a batch
+                $product->batches()->create([
+                    'batch_number' => $request->batch_number ?: 'LOTE-' . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4)),
+                    'provider_id' => $request->provider_id ?: $product->provider_id,
+                    'brand_id' => $request->brand_id ?: $product->brand_id,
+                    'expiry_date' => $request->expiry_date,
+                    'initial_quantity' => $qty,
+                    'current_quantity' => $qty,
+                ]);
+
             } elseif ($request->type === 'out') {
+                if ($previousStock < $qty) {
+                    throw new \Exception('El stock actual es menor que la cantidad a retirar.');
+                }
                 $newStock = $previousStock - $qty;
+                
+                // FIFO deduction
+                $remainingToDeduct = $qty;
+                $activeBatches = $product->getActiveBatches();
+                foreach ($activeBatches as $batch) {
+                    if ($remainingToDeduct <= 0) break;
+                    
+                    if ($batch->current_quantity >= $remainingToDeduct) {
+                        $batch->current_quantity -= $remainingToDeduct;
+                        $batch->save();
+                        $remainingToDeduct = 0;
+                    } else {
+                        $remainingToDeduct -= $batch->current_quantity;
+                        $batch->current_quantity = 0;
+                        $batch->save();
+                    }
+                }
+
             } elseif ($request->type === 'set') {
-                $newStock = $qty; // Physical count sets the absolute value
-                $qty = abs($newStock - $previousStock); // Store the difference for the record if needed
+                $newStock = $qty; 
+                $difference = $newStock - $previousStock;
+                
+                if ($difference > 0) {
+                    // Create adjustment batch for surplus
+                    $product->batches()->create([
+                        'batch_number' => 'AJUSTE-' . date('Ymd-His'),
+                        'provider_id' => $product->provider_id,
+                        'brand_id' => $product->brand_id,
+                        'initial_quantity' => $difference,
+                        'current_quantity' => $difference,
+                    ]);
+                } elseif ($difference < 0) {
+                    // FIFO deduction for deficit
+                    $remainingToDeduct = abs($difference);
+                    $activeBatches = $product->getActiveBatches();
+                    foreach ($activeBatches as $batch) {
+                        if ($remainingToDeduct <= 0) break;
+                        
+                        if ($batch->current_quantity >= $remainingToDeduct) {
+                            $batch->current_quantity -= $remainingToDeduct;
+                            $batch->save();
+                            $remainingToDeduct = 0;
+                        } else {
+                            $remainingToDeduct -= $batch->current_quantity;
+                            $batch->current_quantity = 0;
+                            $batch->save();
+                        }
+                    }
+                }
+                $qty = abs($difference); 
             }
 
             // Create adjustment record

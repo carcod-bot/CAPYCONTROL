@@ -478,6 +478,28 @@ capycontrol/
 
 ---
 
+### ProductBatch (`app/Models/ProductBatch.php`)
+
+| Campo | Tipo |
+|-------|------|
+| `product_id` | integer (FK) |
+| `batch_number` | string |
+| `provider_id` | integer (FK) - Nullable |
+| `brand_id` | integer (FK) - Nullable |
+| `expiry_date` | date - Nullable |
+| `initial_quantity` | decimal:3 |
+| `current_quantity` | decimal:3 |
+
+**Relaciones:**
+`product()` -> `Product`
+`provider()` -> `Provider`
+`brand()` -> `Brand`
+
+**Uso:** 
+Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes y las salidas los descuentan ordenadamente.
+
+---
+
 ### InventoryAdjustment (`app/Models/InventoryAdjustment.php`)
 
 | Campo | Tipo |
@@ -505,7 +527,7 @@ capycontrol/
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
 | `index(Request $request)` | `/inventory-adjustments` | GET | Muestra el historial de ajustes y conteos físicos. Permite filtrar por tipo y producto. |
-| `store(Request $request)` | `/inventory-adjustments` | POST | Registra un nuevo ajuste (entrada, salida) o conteo físico, y actualiza el stock del producto de forma atómica (usando DB Transaction). |
+| `store(Request $request)` | `/inventory-adjustments` | POST | Registra un nuevo ajuste y gestiona los **Lotes (ProductBatches)** mediante metodología **FIFO**. Las entradas (`in`) crean lotes nuevos, las salidas (`out`) descuentan el stock de los lotes más viejos activos. Un conteo físico (`set`) calcula la diferencia e ingresa un lote de ajuste o descuenta lotes según sea necesario. |
 | `searchProducts(Request $request)` | `/inventory-adjustments/search-products` | GET | Retorna resultados de búsqueda JSON (AJAX) para seleccionar productos en el formulario de ajuste. |
 
 ---
@@ -569,7 +591,7 @@ capycontrol/
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
 | `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto. |
-| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, valida estrictamente el inventario disponible, descuenta stock y registra la venta y sus ítems. Lanza excepción si el stock es insuficiente. |
+| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, descuenta stock global y **descuenta de lotes (FIFO)**, registra la venta y sus ítems. |
 | `searchCustomers` | `/api/pos/customers` | GET | Busca clientes por nombre o DNI. |
 | `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma rápida desde la caja. |
 | `withdrawCash` | `/api/pos/session/withdraw` | POST | Registra un retiro de efectivo en la caja actual. |
