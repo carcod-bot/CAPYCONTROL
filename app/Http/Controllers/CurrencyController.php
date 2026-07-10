@@ -30,8 +30,11 @@ class CurrencyController extends Controller
             'exchange_rate' => 'required|numeric',
             'iso_code' => 'nullable|string',
             'observation' => 'nullable|string',
-            'used_in_pos' => 'boolean',
         ]);
+
+        $data['is_default'] = $request->boolean('is_default');
+        $data['is_active'] = $request->boolean('is_active');
+        $data['used_in_pos'] = $request->boolean('used_in_pos');
 
         if (isset($data['is_default']) && $data['is_default']) {
             Currency::query()->update(['is_default' => false]);
@@ -53,8 +56,11 @@ class CurrencyController extends Controller
             'exchange_rate' => 'required|numeric',
             'iso_code' => 'nullable|string',
             'observation' => 'nullable|string',
-            'used_in_pos' => 'boolean',
         ]);
+
+        $data['is_default'] = $request->boolean('is_default');
+        $data['is_active'] = $request->boolean('is_active');
+        $data['used_in_pos'] = $request->boolean('used_in_pos');
 
         if (isset($data['is_default']) && $data['is_default']) {
             Currency::query()->update(['is_default' => false]);
