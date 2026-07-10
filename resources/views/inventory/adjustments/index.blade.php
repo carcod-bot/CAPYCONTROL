@@ -88,12 +88,12 @@
                     <td>{{ $adj->reason }}</td>
                     <td>{{ $adj->user->username }}</td>
                     <td onclick="event.stopPropagation()">
-                        @if($adj->batches->count() > 0 || $adj->type === 'in')
+                        @if($adj->type !== 'out')
                             <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
                                 <i class="fa-solid fa-pen"></i> Editar
                             </button>
                         @else
-                            <span class="text-muted" style="font-size: 0.8rem;">Sin lote</span>
+                            <span class="text-muted" style="font-size: 0.8rem;">No Editable</span>
                         @endif
                     </td>
                 </tr>
@@ -353,12 +353,59 @@
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(res => res.json())
-        .then(batches => {
+        .then(data => {
             hideGlobalLoader();
+            
+            const thead = document.getElementById('batchDetailsModal').querySelector('thead');
+            
+            // Check if it's a sale
+            if (data.is_sale && data.sale) {
+                document.getElementById('batchDetailsModal').querySelector('h3').innerHTML = '<i class="fa-solid fa-receipt"></i> Detalles de la Venta';
+                const tbody = document.getElementById('batchDetailsBody');
+                
+                // Change table headers for sale view
+                thead.innerHTML = `
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 1px solid var(--border);">TICKET</th>
+                        <th style="padding: 10px; border-bottom: 1px solid var(--border);">FECHA</th>
+                        <th style="padding: 10px; border-bottom: 1px solid var(--border);">CAJERO</th>
+                        <th style="padding: 10px; border-bottom: 1px solid var(--border);">MÉTODO DE PAGO</th>
+                        <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: right;">TOTAL</th>
+                    </tr>
+                `;
+                
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="font-bold">${data.sale.ticket}</td>
+                        <td>${data.sale.date}</td>
+                        <td>${data.sale.user}</td>
+                        <td>${data.sale.payment}</td>
+                        <td class="font-bold text-success text-right" style="text-align: right;">$ ${data.sale.total}</td>
+                    </tr>
+                `;
+                openModal('batchDetailsModal');
+                return;
+            }
+
+            // Restore standard headers
+            document.getElementById('batchDetailsModal').querySelector('h3').innerHTML = '<i class="fa-solid fa-route"></i> Trazabilidad del Lote';
+            thead.innerHTML = `
+                <tr style="background: var(--bg-alt); text-align: left; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border);">Lote</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border);">Vencimiento</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">Inicial</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">Vendidas</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">Restadas</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">Reconteo</th>
+                    <th style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">Quedan</th>
+                </tr>
+            `;
+
+            const batches = Array.isArray(data) ? data : data.batches;
             const tbody = document.getElementById('batchDetailsBody');
             tbody.innerHTML = '';
             
-            if (batches.length === 0) {
+            if (!batches || batches.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Este ajuste no afectó ningún lote.</td></tr>';
             } else {
                 batches.forEach(b => {
@@ -367,13 +414,13 @@
                     let expiry = b.expiry_date ? b.expiry_date : '<span class="text-muted">N/A</span>';
                     
                     tr.innerHTML = `
-                        <td class="font-bold" style="font-family: monospace;">${b.batch_number}</td>
-                        <td>${expiry}</td>
-                        <td class="text-center">${b.initial}</td>
-                        <td class="text-center text-success">${b.sold > 0 ? b.sold : '-'}</td>
-                        <td class="text-center text-danger">${b.damaged > 0 ? b.damaged : '-'}</td>
-                        <td class="text-center text-info">${b.recounted ? '<i class="fa-solid fa-check"></i> Sí' : '-'}</td>
-                        <td class="text-center font-bold text-primary">${b.current}</td>
+                        <td class="font-bold" style="font-family: monospace; padding: 10px; border-bottom: 1px solid var(--border);">${b.batch_number}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid var(--border);">${expiry}</td>
+                        <td class="text-center" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.initial}</td>
+                        <td class="text-center text-success" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.sold > 0 ? b.sold : '-'}</td>
+                        <td class="text-center text-danger" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.damaged > 0 ? b.damaged : '-'}</td>
+                        <td class="text-center text-info" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.recounted ? '<i class="fa-solid fa-check"></i> Sí' : '-'}</td>
+                        <td class="text-center font-bold text-primary" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.current}</td>
                     `;
                     tbody.appendChild(tr);
                 });

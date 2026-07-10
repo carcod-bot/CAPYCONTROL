@@ -45,6 +45,23 @@ class InventoryAdjustmentController extends Controller
         return view('inventory.adjustments.index', compact('adjustments', 'brands', 'providers'));
     }
 
+    private function generateBatchNumber($increment = true)
+    {
+        $mode = \App\Models\Setting::get('batch_generation_mode', 'auto_date');
+        $prefix = \App\Models\Setting::get('default_batch_prefix', '');
+
+        if ($mode === 'sequential') {
+            $next = \App\Models\Setting::get('batch_next_number', '1');
+            if ($increment) {
+                \App\Models\Setting::set('batch_next_number', $next + 1);
+            }
+            return $prefix . $next;
+        }
+
+        $autoPrefix = \App\Models\Setting::get('default_batch_prefix', 'LOTE-');
+        return $autoPrefix . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4));
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -231,42 +248,67 @@ class InventoryAdjustmentController extends Controller
     {
         $adjustment = InventoryAdjustment::with('batches')->findOrFail($id);
         
-        $lifecycle = [];
-
+        $batchesInfo = [];
         foreach ($adjustment->batches as $batch) {
-            // Get all adjustments that have affected this batch
             $allAdjustments = $batch->inventoryAdjustments()->get();
 
             $sold = 0;
             $damaged = 0;
+            $totalIn = 0;
+            $totalSetPos = 0;
             $recounted = false;
 
             foreach ($allAdjustments as $adj) {
                 if ($adj->type === 'out') {
-                    // Check if the reason contains 'Venta' (case insensitive)
                     if (stripos($adj->reason, 'Venta') !== false) {
                         $sold += $adj->pivot->quantity;
                     } else {
                         $damaged += $adj->pivot->quantity;
                     }
                 } elseif ($adj->type === 'set') {
-                    $recounted = true;
+                    if ($adj->pivot->quantity > 0) {
+                        $totalSetPos += $adj->pivot->quantity;
+                    } else {
+                        $recounted = true;
+                    }
+                } elseif ($adj->type === 'in') {
+                    $totalIn += $adj->pivot->quantity;
                 }
             }
-
-            $lifecycle[] = [
+            
+            $batchesInfo[] = [
                 'batch_number' => $batch->batch_number,
-                'expiry_date' => $batch->expiry_date ? \Carbon\Carbon::parse($batch->expiry_date)->format('d/m/Y') : null,
-                'initial' => floatval($batch->initial_quantity),
-                'current' => floatval($batch->current_quantity),
-                'sold' => floatval($sold),
-                'damaged' => floatval($damaged),
+                'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('d/m/Y') : null,
+                'initial' => $totalIn + $totalSetPos,
+                'sold' => abs($sold),
+                'damaged' => abs($damaged),
                 'recounted' => $recounted,
+                'current' => $batch->current_quantity
             ];
         }
 
-        return response()->json($lifecycle);
+        $saleData = null;
+        if ($adjustment->type === 'out' && str_starts_with($adjustment->reason, 'Venta ')) {
+            $ticket = str_replace('Venta ', '', $adjustment->reason);
+            $sale = \App\Models\Sale::with(['user', 'items'])->where('ticket_number', $ticket)->first();
+            if ($sale) {
+                $saleData = [
+                    'ticket' => $sale->ticket_number,
+                    'date' => $sale->created_at->format('d/m/Y h:i A'),
+                    'user' => $sale->user ? $sale->user->username : 'N/A',
+                    'total' => $sale->total_amount,
+                    'payment' => $sale->payment_method
+                ];
+            }
+        }
+
+        return response()->json([
+            'batches' => $batchesInfo,
+            'sale' => $saleData,
+            'is_sale' => $saleData !== null
+        ]);
     }
+
     public function editBatches($id)
     {
         $adjustment = InventoryAdjustment::with('batches')->findOrFail($id);

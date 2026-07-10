@@ -384,22 +384,28 @@ class PosIntegrationController extends Controller
                 // FIFO Batch Deduction
                 $remainingToDeduct = $qty;
                 $activeBatches = $product->getActiveBatches();
+                $affectedBatches = [];
                 foreach ($activeBatches as $batch) {
                     if ($remainingToDeduct <= 0) break;
                     
                     if ($batch->current_quantity >= $remainingToDeduct) {
                         $batch->current_quantity -= $remainingToDeduct;
                         $batch->save();
+                        $affectedBatches[$batch->id] = ['quantity' => $remainingToDeduct];
                         $remainingToDeduct = 0;
                     } else {
-                        $remainingToDeduct -= $batch->current_quantity;
+                        $deductedHere = $batch->current_quantity;
+                        $remainingToDeduct -= $deductedHere;
                         $batch->current_quantity = 0;
                         $batch->save();
+                        if ($deductedHere > 0) {
+                            $affectedBatches[$batch->id] = ['quantity' => $deductedHere];
+                        }
                     }
                 }
 
                 // Record Inventory Adjustment for the sale
-                InventoryAdjustment::create([
+                $adj = InventoryAdjustment::create([
                     'product_id' => $product->id,
                     'user_id' => $userId,
                     'type' => 'out',
@@ -408,6 +414,10 @@ class PosIntegrationController extends Controller
                     'new_stock' => $newStock,
                     'reason' => "Venta {$sale->ticket_number}",
                 ]);
+
+                if (count($affectedBatches) > 0) {
+                    $adj->batches()->attach($affectedBatches);
+                }
             }
 
             // 4. Update Cash Session totals
