@@ -15,40 +15,67 @@ class InventoryAdjustmentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = InventoryAdjustment::with(['product', 'user', 'batches'])->orderBy('created_at', 'desc');
+        $isStockView = false;
+        $stockProducts = null;
+        $adjustments = null;
 
-        if ($request->filled('type')) {
-            if ($request->type === 'finished_batches') {
-                $query->whereHas('batches', function($q) {
-                    $q->where('current_quantity', '<=', 0);
-                })->whereIn('type', ['in', 'set']);
-            } else {
-                $query->where('type', $request->type);
+        if ($request->type === 'stock') {
+            $isStockView = true;
+            $query = Product::with(['category', 'brand']);
+            
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('private_code', 'like', "%{$search}%")
+                      ->orWhere('ean_code', 'like', "%{$search}%");
+                });
             }
-        }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('product', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('private_code', 'like', "%{$search}%")
-                  ->orWhere('ean_code', 'like', "%{$search}%");
-            });
-        }
+            if ($request->filled('batch')) {
+                $batchSearch = $request->batch;
+                $query->whereHas('batches', function($q) use ($batchSearch) {
+                    $q->where('batch_number', 'like', "%{$batchSearch}%");
+                });
+            }
 
-        if ($request->filled('batch')) {
-            $batchSearch = $request->batch;
-            $query->whereHas('batches', function($q) use ($batchSearch) {
-                $q->where('batch_number', 'like', "%{$batchSearch}%");
-            });
-        }
+            $stockProducts = $query->orderBy('name')->paginate(20)->withQueryString();
+        } else {
+            $query = InventoryAdjustment::with(['product', 'user', 'batches'])->orderBy('created_at', 'desc');
 
-        $adjustments = $query->paginate(20)->withQueryString();
+            if ($request->filled('type')) {
+                if ($request->type === 'finished_batches') {
+                    $query->whereHas('batches', function($q) {
+                        $q->where('current_quantity', '<=', 0);
+                    })->whereIn('type', ['in', 'set']);
+                } else {
+                    $query->where('type', $request->type);
+                }
+            }
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->whereHas('product', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('private_code', 'like', "%{$search}%")
+                      ->orWhere('ean_code', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('batch')) {
+                $batchSearch = $request->batch;
+                $query->whereHas('batches', function($q) use ($batchSearch) {
+                    $q->where('batch_number', 'like', "%{$batchSearch}%");
+                });
+            }
+
+            $adjustments = $query->paginate(20)->withQueryString();
+        }
 
         $brands = \App\Models\Brand::where('active', true)->orderBy('name')->get();
         $providers = \App\Models\Provider::where('active', true)->orderBy('name')->get();
 
-        return view('inventory.adjustments.index', compact('adjustments', 'brands', 'providers'));
+        return view('inventory.adjustments.index', compact('adjustments', 'brands', 'providers', 'isStockView', 'stockProducts'));
     }
 
     private function generateBatchNumber($increment = true)

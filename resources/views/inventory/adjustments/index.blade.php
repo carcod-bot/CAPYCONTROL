@@ -32,6 +32,7 @@
                 <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Salida (Resta)</option>
                 <option value="set" {{ request('type') == 'set' ? 'selected' : '' }}>Conteo Físico (Remplaza)</option>
                 <option value="finished_batches" {{ request('type') == 'finished_batches' ? 'selected' : '' }}>Lotes Terminados</option>
+                <option value="stock" {{ request('type') == 'stock' ? 'selected' : '' }}>Stock (Agrupado por producto)</option>
             </select>
         </div>
         <div>
@@ -44,75 +45,115 @@
 <!-- Table -->
 <div class="card" style="padding: 0; overflow: hidden;">
     <div class="table-container" style="border: none; margin: 0; box-shadow: none;">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Producto</th>
-                    <th>Tipo</th>
-                    <th>Lote</th>
-                    <th>Cant.</th>
-                    <th>Stock Anterior</th>
-                    <th>Nuevo Stock</th>
-                    <th>Motivo</th>
-                    <th>Usuario</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($adjustments as $adj)
-                <tr style="cursor: pointer;" onclick="loadLifecycle({{ $adj->id }})" class="hover-bg">
-                    <td>{{ $adj->created_at->format('d/m/Y h:i a') }}</td>
-                    <td>
-                        <div class="font-bold">{{ $adj->product->name }}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">{{ $adj->product->private_code }}</div>
-                    </td>
-                    <td>
-                        @if($adj->type === 'in')
-                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
-                        @elseif($adj->type === 'out')
-                            <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-up"></i> Salida</span>
-                        @else
-                            <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-check-double"></i> Conteo</span>
-                        @endif
-                    </td>
-                    <td>
-                        @if($adj->batches->count() > 0)
-                            <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $adj->batches->pluck('batch_number')->unique()->implode(', ') }}</span>
-                        @else
-                            <span class="text-muted" style="font-size: 0.8rem;">-</span>
-                        @endif
-                    </td>
-                    <td class="font-bold text-center">{{ number_format($adj->quantity, 2) }}</td>
-                    <td class="text-center text-muted">{{ number_format($adj->previous_stock, 2) }}</td>
-                    <td class="font-bold text-center">{{ number_format($adj->new_stock, 2) }}</td>
-                    <td>{{ $adj->reason }}</td>
-                    <td>{{ $adj->user->username }}</td>
-                    <td onclick="event.stopPropagation()">
-                        @if($adj->type !== 'out')
-                            <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
-                                <i class="fa-solid fa-pen"></i> Editar
-                            </button>
-                        @else
-                            <span class="text-muted" style="font-size: 0.8rem;">No Editable</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="text-center text-muted" style="padding: 3rem;">
-                        <i class="fa-solid fa-scale-balanced" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                        No se encontraron registros de ajustes.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+        @if($isStockView)
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Código Privado</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Marca</th>
+                        <th class="text-center">Stock Actual</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($stockProducts as $prod)
+                    <tr>
+                        <td class="font-bold" style="font-family: monospace;">{{ $prod->private_code }}</td>
+                        <td class="font-bold">{{ $prod->name }}</td>
+                        <td>{{ $prod->category ? $prod->category->name : 'N/A' }}</td>
+                        <td>{{ $prod->brand ? $prod->brand->name : 'N/A' }}</td>
+                        <td class="font-bold text-center {{ $prod->stock <= 0 ? 'text-danger' : 'text-success' }}">{{ number_format($prod->stock, 2) }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted" style="padding: 3rem;">
+                            <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                            No se encontraron productos.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            <!-- Paginación -->
+            @if($stockProducts->hasPages())
+                <div style="padding: 1rem; border-top: 1px solid var(--border);">
+                    {{ $stockProducts->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
+        @else
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Tipo</th>
+                        <th>Lote</th>
+                        <th>Cant.</th>
+                        <th>Stock Anterior</th>
+                        <th>Nuevo Stock</th>
+                        <th>Motivo</th>
+                        <th>Usuario</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($adjustments as $adj)
+                    <tr style="cursor: pointer;" onclick="loadLifecycle({{ $adj->id }})" class="hover-bg">
+                        <td>{{ $adj->created_at->format('d/m/Y h:i a') }}</td>
+                        <td>
+                            <div class="font-bold">{{ $adj->product->name }}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ $adj->product->private_code }}</div>
+                        </td>
+                        <td>
+                            @if($adj->type === 'in')
+                                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
+                            @elseif($adj->type === 'out')
+                                <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-up"></i> Salida</span>
+                            @else
+                                <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-check-double"></i> Conteo</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($adj->batches->count() > 0)
+                                <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $adj->batches->pluck('batch_number')->unique()->implode(', ') }}</span>
+                            @else
+                                <span class="text-muted" style="font-size: 0.8rem;">-</span>
+                            @endif
+                        </td>
+                        <td class="font-bold text-center">{{ number_format($adj->quantity, 2) }}</td>
+                        <td class="text-center text-muted">{{ number_format($adj->previous_stock, 2) }}</td>
+                        <td class="font-bold text-center">{{ number_format($adj->new_stock, 2) }}</td>
+                        <td>{{ $adj->reason }}</td>
+                        <td>{{ $adj->user->username }}</td>
+                        <td onclick="event.stopPropagation()">
+                            @if($adj->type !== 'out')
+                                <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
+                                    <i class="fa-solid fa-pen"></i> Editar
+                                </button>
+                            @else
+                                <span class="text-muted" style="font-size: 0.8rem;">No Editable</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="10" class="text-center text-muted" style="padding: 3rem;">
+                            <i class="fa-solid fa-scale-balanced" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                            No se encontraron registros de ajustes.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            <!-- Paginación -->
+            @if($adjustments->hasPages())
+                <div style="padding: 1rem; border-top: 1px solid var(--border);">
+                    {{ $adjustments->links('pagination::bootstrap-4') }}
+                </div>
+            @endif
+        @endif
     </div>
-</div>
-
-<div class="mt-4">
-    {{ $adjustments->links('pagination::bootstrap-4') }}
 </div>
 
 <!-- Modal Adjustment -->
