@@ -18,7 +18,13 @@ class InventoryAdjustmentController extends Controller
         $query = InventoryAdjustment::with(['product', 'user', 'batches'])->orderBy('created_at', 'desc');
 
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            if ($request->type === 'finished_batches') {
+                $query->whereHas('batches', function($q) {
+                    $q->where('current_quantity', '<=', 0);
+                })->whereIn('type', ['in', 'set']);
+            } else {
+                $query->where('type', $request->type);
+            }
         }
 
         if ($request->filled('search')) {

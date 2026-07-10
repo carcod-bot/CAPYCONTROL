@@ -31,6 +31,7 @@
                 <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>Entrada (Suma)</option>
                 <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Salida (Resta)</option>
                 <option value="set" {{ request('type') == 'set' ? 'selected' : '' }}>Conteo Físico (Remplaza)</option>
+                <option value="finished_batches" {{ request('type') == 'finished_batches' ? 'selected' : '' }}>Lotes Terminados</option>
             </select>
         </div>
         <div>
