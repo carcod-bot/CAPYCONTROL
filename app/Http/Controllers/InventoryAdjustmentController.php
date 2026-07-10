@@ -273,12 +273,15 @@ class InventoryAdjustmentController extends Controller
         
         $providers = \App\Models\Provider::orderBy('name')->get(['id', 'name']);
         $brands = \App\Models\Brand::orderBy('name')->get(['id', 'name']);
+        $defaultPrefix = \App\Models\Setting::get('default_batch_prefix', 'LOTE-');
 
         return response()->json([
             'adjustment_id' => $adjustment->id,
+            'type' => $adjustment->type,
             'batches' => $adjustment->batches,
             'providers' => $providers,
-            'brands' => $brands
+            'brands' => $brands,
+            'default_batch' => $defaultPrefix . date('Ymd-His') . '-' . strtoupper(substr(uniqid(), -4))
         ]);
     }
 
@@ -286,7 +289,7 @@ class InventoryAdjustmentController extends Controller
     {
         $request->validate([
             'batches' => 'required|array',
-            'batches.*.id' => 'required|exists:product_batches,id',
+            'batches.*.id' => 'required',
             'batches.*.batch_number' => 'required|string|max:100',
             'batches.*.expiry_date' => 'nullable|date',
             'batches.*.provider_id' => 'nullable|exists:providers,id',
@@ -297,7 +300,17 @@ class InventoryAdjustmentController extends Controller
         $adjustmentBatchIds = $adjustment->batches()->pluck('product_batches.id')->toArray();
 
         foreach ($request->batches as $batchData) {
-            if (in_array($batchData['id'], $adjustmentBatchIds)) {
+            if ($batchData['id'] === 'new') {
+                $batch = $adjustment->product->batches()->create([
+                    'batch_number' => $batchData['batch_number'],
+                    'provider_id' => $batchData['provider_id'] ?: null,
+                    'brand_id' => $batchData['brand_id'] ?: null,
+                    'expiry_date' => $batchData['expiry_date'] ?: null,
+                    'initial_quantity' => $adjustment->quantity,
+                    'current_quantity' => $adjustment->quantity, // Asumiendo que todo el stock está ahí, ya que es un ajuste antiguo.
+                ]);
+                $adjustment->batches()->attach($batch->id, ['quantity' => $adjustment->quantity]);
+            } elseif (in_array($batchData['id'], $adjustmentBatchIds)) {
                 $batch = \App\Models\ProductBatch::find($batchData['id']);
                 $batch->update([
                     'batch_number' => $batchData['batch_number'],

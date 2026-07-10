@@ -88,7 +88,7 @@
                     <td>{{ $adj->reason }}</td>
                     <td>{{ $adj->user->username }}</td>
                     <td onclick="event.stopPropagation()">
-                        @if($adj->batches->count() > 0)
+                        @if($adj->batches->count() > 0 || $adj->type === 'in')
                             <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
                                 <i class="fa-solid fa-pen"></i> Editar
                             </button>
@@ -116,7 +116,7 @@
 
 <!-- Modal Adjustment -->
 <div class="modal-overlay" id="adjustmentModal">
-    <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-content" style="max-width: 1100px;">
         <div class="modal-header">
             <h3><i class="fa-solid fa-scale-balanced"></i> Registrar Ajustes Multi-Producto</h3>
             <button type="button" class="modal-close" onclick="closeModal('adjustmentModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -207,7 +207,7 @@
 </div>
 <!-- Modal Editar Lotes de Ajuste -->
 <div class="modal-overlay" id="editBatchesModal">
-    <div class="modal-content" style="max-width: 900px;">
+    <div class="modal-content" style="max-width: 1100px;">
         <div class="modal-header">
             <h3><i class="fa-solid fa-pen"></i> Editar Lote(s) del Ajuste</h3>
             <button type="button" class="modal-close" onclick="closeModal('editBatchesModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -399,8 +399,40 @@
             tbody.innerHTML = '';
             
             if (data.batches.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Este ajuste no generó nuevos lotes modificables.</td></tr>';
-                document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'none';
+                if (data.type === 'in') {
+                    document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'inline-block';
+                    let providersOptions = '<option value="">Ninguno</option>';
+                    data.providers.forEach(p => providersOptions += `<option value="${p.id}">${p.name}</option>`);
+                    
+                    let brandsOptions = '<option value="">Ninguno</option>';
+                    data.brands.forEach(b => brandsOptions += `<option value="${b.id}">${b.name}</option>`);
+
+                    tbody.innerHTML = `
+                        <tr>
+                            <td>
+                                <input type="hidden" name="batches[0][id]" value="new">
+                                <input type="text" class="form-control" name="batches[0][batch_number]" value="${data.default_batch}" required>
+                            </td>
+                            <td>
+                                <input type="date" class="form-control" name="batches[0][expiry_date]" value="">
+                            </td>
+                            <td>
+                                <select class="form-control" name="batches[0][provider_id]">
+                                    ${providersOptions}
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-control" name="batches[0][brand_id]">
+                                    ${brandsOptions}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr><td colspan="4" class="text-muted" style="font-size:0.8rem;"><i class="fa-solid fa-info-circle"></i> Estás creando el lote para un registro antiguo que no tenía uno asignado.</td></tr>
+                    `;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Este ajuste no generó nuevos lotes modificables.</td></tr>';
+                    document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'none';
+                }
             } else {
                 document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'inline-block';
                 let providersOptions = '<option value="">Ninguno</option>';
