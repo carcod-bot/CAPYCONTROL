@@ -267,4 +267,50 @@ class InventoryAdjustmentController extends Controller
 
         return response()->json($lifecycle);
     }
+    public function editBatches($id)
+    {
+        $adjustment = InventoryAdjustment::with('batches')->findOrFail($id);
+        
+        $providers = \App\Models\Provider::orderBy('name')->get(['id', 'name']);
+        $brands = \App\Models\Brand::orderBy('name')->get(['id', 'name']);
+
+        return response()->json([
+            'adjustment_id' => $adjustment->id,
+            'batches' => $adjustment->batches,
+            'providers' => $providers,
+            'brands' => $brands
+        ]);
+    }
+
+    public function updateBatches(Request $request, $id)
+    {
+        $request->validate([
+            'batches' => 'required|array',
+            'batches.*.id' => 'required|exists:product_batches,id',
+            'batches.*.batch_number' => 'required|string|max:100',
+            'batches.*.expiry_date' => 'nullable|date',
+            'batches.*.provider_id' => 'nullable|exists:providers,id',
+            'batches.*.brand_id' => 'nullable|exists:brands,id',
+        ]);
+
+        $adjustment = InventoryAdjustment::findOrFail($id);
+        $adjustmentBatchIds = $adjustment->batches()->pluck('product_batches.id')->toArray();
+
+        foreach ($request->batches as $batchData) {
+            if (in_array($batchData['id'], $adjustmentBatchIds)) {
+                $batch = \App\Models\ProductBatch::find($batchData['id']);
+                $batch->update([
+                    'batch_number' => $batchData['batch_number'],
+                    'expiry_date' => $batchData['expiry_date'],
+                    'provider_id' => $batchData['provider_id'],
+                    'brand_id' => $batchData['brand_id'],
+                ]);
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Lotes actualizados exitosamente']);
+        }
+        return redirect()->back()->with('success', 'Lotes actualizados exitosamente');
+    }
 }

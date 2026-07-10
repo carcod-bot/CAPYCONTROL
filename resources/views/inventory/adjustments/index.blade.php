@@ -55,7 +55,7 @@
                     <th>Nuevo Stock</th>
                     <th>Motivo</th>
                     <th>Usuario</th>
-                    <th>Detalles</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,11 +68,11 @@
                     </td>
                     <td>
                         @if($adj->type === 'in')
-                            <span class="badge badge-success"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
+                            <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
                         @elseif($adj->type === 'out')
-                            <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca;"><i class="fa-solid fa-arrow-up"></i> Salida</span>
+                            <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-up"></i> Salida</span>
                         @else
-                            <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe;"><i class="fa-solid fa-check-double"></i> Conteo</span>
+                            <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-check-double"></i> Conteo</span>
                         @endif
                     </td>
                     <td>
@@ -87,9 +87,11 @@
                     <td class="font-bold text-center">{{ number_format($adj->new_stock, 2) }}</td>
                     <td>{{ $adj->reason }}</td>
                     <td>{{ $adj->user->username }}</td>
-                    <td>
+                    <td onclick="event.stopPropagation()">
                         @if($adj->batches->count() > 0)
-                            <span class="text-primary"><i class="fa-solid fa-eye"></i> Ver Ciclo</span>
+                            <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
                         @else
                             <span class="text-muted" style="font-size: 0.8rem;">Sin lote</span>
                         @endif
@@ -201,6 +203,39 @@
         <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
             <button class="btn btn-secondary" onclick="closeModal('batchDetailsModal')">Cerrar</button>
         </div>
+    </div>
+</div>
+<!-- Modal Editar Lotes de Ajuste -->
+<div class="modal-overlay" id="editBatchesModal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-pen"></i> Editar Lote(s) del Ajuste</h3>
+            <button type="button" class="modal-close" onclick="closeModal('editBatchesModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form id="editBatchesForm" onsubmit="event.preventDefault(); submitEditBatches();">
+            @csrf
+            @method('PUT')
+            <input type="hidden" id="editAdjustmentId">
+            <div class="table-container" style="border: none; margin: 0; box-shadow: none; overflow-x: auto; margin-bottom: 1rem;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Lote</th>
+                            <th style="width: 25%;">Vencimiento</th>
+                            <th style="width: 25%;">Proveedor</th>
+                            <th style="width: 25%;">Marca</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editBatchesBody">
+                        <!-- Dinámico -->
+                    </tbody>
+                </table>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editBatchesModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar Cambios</button>
+            </div>
+        </form>
     </div>
 </div>
 @endsection
@@ -349,6 +384,79 @@
             hideGlobalLoader();
             console.error(err);
             alert('Error al cargar la información del lote.');
+        });
+    }
+    function editAdjustmentBatches(id) {
+        showGlobalLoader();
+        fetch(`{{ url('inventory-adjustments') }}/${id}/batches/edit`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            hideGlobalLoader();
+            document.getElementById('editAdjustmentId').value = data.adjustment_id;
+            const tbody = document.getElementById('editBatchesBody');
+            tbody.innerHTML = '';
+            
+            if (data.batches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Este ajuste no generó nuevos lotes modificables.</td></tr>';
+                document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'none';
+            } else {
+                document.querySelector('#editBatchesForm button[type="submit"]').style.display = 'inline-block';
+                let providersOptions = '<option value="">Ninguno</option>';
+                data.providers.forEach(p => providersOptions += `<option value="${p.id}">${p.name}</option>`);
+                
+                let brandsOptions = '<option value="">Ninguno</option>';
+                data.brands.forEach(b => brandsOptions += `<option value="${b.id}">${b.name}</option>`);
+
+                data.batches.forEach((b, index) => {
+                    const tr = document.createElement('tr');
+                    
+                    tr.innerHTML = `
+                        <td>
+                            <input type="hidden" name="batches[${index}][id]" value="${b.id}">
+                            <input type="text" class="form-control" name="batches[${index}][batch_number]" value="${b.batch_number}" required>
+                        </td>
+                        <td>
+                            <input type="date" class="form-control" name="batches[${index}][expiry_date]" value="${b.expiry_date ? b.expiry_date.split(' ')[0] : ''}">
+                        </td>
+                        <td>
+                            <select class="form-control" name="batches[${index}][provider_id]">
+                                ${providersOptions}
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control" name="batches[${index}][brand_id]">
+                                ${brandsOptions}
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                    
+                    if (b.provider_id) {
+                        tr.querySelector(`select[name="batches[${index}][provider_id]"]`).value = b.provider_id;
+                    }
+                    if (b.brand_id) {
+                        tr.querySelector(`select[name="batches[${index}][brand_id]"]`).value = b.brand_id;
+                    }
+                });
+            }
+            openModal('editBatchesModal');
+        })
+        .catch(err => {
+            hideGlobalLoader();
+            console.error(err);
+            alert('Error al cargar la información para edición.');
+        });
+    }
+
+    function submitEditBatches() {
+        const id = document.getElementById('editAdjustmentId').value;
+        const form = document.getElementById('editBatchesForm');
+        
+        submitAjaxForm(form, `{{ url('inventory-adjustments') }}/${id}/batches`, () => {
+            closeModal('editBatchesModal');
+            window.location.reload();
         });
     }
 </script>

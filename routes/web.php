@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/inventory-adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory-adjustments.index');
         Route::get('/inventory-adjustments/search-products', [InventoryAdjustmentController::class, 'searchProducts'])->name('inventory-adjustments.search-products');
         Route::get('/inventory-adjustments/{id}/lifecycle', [InventoryAdjustmentController::class, 'getBatchLifecycle'])->name('inventory-adjustments.lifecycle');
+        Route::get('/inventory-adjustments/{id}/batches/edit', [InventoryAdjustmentController::class, 'editBatches'])->name('inventory-adjustments.edit-batches');
         
         Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
     });
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('products', ProductController::class)->except(['index', 'show']);
         
         Route::post('/inventory-adjustments', [InventoryAdjustmentController::class, 'store'])->name('inventory-adjustments.store');
+        Route::put('/inventory-adjustments/{id}/batches', [InventoryAdjustmentController::class, 'updateBatches'])->name('inventory-adjustments.update-batches');
         Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
     });
 
