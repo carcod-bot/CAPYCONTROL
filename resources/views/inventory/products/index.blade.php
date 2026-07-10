@@ -97,15 +97,6 @@
                     </div>
                 </div>
 
-                <div class="flex gap-4 mb-4" style="flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 200px;">
-                        <label class="form-label">Tamaño</label>
-                        <select name="size_type" class="form-control">
-                            <option value="pequeño">Pequeño</option>
-                            <option value="mediano" selected>Mediano</option>
-                            <option value="grande">Grande</option>
-                        </select>
-                    </div>
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Categoría *</label>
                         <select name="category_id" class="form-control select2" required style="width: 100%;">
@@ -189,15 +180,6 @@
                     </div>
                 </div>
 
-                <div class="flex gap-4 mb-4" style="flex-wrap: wrap;">
-                    <div class="form-group" style="flex: 1; min-width: 200px;">
-                        <label class="form-label">Tamaño</label>
-                        <select name="size_type" id="edit_size_type" class="form-control">
-                            <option value="pequeño">Pequeño</option>
-                            <option value="mediano">Mediano</option>
-                            <option value="grande">Grande</option>
-                        </select>
-                    </div>
                     <div class="form-group" style="flex: 1; min-width: 200px;">
                         <label class="form-label">Categoría *</label>
                         <select name="category_id" id="edit_category_id" class="form-control select2" required style="width: 100%;">
@@ -256,7 +238,6 @@
                     <th>Cód Interno</th>
                     <th>Nombre</th>
                     <th>Dept/Cat</th>
-                    <th>Tamaño</th>
                     <th>Stock</th>
                     <th>Precio</th>
                     <th>Acciones</th>
@@ -281,7 +262,6 @@
                         <span class="badge" style="background:#e0e7ff; color:#3730a3; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-copyright"></i> {{ optional($product->brand)->name ?? 'Genérico' }}</span>
                         <span class="badge" style="background:#fef3c7; color:#92400e; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-truck"></i> {{ optional($product->provider)->name ?? 'Genérico' }}</span>
                     </td>
-                    <td><span style="text-transform: capitalize;">{{ $product->size_type }}</span></td>
                     <td style="font-weight: 700; color: {{ $product->stock <= 0 ? 'var(--danger)' : 'var(--text-main)' }};">{{ floatval($product->stock) }}</td>
                     <td style="font-weight: 700; color: #10b981;">${{ number_format($product->price_usd, 2) }}</td>
                     <td>
@@ -331,7 +311,6 @@
                 document.getElementById('edit_private_code').value = p.private_code;
                 document.getElementById('edit_ean_code').value = p.ean_code || '';
                 document.getElementById('edit_price_usd').value = parseFloat(p.price_usd).toFixed(2);
-                document.getElementById('edit_size_type').value = p.size_type;
                 document.getElementById('edit_description').value = p.description || '';
                 
                 $('#edit_category_id').val(p.category_id).trigger('change');
