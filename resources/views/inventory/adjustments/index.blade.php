@@ -116,7 +116,28 @@
                         </td>
                         <td>
                             @if($adj->batches->count() > 0)
-                                <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $adj->batches->pluck('batch_number')->unique()->implode(', ') }}</span>
+                                @foreach($adj->batches->unique('batch_number') as $batch)
+                                    @php
+                                        $statusBadge = '';
+                                        if($batch->expiration_date) {
+                                            $exp = \Carbon\Carbon::parse($batch->expiration_date)->startOfDay();
+                                            $today = \Carbon\Carbon::now()->startOfDay();
+                                            $days = $today->diffInDays($exp, false);
+                                            
+                                            if($days < 0) {
+                                                $statusBadge = '<span class="badge" style="background:#fee2e2; color:#991b1b; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vencido</span>';
+                                            } elseif($days <= 30) {
+                                                $statusBadge = '<span class="badge" style="background:#fef08a; color:#854d0e; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Por Vencer</span>';
+                                            } else {
+                                                $statusBadge = '<span class="badge" style="background:#dcfce7; color:#166534; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vigente</span>';
+                                            }
+                                        }
+                                    @endphp
+                                    <div style="margin-bottom: 3px;">
+                                        <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $batch->batch_number }}</span>
+                                        {!! $statusBadge !!}
+                                    </div>
+                                @endforeach
                             @else
                                 <span class="text-muted" style="font-size: 0.8rem;">-</span>
                             @endif
@@ -455,11 +476,30 @@
                 batches.forEach(b => {
                     const tr = document.createElement('tr');
                     
-                    let expiry = b.expiry_date ? b.expiry_date : '<span class="text-muted">N/A</span>';
+                    let expiryHTML = '<span class="text-muted">N/A</span>';
+                    if (b.expiry_date) {
+                        const expDate = new Date(b.expiry_date);
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        expDate.setHours(0,0,0,0);
+                        
+                        const diffTime = expDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        let badge = '';
+                        if (diffDays < 0) {
+                            badge = '<span class="badge" style="background:#fee2e2; color:#991b1b; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vencido</span>';
+                        } else if (diffDays <= 30) {
+                            badge = '<span class="badge" style="background:#fef08a; color:#854d0e; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Por Vencer</span>';
+                        } else {
+                            badge = '<span class="badge" style="background:#dcfce7; color:#166534; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vigente</span>';
+                        }
+                        expiryHTML = b.expiry_date + badge;
+                    }
                     
                     tr.innerHTML = `
                         <td class="font-bold" style="font-family: monospace; padding: 10px; border-bottom: 1px solid var(--border);">${b.batch_number}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid var(--border);">${expiry}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid var(--border);">${expiryHTML}</td>
                         <td class="text-center" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.initial}</td>
                         <td class="text-center text-success" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.sold > 0 ? b.sold : '-'}</td>
                         <td class="text-center text-danger" style="padding: 10px; border-bottom: 1px solid var(--border);">${b.damaged > 0 ? b.damaged : '-'}</td>
