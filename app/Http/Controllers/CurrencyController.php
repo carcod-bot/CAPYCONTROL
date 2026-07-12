@@ -26,6 +26,7 @@ class CurrencyController extends Controller
             'symbol' => 'nullable|string',
             'max_decimals' => 'required|integer',
             'is_default' => 'boolean',
+            'is_base' => 'boolean',
             'is_active' => 'boolean',
             'exchange_rate' => 'required|numeric',
             'iso_code' => 'nullable|string',
@@ -33,11 +34,16 @@ class CurrencyController extends Controller
         ]);
 
         $data['is_default'] = $request->boolean('is_default');
+        $data['is_base'] = $request->boolean('is_base');
         $data['is_active'] = $request->boolean('is_active');
         $data['used_in_pos'] = $request->boolean('used_in_pos');
 
         if (isset($data['is_default']) && $data['is_default']) {
             Currency::query()->update(['is_default' => false]);
+        }
+
+        if (isset($data['is_base']) && $data['is_base']) {
+            Currency::query()->update(['is_base' => false]);
         }
 
         $currency = Currency::create($data);
@@ -52,6 +58,7 @@ class CurrencyController extends Controller
             'symbol' => 'nullable|string',
             'max_decimals' => 'required|integer',
             'is_default' => 'boolean',
+            'is_base' => 'boolean',
             'is_active' => 'boolean',
             'exchange_rate' => 'required|numeric',
             'iso_code' => 'nullable|string',
@@ -59,11 +66,16 @@ class CurrencyController extends Controller
         ]);
 
         $data['is_default'] = $request->boolean('is_default');
+        $data['is_base'] = $request->boolean('is_base');
         $data['is_active'] = $request->boolean('is_active');
         $data['used_in_pos'] = $request->boolean('used_in_pos');
 
         if (isset($data['is_default']) && $data['is_default']) {
             Currency::query()->update(['is_default' => false]);
+        }
+
+        if (isset($data['is_base']) && $data['is_base']) {
+            Currency::query()->update(['is_base' => false]);
         }
 
         $currency->update($data);

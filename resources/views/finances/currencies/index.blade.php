@@ -340,7 +340,10 @@
                     <div class="options-grid" style="margin-top: 1rem;">
                         <div class="options-title">Configuraciones de la Moneda</div>
                         <label class="checkbox-group">
-                            <input type="checkbox" id="c_is_default"> Predeterminada (Moneda Base)
+                            <input type="checkbox" id="c_is_default"> Predeterminada (Local)
+                        </label>
+                        <label class="checkbox-group">
+                            <input type="checkbox" id="c_is_base"> Moneda Base (Precios)
                         </label>
                         <label class="checkbox-group">
                             <input type="checkbox" id="c_is_active" checked> Activa
@@ -568,14 +571,14 @@
         document.getElementById('c_code').value = c.code || '';
         document.getElementById('c_description').value = c.description || '';
         document.getElementById('c_symbol').value = c.symbol || '';
-        document.getElementById('c_max_decimals').value = c.max_decimals || 2;
-        document.getElementById('c_exchange_rate').value = parseFloat(c.exchange_rate).toFixed(4) || '1.0000';
-        document.getElementById('c_iso_code').value = c.iso_code || '';
-        document.getElementById('c_observation').value = c.observation || '';
-        
+        document.getElementById('c_max_decimals').value = c.max_decimals;
+        document.getElementById('c_exchange_rate').value = c.exchange_rate;
         document.getElementById('c_is_default').checked = c.is_default;
+        document.getElementById('c_is_base').checked = c.is_base;
         document.getElementById('c_is_active').checked = c.is_active;
         document.getElementById('c_used_in_pos').checked = c.used_in_pos;
+        document.getElementById('c_iso_code').value = c.iso_code || '';
+        document.getElementById('c_observation').value = c.observation || '';
         
         currentCurrencyId = c.id;
         currentPmId = null;
@@ -641,6 +644,7 @@
             iso_code: document.getElementById('c_iso_code').value,
             observation: document.getElementById('c_observation').value,
             is_default: document.getElementById('c_is_default').checked ? 1 : 0,
+            is_base: document.getElementById('c_is_base').checked ? 1 : 0,
             is_active: document.getElementById('c_is_active').checked ? 1 : 0,
             used_in_pos: document.getElementById('c_used_in_pos').checked ? 1 : 0,
             _token: '{{ csrf_token() }}'

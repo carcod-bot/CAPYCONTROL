@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CashMovement extends Model
 {
     protected $fillable = [
-        'cash_session_id', 'user_id', 'type', 'amount', 'reason', 'notes',
+        'cash_session_id', 'user_id', 'type', 'amount', 'reason', 'notes', 'payment_method_id',
     ];
 
     protected function casts(): array

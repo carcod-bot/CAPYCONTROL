@@ -512,6 +512,7 @@ class PosIntegrationController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'reason' => 'required|string|max:255',
+            'payment_method_id' => 'required|exists:payment_methods,id',
         ]);
 
         try {
@@ -532,6 +533,7 @@ class PosIntegrationController extends Controller
                 'type' => 'withdrawal',
                 'amount' => $request->amount,
                 'reason' => $request->reason,
+                'payment_method_id' => $request->payment_method_id,
             ]);
 
             $session->expected_amount -= $request->amount;
@@ -549,16 +551,116 @@ class PosIntegrationController extends Controller
     }
 
     /**
+     * Get Declaration Totals for non-auto-declare payment methods
+     */
+    public function getDeclarationTotals(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        
+        $session = CashSession::where('user_id', $userId)
+            ->where('status', 'open')
+            ->first();
+
+        if (!$session) {
+            return response()->json(['success' => false, 'message' => 'No hay turno abierto.'], 404);
+        }
+
+        // Get all payment methods that do not auto declare
+        $methods = \App\Models\PaymentMethod::with('currency')
+            ->where('used_in_pos', true)
+            ->where('auto_declare', false)
+            ->get();
+
+        $totals = [];
+        $openingAndWithdrawalsApplied = false;
+
+        foreach ($methods as $method) {
+            // Calculate total from sale_payments for this session using amount_local (which is the actual currency of the payment method)
+            $totalLocal = \App\Models\SalePayment::whereHas('sale', function ($query) use ($session) {
+                $query->where('cash_session_id', $session->id);
+            })
+            ->where('payment_method_id', $method->id)
+            ->sum('amount_local');
+
+            // Apply opening amount to the main cash method
+            if (!$openingAndWithdrawalsApplied && (str_contains(strtolower($method->description), 'efectivo') || str_contains(strtolower($method->description), 'cash'))) {
+                $totalLocal += $session->opening_amount;
+                
+                // Subtract withdrawals that don't have a payment_method_id (legacy/fallback)
+                $legacyWithdrawals = \App\Models\CashMovement::where('cash_session_id', $session->id)
+                    ->where('type', 'withdrawal')
+                    ->whereNull('payment_method_id')
+                    ->sum('amount');
+                $totalLocal -= $legacyWithdrawals;
+                $openingAndWithdrawalsApplied = true;
+            }
+
+            // Subtract specific withdrawals for this payment method
+            $specificWithdrawals = \App\Models\CashMovement::where('cash_session_id', $session->id)
+                ->where('type', 'withdrawal')
+                ->where('payment_method_id', $method->id)
+                ->sum('amount');
+            $totalLocal -= $specificWithdrawals;
+
+            // Let's pass the expected amount
+            $exchangeRate = $method->currency ? $method->currency->exchange_rate : 1;
+
+            $totals[] = [
+                'payment_method_id' => $method->id,
+                'name' => $method->description,
+                'currency_symbol' => $method->currency ? $method->currency->symbol : '$',
+                'expected_base' => $totalLocal / ($exchangeRate > 0 ? $exchangeRate : 1), // Optional backward compatibility if needed
+                'expected_local' => $totalLocal, // This is the EXACT amount the cashier needs to count in this currency
+                'exchange_rate' => $exchangeRate,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'totals' => $totals
+        ]);
+    }
+
+    /**
      * Close Session (F11 - Reporte Z / Cierre)
      */
     public function closeSession(Request $request)
     {
         $userId = $request->header('X-User-Id');
-        
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'Usuario no identificado.'], 401);
+        }
+
+        $user = User::find($userId);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Usuario no encontrado.'], 404);
+        }
+
         $request->validate([
-            'actual_amount' => 'required|numeric|min:0',
+            'declarations' => 'nullable|array',
+            'declarations.*.payment_method_id' => 'required|exists:payment_methods,id',
+            'declarations.*.declared_amount' => 'required|numeric|min:0',
             'closing_notes' => 'nullable|string',
         ]);
+
+        // --- CASHIER: needs supervisor authorization ---
+        if (!$user->isAdmin()) {
+            $request->validate([
+                'supervisor_username' => 'required|string',
+                'supervisor_password' => 'required|string',
+            ]);
+
+            $supervisor = User::where('username', $request->supervisor_username)
+                ->where('role', 'admin')
+                ->first();
+
+            if (!$supervisor || !Hash::check($request->supervisor_password, $supervisor->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Credenciales del supervisor incorrectas o el usuario no es administrador.',
+                ], 403);
+            }
+        }
 
         try {
             DB::beginTransaction();
@@ -572,9 +674,31 @@ class PosIntegrationController extends Controller
                 throw new \Exception('No hay turno abierto.');
             }
 
+            $totalDeclaredBase = 0;
+            if ($request->has('declarations')) {
+                foreach ($request->declarations as $dec) {
+                    $method = \App\Models\PaymentMethod::find($dec['payment_method_id']);
+                    // Simple sum of base amounts for the global session totals
+                    // (You could also save the detailed declarations in a new table if desired)
+                    $totalDeclaredBase += $dec['declared_amount'];
+                }
+            } else {
+                // Backward compatibility or no methods to declare
+                $totalDeclaredBase = $request->actual_amount ?? $session->expected_amount;
+            }
+
+            $session->actual_amount = $totalDeclaredBase;
+            $session->difference = $totalDeclaredBase - $session->expected_amount;
+            $session->declarations_data = $request->has('declarations') ? json_encode($request->declarations) : null;
+            
+            if ($request->action === 'declare') {
+                // Solo declarar, el turno sigue abierto
+                $session->save();
+                DB::commit();
+                return response()->json(['success' => true, 'message' => 'Declaración guardada exitosamente. Turno sigue abierto.', 'difference' => $session->difference]);
+            }
+
             $session->status = 'closed';
-            $session->actual_amount = $request->actual_amount;
-            $session->difference = $request->actual_amount - $session->expected_amount;
             $session->closed_at = now();
             $session->closing_notes = $request->closing_notes;
             $session->save();
