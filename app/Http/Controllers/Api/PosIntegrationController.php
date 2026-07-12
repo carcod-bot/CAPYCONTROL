@@ -527,6 +527,13 @@ class PosIntegrationController extends Controller
                 throw new \Exception('No hay turno abierto.');
             }
 
+            $method = \App\Models\PaymentMethod::with('currency')->find($request->payment_method_id);
+            $exchangeRate = $method && $method->currency ? $method->currency->exchange_rate : 1;
+            $baseCurrency = \App\Models\Currency::where('is_base', true)->first();
+            $baseRate = $baseCurrency ? $baseCurrency->exchange_rate : 1;
+
+            $amountBase = ($request->amount * $exchangeRate) / $baseRate;
+
             \App\Models\CashMovement::create([
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
@@ -536,7 +543,7 @@ class PosIntegrationController extends Controller
                 'payment_method_id' => $request->payment_method_id,
             ]);
 
-            $session->expected_amount -= $request->amount;
+            $session->expected_amount -= $amountBase;
             $session->total_withdrawals += 1;
             $session->save();
 
@@ -604,12 +611,14 @@ class PosIntegrationController extends Controller
 
             // Let's pass the expected amount
             $exchangeRate = $method->currency ? $method->currency->exchange_rate : 1;
+            $baseCurrency = \App\Models\Currency::where('is_base', true)->first();
+            $baseRate = $baseCurrency ? $baseCurrency->exchange_rate : 1;
 
             $totals[] = [
                 'payment_method_id' => $method->id,
                 'name' => $method->description,
                 'currency_symbol' => $method->currency ? $method->currency->symbol : '$',
-                'expected_base' => $totalLocal / ($exchangeRate > 0 ? $exchangeRate : 1), // Optional backward compatibility if needed
+                'expected_base' => ($totalLocal * $exchangeRate) / $baseRate, // Optional backward compatibility if needed
                 'expected_local' => $totalLocal, // This is the EXACT amount the cashier needs to count in this currency
                 'exchange_rate' => $exchangeRate,
             ];
