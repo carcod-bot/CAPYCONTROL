@@ -25,6 +25,9 @@ capycontrol/
 │   │   ├── PaymentMethodController.php
 │   │   ├── CashRegisterController.php
 │   │   ├── CashSessionController.php
+│   │   ├── Administration/
+│   │   │   ├── CuadreController.php
+│   │   │   └── InvoiceController.php
 │   │   └── Api/PosIntegrationController.php
 │   ├── Models/
 │   │   ├── User.php
@@ -50,6 +53,12 @@ capycontrol/
 │   ├── pos-control/
 │   │   ├── index.blade.php        ← Monitoreo (solo sesiones abiertas)
 │   │   └── registers.blade.php   ← Gestión de Cajas (CRUD con IP/Hostname)
+│   ├── administration/
+│   │   ├── cuadre/
+│   │   │   └── index.blade.php
+│   │   └── invoices/
+│   │       ├── index.blade.php
+│   │       └── show.blade.php
 │   ├── home.blade.php
 │   └── welcome.blade.php
 ├── routes/
@@ -898,3 +907,16 @@ Se documentó e incorporó la interfaz visual de las configuraciones avanzadas p
 Al presionar el botón de apagado (Power) en CapyPOS, el sistema pregunta:
 - **"Solo salir"**: Sale de la sesión web sin cerrar el turno en el sistema.
 - **"Finalizar Turno"**: Cierra el turno directamente en CapyControl. El `actual_amount` y `difference` quedan en `null` (sin conciliación formal). Si se desea registrar diferencias, primero se debe hacer un **Declarar (Arqueo Parcial)** desde **F11 Opciones → Declarar**.
+
+---
+
+### Actualizaciones Recientes (13/07/2026)
+
+#### Módulo de Administración (CapyControl):
+- **Cuadre General y Cierres Forzados:**
+  - El modal de *Cierre Forzado* se rediseñó para cargar dinámicamente **solo los métodos de pago que registraron movimientos o ventas** durante el turno. Si una caja no tuvo actividad, no se exigirá ninguna declaración y el sistema cuadrará con la base inicial automáticamente.
+  - El código se optimizó empleando AJAX (`fetch`) hacia el backend (`/admin/cuadre/{session}/declaration-fields`) que evalúa en tiempo real las operaciones de `SalePayment` y `CashMovement`.
+- **Módulo de Facturas:**
+  - **Visualización Tipo Ticket:** Se añadió la funcionalidad de abrir facturas directamente como tickets no-fiscales usando diseño web (HTML puro estilo recibo). Cuenta con la capacidad directa de ser **impreso** en impresoras térmicas.
+  - **Filtros Avanzados:** El buscador de facturas se expandió. La casilla "Producto" no solo busca facturas donde aparezca el nombre, sino que está vinculado directamente para cruzar y buscar por **código interno** o **código de barras EAN**.
+  - **UI (Dropdowns):** Se unificó el apartado de "Acciones" en la tabla para presentar un menú desplegable moderno, reparando posibles colisiones de estilos y optimizando espacio visual.
