@@ -856,3 +856,45 @@ Se ha rediseñado el módulo de Ajustes de Inventario para soportar la visualiza
 - **Filtro de Lotes Terminados:** Se integró un nuevo filtro en el dropdown de Tipos de Ajuste que permite visualizar exclusivamente las entradas de inventario en donde el lote generado haya alcanzado un stock actual de cero unidades (0).
 - **Filtro Agrupado por Stock:** Se añadió un modo de vista especial dentro del panel de Ajustes. Al seleccionar el filtro "Stock", la tabla de historial muta dinámicamente y se transforma en un reporte consolidado de inventario, agrupando por producto e indicando la cantidad de stock actual sin mezclarlo con el listado detallado de movimientos.
 - **Configuración PWA e Identidad Visual:** Se añadió soporte completo PWA (Progressive Web App) instalable con iconos oficiales en tamaños requeridos. Se unificó la tipografía general a 'Poppins' (Google Fonts) en todas las plantillas para alinearse con el ecosistema. Además, se implementó un indicador visual del estado de vencimiento en los lotes (Vigente, Por Vencer, Vencido) directamente en la interfaz de Ajustes y Conteo.
+
+---
+
+## 💳 Opciones Avanzadas de Métodos de Pago - 2026-07-12
+
+### Descripción
+Se documentó e incorporó la interfaz visual de las configuraciones avanzadas para la creación y edición de Métodos de Pago en el módulo Financiero. Estas opciones (checkboxes) permiten modelar estrictamente cómo CapyPOS y el motor de cierres reaccionan ante cada forma de cobro.
+
+### Funcionamiento de Opciones Clave:
+- **Denominación Real:** Indica que es dinero físico. En módulos avanzados exige conteo por billetes y es el único método permitido para **Retiros de Caja**.
+- **Administra Serial:** Usado para Gift Cards, cheques o cupones. El sistema exige un serial y valida que no haya sido consumido previamente.
+- **Permite Vuelto:** Le indica al POS si puede permitir pagos por montos superiores al total para generar una devolución en efectivo (Efectivo sí, Tarjetas/Zelle no).
+- **Auto Declarar (POS):** Indica que el dinero se asume ya "en el banco" y se cuadra automáticamente. Por ende, **el cajero no deberá contar ni declarar este dinero** durante su Cierre de Turno en el POS.
+- **Auto Depositar (POS):** Al finalizar el turno, el monto recolectado se asume directamente como depositado o trasladado a la cuenta bancaria sin intervención administrativa manual.
+- **Usado en POS:** Activa o desactiva la visibilidad del método en la pantalla del cajero (CapyPOS).
+- **Usado en Fact. Adm.:** Activa o desactiva la visibilidad del método en la facturación o cobros directos desde el panel administrativo (CapyControl).
+- **Verificación Electrónica:** Fuerza al POS a pedir un "Número de Referencia" de forma obligatoria al recibir el pago (ideal para Transferencias y Pago Móvil).
+- **Avance de Efectivo:** Permite usar el método para procesar cobros por encima de la venta total con el fin de entregar efectivo al cliente.
+
+**UI en CapyControl:** Se incorporaron *tooltips* explicativos nativos en los formularios de creación y edición para que los administradores conozcan de manera inmediata el impacto de cada opción.
+
+
+### Gestión de Caja: Reporte X, Declarar (Arqueo Parcial), Cierre de Turno y Reporte Z
+
+> **IMPORTANTE:** Reporte X ≠ Declarar. Son conceptos distintos.
+
+| Acción | Descripción | Efecto en sistema | Efecto en esperado |
+|--------|-------------|-------------------|--------------------|
+| **Reporte X** | Imprime en la impresora fiscal un resumen del turno actual sin resetear nada. Es solo informativo. | Ninguno | Ninguno |
+| **Declarar (Arqueo Parcial)** | El cajero físicamente cuenta el dinero y declara cuánto tiene. El sistema registra un retiro por ese monto. | Crea `CashMovement` tipo `withdrawal` | **Reduce** el `expected_amount` por el monto declarado |
+| **Cierre de Turno** | Finaliza la sesión del cajero en el sistema. **No obliga a declarar montos**. Solo cierra el turno. | Cambia estado a `closed` | Sin cambio (queda como estaba) |
+| **Reporte Z** | Emitido únicamente por la impresora fiscal. Representa el total del día y **no tiene relación directa con un cierre de turno del sistema**. | Ninguno en el sistema | Ninguno |
+
+#### Flujo recomendado para múltiples cajeros en un mismo día:
+1. Cajero A abre turno → trabaja → hace **Arqueo Parcial** (opcional, para extraer dinero durante el turno) → hace **Cierre de Turno** cuando termina.
+2. Cajero B abre otro turno en la misma caja → repite.
+3. Al final del día, el administrador hace el **Reporte Z** físico de la impresora fiscal (que agrupa TODAS las ventas del día de todos los turnos).
+
+#### Cierre de Turno sin Declaración:
+Al presionar el botón de apagado (Power) en CapyPOS, el sistema pregunta:
+- **"Solo salir"**: Sale de la sesión web sin cerrar el turno en el sistema.
+- **"Finalizar Turno"**: Cierra el turno directamente en CapyControl. El `actual_amount` y `difference` quedan en `null` (sin conciliación formal). Si se desea registrar diferencias, primero se debe hacer un **Declarar (Arqueo Parcial)** desde **F11 Opciones → Declarar**.

@@ -683,32 +683,50 @@ class PosIntegrationController extends Controller
                 throw new \Exception('No hay turno abierto.');
             }
 
-            $totalDeclaredBase = 0;
-            if ($request->has('declarations')) {
-                foreach ($request->declarations as $dec) {
-                    $method = \App\Models\PaymentMethod::find($dec['payment_method_id']);
-                    // Simple sum of base amounts for the global session totals
-                    // (You could also save the detailed declarations in a new table if desired)
-                    $totalDeclaredBase += $dec['declared_amount'];
-                }
-            } else {
-                // Backward compatibility or no methods to declare
-                $totalDeclaredBase = $request->actual_amount ?? $session->expected_amount;
-            }
+            $hasDeclarations = $request->has('declarations') && is_array($request->declarations) && count($request->declarations) > 0;
 
-            $session->actual_amount = $totalDeclaredBase;
-            $session->difference = $totalDeclaredBase - $session->expected_amount;
-            $session->declarations_data = $request->has('declarations') ? json_encode($request->declarations) : null;
-            
             if ($request->action === 'declare') {
-                // Solo declarar, el turno sigue abierto
+                // Arqueo Parcial (Corte X): register withdrawals and reset expected_amount.
+                // Do NOT touch actual_amount or difference — those are only for the final close.
+                if ($hasDeclarations) {
+                    foreach ($request->declarations as $dec) {
+                        $localAmount = $dec['declared_amount_local'] ?? 0;
+                        if ($localAmount > 0) {
+                            \App\Models\CashMovement::create([
+                                'cash_session_id' => $session->id,
+                                'user_id'         => $userId,
+                                'type'            => 'withdrawal',
+                                'amount'          => $localAmount,
+                                'reason'          => 'Arqueo Parcial / Corte X',
+                                'payment_method_id' => $dec['payment_method_id'],
+                            ]);
+                            $session->expected_amount -= $dec['declared_amount'];
+                            $session->total_withdrawals += 1;
+                        }
+                    }
+                }
                 $session->save();
                 DB::commit();
-                return response()->json(['success' => true, 'message' => 'Declaración guardada exitosamente. Turno sigue abierto.', 'difference' => $session->difference]);
+                return response()->json(['success' => true, 'message' => 'Arqueo parcial completado. Los montos esperados se han reiniciado.']);
             }
 
-            $session->status = 'closed';
-            $session->closed_at = now();
+            // --- Final Close ---
+            if ($hasDeclarations) {
+                $totalDeclaredBase = 0;
+                foreach ($request->declarations as $dec) {
+                    $totalDeclaredBase += $dec['declared_amount'];
+                }
+                $session->actual_amount    = $totalDeclaredBase;
+                $session->difference       = $totalDeclaredBase - $session->expected_amount;
+                $session->declarations_data = json_encode($request->declarations);
+            } else {
+                // Direct close without declaration — reset any stale values from previous arqueo
+                $session->actual_amount    = null;
+                $session->difference       = null;
+            }
+
+            $session->status      = 'closed';
+            $session->closed_at   = now();
             $session->closing_notes = $request->closing_notes;
             $session->save();
 

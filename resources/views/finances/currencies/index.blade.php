@@ -402,15 +402,33 @@
                     
                     <div class="options-grid">
                         <div class="options-title">Opciones adicionales</div>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_is_real_denomination"> Denominación Real</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_admin_serial"> Administra Serial</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_allows_change"> Permite Vuelto</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_auto_declare"> Auto Declarar (POS)</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_used_in_pos" checked> Usado en POS</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_auto_deposit"> Auto Depositar (POS)</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_electronic_verification"> Verificación Electrónica</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_used_in_admin_billing"> Usado en Fact. Adm.</label>
-                        <label class="checkbox-group"><input type="checkbox" id="pm_cash_advance"> Avance de Efectivo</label>
+                        <label class="checkbox-group" title="Indica que es dinero físico. Exige conteo por billetes en módulos avanzados y es el único método que se puede usar para Retiros de Caja.">
+                            <input type="checkbox" id="pm_is_real_denomination"> Denominación Real
+                        </label>
+                        <label class="checkbox-group" title="Usado para Gift Cards, cheques o cupones. El sistema exigirá un serial y validará que no haya sido cobrado antes.">
+                            <input type="checkbox" id="pm_admin_serial"> Administra Serial
+                        </label>
+                        <label class="checkbox-group" title="Permite dar cambio (vuelto) cuando el cliente paga con este método. (Ej: Efectivo sí, Zelle no).">
+                            <input type="checkbox" id="pm_allows_change"> Permite Vuelto
+                        </label>
+                        <label class="checkbox-group" title="El sistema asume que el dinero está en el banco y lo declara automáticamente en el Cierre de Turno. El cajero no debe contar este dinero.">
+                            <input type="checkbox" id="pm_auto_declare"> Auto Declarar (POS)
+                        </label>
+                        <label class="checkbox-group" title="Si está marcado, este método aparecerá en la pantalla de cobro del cajero (CapyPOS).">
+                            <input type="checkbox" id="pm_used_in_pos" checked> Usado en POS
+                        </label>
+                        <label class="checkbox-group" title="Al cerrar el turno, el dinero recolectado por este método se marca como depositado en el banco automáticamente.">
+                            <input type="checkbox" id="pm_auto_deposit"> Auto Depositar (POS)
+                        </label>
+                        <label class="checkbox-group" title="Requiere que el cajero introduzca forzosamente un Número de Referencia (Ej: Pago Móvil, Zelle, Transferencias).">
+                            <input type="checkbox" id="pm_electronic_verification"> Verificación Electrónica
+                        </label>
+                        <label class="checkbox-group" title="Disponible para usarse al crear Facturas Administrativas directamente desde CapyControl.">
+                            <input type="checkbox" id="pm_used_in_admin_billing"> Usado en Fact. Adm.
+                        </label>
+                        <label class="checkbox-group" title="Permite recibir pagos mayores al total para entregarle la diferencia en efectivo al cliente.">
+                            <input type="checkbox" id="pm_cash_advance"> Avance de Efectivo
+                        </label>
                     </div>
                 </form>
             </div>

@@ -198,6 +198,15 @@
                 <input type="text" id="withdrawRegisterLabel" class="form-control" readonly style="background: var(--background); font-weight: 700;">
             </div>
             <div class="form-group">
+                <label class="form-label">Moneda (Método de Pago) <span class="text-danger">*</span></label>
+                <select name="payment_method_id" class="form-control" required style="appearance: auto;">
+                    <option value="">Seleccione una moneda...</option>
+                    @foreach(\App\Models\PaymentMethod::where('used_in_pos', true)->get() as $pm)
+                        <option value="{{ $pm->id }}">{{ $pm->description }} ({{ $pm->currency ? $pm->currency->code : '' }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
                 <label class="form-label">Monto a Retirar <span class="text-danger">*</span></label>
                 <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required placeholder="0.00">
             </div>
