@@ -122,7 +122,7 @@
                                 {{ number_format($summary['declared'], 2) }}
                             @endif
                         </td>
-                        <td class="text-right" style="font-family: monospace; font-weight: bold; background: rgba(0,0,0,0.02); color: {{ $summary['difference'] < 0 ? 'var(--danger)' : ($summary['difference'] > 0 ? 'var(--success)' : 'inherit') }}">
+                        <td class="text-right" style="font-family: monospace; font-weight: bold; background: rgba(0,0,0,0.02); color: {{ $summary['is_auto_declare'] ? 'inherit' : ($summary['difference'] < 0 ? 'var(--danger)' : ($summary['difference'] > 0 ? 'var(--success)' : 'inherit')) }}">
                             @if($summary['is_auto_declare'])
                                 0.00
                             @else

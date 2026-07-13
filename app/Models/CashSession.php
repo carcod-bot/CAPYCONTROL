@@ -40,6 +40,11 @@ class CashSession extends Model
         return $this->hasMany(CashMovement::class);
     }
 
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+    }
+
     /**
      * Check if session is open
      */

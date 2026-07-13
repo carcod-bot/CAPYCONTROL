@@ -17,6 +17,10 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
@@ -79,19 +83,33 @@
                                 </a>
                             </div>
                         </div>
-                        @endif
-
-                        @if(Auth::user()->hasPermission('finances.view'))
+                        @endif                        @if(Auth::user()->hasPermission('finances.view'))
                         <div class="topbar-dropdown" id="finanzasDropdown">
-                            <button class="topbar-dropdown-toggle {{ request()->routeIs('currencies.*', 'declarations.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('finanzasDropdown')">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('currencies.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('finanzasDropdown')">
                                 <i class="fa-solid fa-money-bill-transfer"></i> Finanzas <i class="fa-solid fa-chevron-down chevron"></i>
                             </button>
                             <div class="topbar-dropdown-menu">
                                 <a href="{{ route('currencies.index') }}" class="topbar-dropdown-item {{ request()->routeIs('currencies.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-coins"></i> Monedas y Métodos de Pago
                                 </a>
+                            </div>
+                        </div>
+                        @endif
+
+                        @if(Auth::user()->hasPermission('finances.view') || Auth::user()->hasPermission('pos_control.view'))
+                        <div class="topbar-dropdown" id="adminDropdown">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('declarations.*', 'admin.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('adminDropdown')">
+                                <i class="fa-solid fa-user-tie"></i> Administración <i class="fa-solid fa-chevron-down chevron"></i>
+                            </button>
+                            <div class="topbar-dropdown-menu">
+                                <a href="{{ route('admin.cuadre.index') }}" class="topbar-dropdown-item {{ request()->routeIs('admin.cuadre.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-scale-balanced"></i> Cuadre General
+                                </a>
                                 <a href="{{ route('declarations.index') }}" class="topbar-dropdown-item {{ request()->routeIs('declarations.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-list-check"></i> Reporte de Declaraciones
+                                </a>
+                                <a href="{{ route('admin.invoices.index') }}" class="topbar-dropdown-item {{ request()->routeIs('admin.invoices.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-file-invoice"></i> Buscar Facturas
                                 </a>
                             </div>
                         </div>

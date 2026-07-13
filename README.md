@@ -57,7 +57,10 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-## Cambios Recientes (2026-07-10)
+## Cambios Recientes (2026-07-13)
 - Configuración PWA (Progressive Web App).
 - Unificación tipográfica con Google Fonts (Poppins).
 - Incorporación de indicadores visuales de vencimiento de lotes.
+- Módulo de Administración: Cuadre General de Cajas, con validaciones dinámicas que solo requieren métodos usados.
+- Módulo de Facturas: Búsqueda avanzada por nombre de producto, EAN y código interno, con diseño optimizado (dropdown de acciones en tabla).
+- Visualización de tickets: Facturas pueden visualizarse con diseño tipo ticket no-fiscal y mandarse a imprimir.

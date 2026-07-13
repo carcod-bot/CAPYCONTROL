@@ -199,7 +199,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Moneda (Método de Pago) <span class="text-danger">*</span></label>
-                <select name="payment_method_id" class="form-control" required style="appearance: auto;">
+                <select name="payment_method_id" class="form-control select2" required style="width: 100%;">
                     <option value="">Seleccione una moneda...</option>
                     @foreach(\App\Models\PaymentMethod::where('used_in_pos', true)->get() as $pm)
                         <option value="{{ $pm->id }}">{{ $pm->description }} ({{ $pm->currency ? $pm->currency->code : '' }})</option>
@@ -258,6 +258,10 @@
 
 @push('scripts')
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        $('.select2').select2({ width: '100%' });
+    });
+
     // === CLOSE SESSION ===
     function openCloseSessionModal(sessionId, registerNumber, username) {
         document.getElementById('closeSessionId').value = sessionId;

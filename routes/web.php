@@ -58,6 +58,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
     });
 
+    // --- Administration Module ---
+    Route::middleware('permission:finances.view')->group(function () {
+        Route::get('admin/cuadre', [\App\Http\Controllers\Administration\CuadreController::class, 'index'])->name('admin.cuadre.index');
+        Route::get('admin/cuadre/{session}/declaration-fields', [\App\Http\Controllers\Administration\CuadreController::class, 'declarationFields']);
+        Route::post('admin/cuadre/{session}/force-close', [\App\Http\Controllers\Administration\CuadreController::class, 'forceClose'])->name('admin.cuadre.force-close');
+        
+        Route::get('admin/invoices', [\App\Http\Controllers\Administration\InvoiceController::class, 'index'])->name('admin.invoices.index');
+        Route::get('admin/invoices/{invoice}', [\App\Http\Controllers\Administration\InvoiceController::class, 'show'])->name('admin.invoices.show');
+    });
+
     // --- Finances Module ---
     Route::middleware('permission:finances.view')->group(function () {
         Route::get('currencies', [App\Http\Controllers\CurrencyController::class, 'index'])->name('currencies.index');

@@ -129,39 +129,7 @@
 </div>
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<style>
-    .select2-container--default .select2-selection--single {
-        height: 38px;
-        border: 1px solid var(--border);
-        background-color: var(--surface);
-        border-radius: 4px;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 38px;
-        color: var(--text-main);
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-    }
-    .dark-mode .select2-container--default .select2-selection--single {
-        background-color: var(--surface);
-        border-color: var(--border);
-    }
-    .dark-mode .select2-dropdown {
-        background-color: var(--surface);
-        border-color: var(--border);
-    }
-    .dark-mode .select2-container--default .select2-results__option[aria-selected=true] {
-        background-color: var(--primary);
-    }
-</style>
-@endpush
-
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
 <script>
 $(document).ready(function() {
     $('.form-select').select2({
