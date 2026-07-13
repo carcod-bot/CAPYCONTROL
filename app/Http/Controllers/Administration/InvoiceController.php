@@ -53,12 +53,14 @@ class InvoiceController extends Controller
         if ($request->filled('product_name')) {
             $term = $request->product_name;
             $query->whereHas('items', function($q) use ($term) {
-                $q->where('product_name', 'like', '%' . $term . '%')
-                  ->orWhere('product_code', 'like', '%' . $term . '%')
-                  ->orWhereHas('product', function($pq) use ($term) {
-                      $pq->where('ean_code', 'like', '%' . $term . '%')
-                         ->orWhere('private_code', 'like', '%' . $term . '%');
-                  });
+                $q->where(function($subQ) use ($term) {
+                    $subQ->where('product_name', 'like', '%' . $term . '%')
+                         ->orWhere('product_code', 'like', '%' . $term . '%')
+                         ->orWhereHas('product', function($pq) use ($term) {
+                             $pq->where('ean_code', 'like', '%' . $term . '%')
+                                ->orWhere('private_code', 'like', '%' . $term . '%');
+                         });
+                });
             });
         }
 
