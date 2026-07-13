@@ -27,6 +27,11 @@ class CashMovement extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
     /**
      * Get the type label in Spanish
      */

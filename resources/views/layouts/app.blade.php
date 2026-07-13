@@ -83,12 +83,15 @@
 
                         @if(Auth::user()->hasPermission('finances.view'))
                         <div class="topbar-dropdown" id="finanzasDropdown">
-                            <button class="topbar-dropdown-toggle {{ request()->routeIs('currencies.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('finanzasDropdown')">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('currencies.*', 'declarations.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('finanzasDropdown')">
                                 <i class="fa-solid fa-money-bill-transfer"></i> Finanzas <i class="fa-solid fa-chevron-down chevron"></i>
                             </button>
                             <div class="topbar-dropdown-menu">
                                 <a href="{{ route('currencies.index') }}" class="topbar-dropdown-item {{ request()->routeIs('currencies.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-coins"></i> Monedas y Métodos de Pago
+                                </a>
+                                <a href="{{ route('declarations.index') }}" class="topbar-dropdown-item {{ request()->routeIs('declarations.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-list-check"></i> Reporte de Declaraciones
                                 </a>
                             </div>
                         </div>

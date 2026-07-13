@@ -62,6 +62,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:finances.view')->group(function () {
         Route::get('currencies', [App\Http\Controllers\CurrencyController::class, 'index'])->name('currencies.index');
         Route::get('api/currencies', [App\Http\Controllers\CurrencyController::class, 'fetchAll']);
+        
+        // Declarations
+        Route::get('finances/declarations', [App\Http\Controllers\DeclarationReportController::class, 'index'])->name('declarations.index');
+        Route::get('finances/declarations/{session}', [App\Http\Controllers\DeclarationReportController::class, 'show'])->name('declarations.show');
     });
     Route::middleware('permission:finances.edit')->group(function () {
         Route::post('api/currencies', [App\Http\Controllers\CurrencyController::class, 'store']);

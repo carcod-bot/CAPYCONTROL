@@ -427,9 +427,7 @@ class PosIntegrationController extends Controller
 
             // 4. Update Cash Session totals
             $session->total_sales += 1;
-            if ($request->payment_method === 'efectivo' || $request->payment_method === 'cash') {
-                 $session->expected_amount += $request->total_amount;
-            }
+            $session->expected_amount += $request->total_amount;
             $session->save();
 
             DB::commit();
@@ -716,6 +714,31 @@ class PosIntegrationController extends Controller
                 foreach ($request->declarations as $dec) {
                     $totalDeclaredBase += $dec['declared_amount'];
                 }
+
+                // Add the expected amounts of auto_declare methods so they don't cause an artificial negative difference
+                $autoMethods = \App\Models\PaymentMethod::with('currency')->where('auto_declare', true)->get();
+                $baseCurrency = \App\Models\Currency::where('is_base', true)->first();
+                $baseRate = $baseCurrency ? $baseCurrency->exchange_rate : 1;
+
+                foreach($autoMethods as $m) {
+                    $mSalesLocal = \App\Models\SalePayment::whereHas('sale', function($q) use ($session) {
+                        $q->where('cash_session_id', $session->id);
+                    })->where('payment_method_id', $m->id)->sum('amount_local');
+
+                    $mWithdrawalsLocal = \App\Models\CashMovement::where('cash_session_id', $session->id)
+                        ->where('type', 'withdrawal')
+                        ->where('payment_method_id', $m->id)
+                        ->sum('amount');
+                    
+                    $mExpectedLocal = $mSalesLocal - $mWithdrawalsLocal;
+                    
+                    if ($mExpectedLocal > 0) {
+                        $mRate = $m->currency ? $m->currency->exchange_rate : 1;
+                        $mExpectedBase = ($mExpectedLocal * $mRate) / $baseRate;
+                        $totalDeclaredBase += $mExpectedBase;
+                    }
+                }
+
                 $session->actual_amount    = $totalDeclaredBase;
                 $session->difference       = $totalDeclaredBase - $session->expected_amount;
                 $session->declarations_data = json_encode($request->declarations);
