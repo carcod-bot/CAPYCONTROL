@@ -556,6 +556,78 @@ class PosIntegrationController extends Controller
     }
 
     /**
+     * Log POS Event (Drawer, Report X, Report Z, Withdrawal)
+     */
+    public function logEvent(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        
+        $request->validate([
+            'event_type' => 'required|string',
+            'supervisor_username' => 'nullable|string',
+            'supervisor_password' => 'nullable|string',
+            'details' => 'nullable|array'
+        ]);
+
+        try {
+            $session = CashSession::where('user_id', $userId)
+                ->where('status', 'open')
+                ->first();
+
+            if (!$session) {
+                throw new \Exception('No hay turno abierto.');
+            }
+
+            $supervisorUsername = null;
+
+            // Validate supervisor if provided
+            if ($request->filled('supervisor_username') && $request->filled('supervisor_password')) {
+                $supervisor = \App\Models\User::where('username', $request->supervisor_username)->first();
+                if (!$supervisor || !\Hash::check($request->supervisor_password, $supervisor->password)) {
+                    throw new \Exception('Credenciales de supervisor inválidas.');
+                }
+                if (!$supervisor->isAdmin()) {
+                    throw new \Exception('El usuario proporcionado no tiene permisos de administrador.');
+                }
+                $supervisorUsername = $supervisor->username;
+            } else {
+                // If not provided, the current user MUST be an admin.
+                $user = \App\Models\User::find($userId);
+                if ($user && $user->isAdmin()) {
+                    $supervisorUsername = $user->username;
+                } else {
+                    throw new \Exception('Se requiere autorización de un administrador para esta acción.');
+                }
+            }
+
+            $event = \App\Models\PosEvent::create([
+                'cash_session_id' => $session->id,
+                'user_id' => $userId,
+                'supervisor_username' => $supervisorUsername,
+                'event_type' => $request->event_type,
+                'details' => $request->details,
+            ]);
+
+            if (in_array($request->event_type, ['report_x', 'report_z']) && $request->filled('details')) {
+                $details = $request->details;
+                if (isset($details['raw_data']) || isset($details['z_number'])) {
+                    \App\Models\FiscalReport::create([
+                        'pos_event_id' => $event->id,
+                        'report_type' => $request->event_type === 'report_x' ? 'X' : 'Z',
+                        'report_number' => $details['z_number'] ?? null,
+                        'raw_data' => $details['raw_data'] ?? null,
+                    ]);
+                }
+            }
+
+            return response()->json(['success' => true, 'message' => 'Evento registrado.', 'event' => $event]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+        }
+    }
+
+    /**
      * Get Declaration Totals for non-auto-declare payment methods
      */
     public function getDeclarationTotals(Request $request)
@@ -762,4 +834,6 @@ class PosIntegrationController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+
 }

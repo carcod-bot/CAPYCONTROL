@@ -13,6 +13,7 @@ Route::prefix('pos')->group(function () {
     Route::get('/session/declaration-totals', [PosIntegrationController::class, 'getDeclarationTotals']);
     Route::post('/session/close', [PosIntegrationController::class, 'closeSession']);
     Route::post('/session/withdraw', [PosIntegrationController::class, 'withdrawCash']);
+    Route::post('/session/log-event', [PosIntegrationController::class, 'logEvent']);
     
     // Ventas
     Route::post('/sales', [PosIntegrationController::class, 'storeSale']);

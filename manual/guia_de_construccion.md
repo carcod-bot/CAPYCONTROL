@@ -235,6 +235,30 @@ capycontrol/
 
 ## 📦 Modelos
 
+### PosEvent (`app/Models/PosEvent.php`)
+
+Registra eventos operacionales y fiscales disparados desde CapyPOS (ej. Apertura de Gaveta, Reporte Z, Reporte X).
+
+| Campo | Tipo |
+|-------|------|
+| `cash_session_id` | foreignId |
+| `user_id` | foreignId |
+| `supervisor_id` | foreignId (nullable) |
+| `event_type` | string |
+| `description` | text (nullable) |
+
+### FiscalReport (`app/Models/FiscalReport.php`)
+
+Almacena la trama completa devuelta por la impresora fiscal y el correlativo del reporte Z o X.
+
+| Campo | Tipo |
+|-------|------|
+| `pos_event_id` | foreignId |
+| `report_type` | string (z_report, x_report) |
+| `report_number` | string |
+| `raw_data` | text |
+
+
 ### User (`app/Models/User.php`)
 
 | Campo | Tipo |
