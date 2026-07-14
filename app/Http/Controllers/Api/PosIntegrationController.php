@@ -84,6 +84,7 @@ class PosIntegrationController extends Controller
                     'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
                     'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
                     'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
+                    'is_fiscal'       => \App\Models\Setting::get('is_fiscal', 'true'),
                 ]
             ], 200);
         }
@@ -148,6 +149,7 @@ class PosIntegrationController extends Controller
                 'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
                 'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
                 'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
+                'is_fiscal'       => \App\Models\Setting::get('is_fiscal', 'true'),
             ]
         ]);
     }

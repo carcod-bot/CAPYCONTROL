@@ -20,6 +20,7 @@ capycontrol/
 │   │   ├── BrandController.php
 │   │   ├── ProviderController.php
 │   │   ├── ProductController.php
+│   │   ├── ParameterController.php
 │   │   ├── SettingController.php
 │   │   ├── CurrencyController.php
 │   │   ├── PaymentMethodController.php
@@ -59,6 +60,9 @@ capycontrol/
 │   │   └── invoices/
 │   │       ├── index.blade.php
 │   │       └── show.blade.php
+│   ├── configuraciones/
+│   │   ├── parametros.blade.php
+│   │   └── usuarios.blade.php
 │   ├── home.blade.php
 │   └── welcome.blade.php
 ├── routes/
