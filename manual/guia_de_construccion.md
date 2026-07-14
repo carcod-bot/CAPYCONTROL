@@ -975,4 +975,4 @@ Al presionar el botón de apagado (Power) en CapyPOS, el sistema pregunta:
   - **Base de Datos & Parámetros:** Se añadieron nuevos parámetros a la tabla `settings`: `company_name`, `company_rif`, `company_location`, `company_branch` y `is_fiscal`.
   - **Controlador (`ParameterController`):** Modificado para extraer y validar los datos de la empresa y la modalidad de impresión.
   - **Vistas:** Actualizada la vista de parámetros (`parametros.blade.php`) para incluir una nueva tarjeta con el formulario de "Datos de la Empresa y Modalidad".
-  - **Exportación a POS:** `PosIntegrationController` inyecta ahora los datos de la empresa y la configuración `is_fiscal` dentro del objeto global `pos_config` enviado al Punto de Venta al iniciar sesión.
+  - **Exportación a POS:** `PosIntegrationController` inyecta ahora los datos de la empresa y la configuración `is_fiscal` dentro del objeto global `pos_config` enviado al Punto de Venta al iniciar sesión, y también a través de los endpoints de validación rápida (`checkSession` y `openSession`) garantizando sincronización en tiempo real.
