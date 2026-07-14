@@ -238,6 +238,11 @@ class PosIntegrationController extends Controller
             'tax_type'        => \App\Models\Setting::get('tax_type', 'percentage'),
             'tax_amount'      => \App\Models\Setting::get('tax_amount', '16.00'),
             'tax_included'    => \App\Models\Setting::get('tax_included', 'false'),
+            'is_fiscal'       => \App\Models\Setting::get('is_fiscal', 'true'),
+            'company_name'    => \App\Models\Setting::get('company_name', 'CapyPOS'),
+            'company_rif'     => \App\Models\Setting::get('company_rif', 'J-000000000'),
+            'company_location'=> \App\Models\Setting::get('company_location', 'Ubicación Central'),
+            'company_branch'  => \App\Models\Setting::get('company_branch', 'Sucursal Principal'),
         ];
 
         return response()->json([
@@ -277,6 +282,7 @@ class PosIntegrationController extends Controller
             'new_customer' => 'nullable|array',
             'new_customer.name' => 'required_with:new_customer|string|max:255',
             'new_customer.document_id' => 'required_with:new_customer|string|max:100',
+            'refund_parent_sale_id' => 'nullable|exists:sales,id',
         ]);
 
         try {
@@ -331,6 +337,7 @@ class PosIntegrationController extends Controller
                 'tendered_amount' => $totalTenderedBase,
                 'change_amount' => $changeAmount,
                 'ticket_number' => Sale::generateTicketNumber(),
+                'refund_parent_sale_id' => $request->refund_parent_sale_id,
             ]);
 
             // Save individual payments

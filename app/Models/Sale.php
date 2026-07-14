@@ -19,7 +19,13 @@ class Sale extends Model
         'status',
         'ticket_number',
         'notes',
+        'refund_parent_sale_id',
     ];
+
+    public function parentRefundSale()
+    {
+        return $this->belongsTo(Sale::class, 'refund_parent_sale_id');
+    }
 
     protected function casts(): array
     {

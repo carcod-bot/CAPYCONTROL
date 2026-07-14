@@ -39,6 +39,39 @@
             <small class="text-muted">Si eliges que ya lo incluyen, el POS no sumará el impuesto al final de la cuenta.</small>
         </div>
 
+        <div class="card mt-4 mb-4">
+            <h4 style="margin-bottom: 15px;">Datos de la Empresa y Modalidad</h4>
+            
+            <div class="form-group">
+                <label class="form-label">Nombre de la Empresa</label>
+                <input type="text" name="company_name" class="form-control" value="{{ $settings['company_name'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">RIF / Identificación Fiscal</label>
+                <input type="text" name="company_rif" class="form-control" value="{{ $settings['company_rif'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Ubicación</label>
+                <input type="text" name="company_location" class="form-control" value="{{ $settings['company_location'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Sucursal</label>
+                <input type="text" name="company_branch" class="form-control" value="{{ $settings['company_branch'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Modo de Facturación (Impresora Fiscal)</label>
+                <select name="is_fiscal" class="form-control">
+                    <option value="true" {{ $settings['is_fiscal'] == 'true' ? 'selected' : '' }}>Sí, usar Impresora Fiscal (TFHKA)</option>
+                    <option value="false" {{ $settings['is_fiscal'] == 'false' ? 'selected' : '' }}>No, usar Impresora Térmica Genérica o Ninguna (Omitir impresión fiscal)</option>
+                </select>
+                <small class="text-muted">Si seleccionas "No", el Punto de Venta registrará las facturas pero no intentará comunicarse con el puente local de impresión fiscal.</small>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar Cambios</button>
     </form>
 </div>

@@ -6,6 +6,14 @@
         <p style="margin: 0;">Fecha: {{ $invoice->created_at->format('d/m/Y H:i') }}</p>
     </div>
 
+    @if($invoice->parentRefundSale)
+    <div style="background: #fff3cd; color: #856404; padding: 10px; border: 1px solid #ffeeba; margin-bottom: 20px; font-size: 12px; text-align: center; border-radius: 4px;">
+        <strong>¡ATENCIÓN!</strong><br>
+        Esta factura fue generada por un cambio/devolución del Ticket:<br>
+        <strong>{{ $invoice->parentRefundSale->ticket_number }}</strong>
+    </div>
+    @endif
+
     <div style="margin-bottom: 20px; border-bottom: 1px dashed #000; padding-bottom: 10px;">
         <p style="margin: 2px 0;"><strong>Caja:</strong> {{ $invoice->cashSession->cashRegister->name ?? 'N/A' }}</p>
         <p style="margin: 2px 0;"><strong>Cajero:</strong> {{ $invoice->cashSession->user->username ?? 'N/A' }}</p>

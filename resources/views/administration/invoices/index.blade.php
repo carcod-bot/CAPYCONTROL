@@ -93,7 +93,12 @@
                     @forelse($invoices as $invoice)
                     <tr>
                         <td>{{ $invoice->created_at->format('d/m/Y H:i') }}</td>
-                        <td class="font-bold">{{ $invoice->ticket_number }}</td>
+                        <td class="font-bold">
+                            {{ $invoice->ticket_number }}
+                            @if($invoice->refund_parent_sale_id)
+                                <i class="fa-solid fa-arrow-right-arrow-left text-warning" title="Generada por cambio/devolución"></i>
+                            @endif
+                        </td>
                         <td>{{ $invoice->cashSession->cashRegister->name ?? 'N/A' }}</td>
                         <td>{{ $invoice->cashSession->user->username ?? 'N/A' }}</td>
                         <td>
