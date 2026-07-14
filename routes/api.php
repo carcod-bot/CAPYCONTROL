@@ -15,8 +15,10 @@ Route::prefix('pos')->group(function () {
     Route::post('/session/withdraw', [PosIntegrationController::class, 'withdrawCash']);
     Route::post('/session/log-event', [PosIntegrationController::class, 'logEvent']);
     
-    // Ventas
+    // Ventas y Devoluciones
     Route::post('/sales', [PosIntegrationController::class, 'storeSale']);
+    Route::get('/sales/{ticket}', [PosIntegrationController::class, 'getSale']);
+    Route::post('/refund', [PosIntegrationController::class, 'storeRefund']);
     
     // Clientes
     Route::get('/customers', [PosIntegrationController::class, 'searchCustomers']);

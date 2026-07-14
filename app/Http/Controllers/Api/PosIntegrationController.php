@@ -835,5 +835,59 @@ class PosIntegrationController extends Controller
         }
     }
 
+    /**
+     * Fetch a sale by ticket number
+     */
+    public function getSale($ticket)
+    {
+        $sale = Sale::with('items')->where('ticket_number', $ticket)->first();
+        if (!$sale) {
+            return response()->json(['success' => false, 'message' => 'Factura interna no encontrada'], 404);
+        }
+        return response()->json(['success' => true, 'sale' => $sale]);
+    }
 
+    /**
+     * Process refund and register ReturnedProducts
+     */
+    public function storeRefund(Request $request)
+    {
+        $request->validate([
+            'sale_id' => 'required|exists:sales,id',
+            'returned_items' => 'required|array|min:1',
+            'returned_items.*.product_id' => 'required|exists:products,id',
+            'returned_items.*.quantity' => 'required|numeric|min:0.001',
+            'returned_items.*.amount' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $totalRefundAmount = 0;
+
+            foreach ($request->returned_items as $item) {
+                \App\Models\ReturnedProduct::create([
+                    'sale_id' => $request->sale_id,
+                    'product_id' => $item['product_id'],
+                    'quantity_returned' => $item['quantity'],
+                    'amount' => $item['amount'],
+                    'status' => 'pending_review',
+                    'reason' => $request->reason ?? 'Devolución desde Punto de Venta',
+                ]);
+                $totalRefundAmount += $item['amount'];
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Devolución registrada correctamente.',
+                'refund_total' => $totalRefundAmount
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

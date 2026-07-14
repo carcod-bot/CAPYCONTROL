@@ -258,6 +258,20 @@ Almacena la trama completa devuelta por la impresora fiscal y el correlativo del
 | `report_number` | string |
 | `raw_data` | text |
 
+### ReturnedProduct (`app/Models/ReturnedProduct.php`)
+
+Almacena los productos individuales que han sido devueltos a la tienda en una Devolución/Nota de Crédito para auditoría y posible retorno a inventario.
+
+| Campo | Tipo |
+|-------|------|
+| `sale_id` | foreignId |
+| `product_id` | foreignId |
+| `quantity_returned` | decimal |
+| `amount` | decimal |
+| `reason` | text (nullable) |
+| `status` | string (pending_review, restocked, discarded) |
+
+
 
 ### User (`app/Models/User.php`)
 
@@ -629,6 +643,9 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 | `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma rápida desde la caja. |
 | `withdrawCash` | `/api/pos/session/withdraw` | POST | Registra un retiro de efectivo en la caja actual. |
 | `closeSession` | `/api/pos/session/close` | POST | Cierra el turno del cajero validando el efectivo físico (Reporte Z). |
+| `logEvent` | `/api/pos/session/log-event` | POST | Registra eventos de punto de venta (gaveta, reportes Z y X, autorizaciones). |
+| `getSale` | `/api/pos/sales/{ticket}` | GET | Busca una factura interna y sus productos para gestionar devoluciones. |
+| `storeRefund` | `/api/pos/refund` | POST | Registra los productos devueltos a la tienda tras emitir una Nota de Crédito. |
 
 ---
 
