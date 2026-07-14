@@ -961,3 +961,14 @@ Al presionar el botón de apagado (Power) en CapyPOS, el sistema pregunta:
   - **Visualización Tipo Ticket:** Se añadió la funcionalidad de abrir facturas directamente como tickets no-fiscales usando diseño web (HTML puro estilo recibo). Cuenta con la capacidad directa de ser **impreso** en impresoras térmicas.
   - **Filtros Avanzados:** El buscador de facturas se expandió. La casilla "Producto" no solo busca facturas donde aparezca el nombre, sino que está vinculado directamente para cruzar y buscar por **código interno** o **código de barras EAN**.
   - **UI (Dropdowns):** Se unificó el apartado de "Acciones" en la tabla para presentar un menú desplegable moderno, reparando posibles colisiones de estilos y optimizando espacio visual.
+
+#### Actualizaciones del 14/07/2026:
+- **Trazabilidad de Devoluciones (Notas de Crédito):**
+  - **Base de Datos:** Se añadió el campo `refund_parent_sale_id` a la tabla `sales` para guardar el enlace directo entre una nueva venta y la factura original devuelta.
+  - **Backend (PosIntegrationController):** El endpoint de guardado de ventas `storeSale` ahora captura y procesa el `refund_parent_sale_id` enviado por CapyPOS.
+  - **Administración:** La vista de índice (`index.blade.php`) y visualización de facturas (`show.blade.php`) ahora identifican si una factura provino de una devolución, mostrando un icono de intercambio amarillo y una alerta informativa con el ticket de origen.
+- **Configuración de Empresa y Modo "No Fiscal":**
+  - **Base de Datos & Parámetros:** Se añadieron nuevos parámetros a la tabla `settings`: `company_name`, `company_rif`, `company_location`, `company_branch` y `is_fiscal`.
+  - **Controlador (`ParameterController`):** Modificado para extraer y validar los datos de la empresa y la modalidad de impresión.
+  - **Vistas:** Actualizada la vista de parámetros (`parametros.blade.php`) para incluir una nueva tarjeta con el formulario de "Datos de la Empresa y Modalidad".
+  - **Exportación a POS:** `PosIntegrationController` inyecta ahora los datos de la empresa y la configuración `is_fiscal` dentro del objeto global `pos_config` enviado al Punto de Venta al iniciar sesión.
