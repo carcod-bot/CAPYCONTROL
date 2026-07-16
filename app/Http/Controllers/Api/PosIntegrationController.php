@@ -899,4 +899,27 @@ class PosIntegrationController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Get active promotions for CapyPOS
+     */
+    public function getPromotions(Request $request)
+    {
+        $now = now();
+        $promotions = \App\Models\Promotion::where('active', true)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('start_date')
+                      ->orWhere('start_date', '<=', $now);
+            })
+            ->where(function ($query) use ($now) {
+                $query->whereNull('end_date')
+                      ->orWhere('end_date', '>=', $now);
+            })
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'promotions' => $promotions
+        ]);
+    }
 }

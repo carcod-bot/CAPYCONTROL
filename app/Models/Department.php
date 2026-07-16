@@ -25,4 +25,8 @@ class Department extends Model
     {
         return $this->hasMany(Product::class);
     }
+    public function promotions()
+    {
+        return $this->morphMany(Promotion::class, 'promotable');
+    }
 }

@@ -23,4 +23,6 @@ Route::prefix('pos')->group(function () {
     // Clientes
     Route::get('/customers', [PosIntegrationController::class, 'searchCustomers']);
     Route::post('/customers', [PosIntegrationController::class, 'storeCustomer']);
+    // Promociones
+    Route::get('/promotions', [PosIntegrationController::class, 'getPromotions']);
 });

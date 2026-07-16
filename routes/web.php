@@ -9,6 +9,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CashSessionController;
 use App\Http\Controllers\InventoryAdjustmentController;
@@ -37,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('providers', ProviderController::class)->only(['index']);
         Route::get('departments/{department}/categories', [CategoryController::class, 'getByDepartment'])->name('departments.categories');
         Route::resource('products', ProductController::class)->only(['index']);
+        Route::resource('promotions', PromotionController::class)->only(['index']);
         
         Route::get('/inventory-adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory-adjustments.index');
         Route::get('/inventory-adjustments/search-products', [InventoryAdjustmentController::class, 'searchProducts'])->name('inventory-adjustments.search-products');
@@ -52,6 +54,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('brands', BrandController::class)->except(['index', 'create', 'show']);
         Route::resource('providers', ProviderController::class)->except(['index', 'create', 'show']);
         Route::resource('products', ProductController::class)->except(['index', 'show']);
+        Route::resource('promotions', PromotionController::class)->except(['index', 'create', 'show', 'edit']);
         
         Route::post('/inventory-adjustments', [InventoryAdjustmentController::class, 'store'])->name('inventory-adjustments.store');
         Route::put('/inventory-adjustments/{id}/batches', [InventoryAdjustmentController::class, 'updateBatches'])->name('inventory-adjustments.update-batches');

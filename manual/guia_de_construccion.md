@@ -976,3 +976,23 @@ Al presionar el botón de apagado (Power) en CapyPOS, el sistema pregunta:
   - **Controlador (`ParameterController`):** Modificado para extraer y validar los datos de la empresa y la modalidad de impresión.
   - **Vistas:** Actualizada la vista de parámetros (`parametros.blade.php`) para incluir una nueva tarjeta con el formulario de "Datos de la Empresa y Modalidad".
   - **Exportación a POS:** `PosIntegrationController` inyecta ahora los datos de la empresa y la configuración `is_fiscal` dentro del objeto global `pos_config` enviado al Punto de Venta al iniciar sesión, y también a través de los endpoints de validación rápida (`checkSession` y `openSession`) garantizando sincronización en tiempo real.
+
+## 🎁 Módulo de Promociones y Descuentos - 2026-07-16
+### Descripción
+Se creó un sistema completo para gestionar promociones y descuentos dinámicos (porcentaje o monto fijo) asignables a distintos niveles del inventario y finanzas. 
+
+### Modelo de Datos (`app/Models/Promotion.php`)
+- **Migración (`2026_07_16_150420_create_promotions_table`)**: Define la tabla `promotions` utilizando relaciones polimórficas (`promotable_id` y `promotable_type`) lo cual permite que un descuento apunte a un `Product`, `Category`, `Department`, `Currency`, o `PaymentMethod`. 
+- Incorpora atributos como `name`, `discount_type` ('percentage' o 'fixed'), `discount_value`, `start_date`, `end_date`, y un toggle de activación `active`.
+
+### Controlador (`app/Http/Controllers/PromotionController.php`)
+- Gestiona el CRUD completo mediante peticiones asíncronas JSON.
+- Implementa métodos para listar (DataTable), crear, y alternar el estado (toggle) sin recargar la página.
+
+### Vistas e Interfaz (`resources/views/inventory/promotions/index.blade.php`)
+- **Modal de Creación Inteligente**: Usando `Select2` y `Flatpickr`, el formulario de creación es dinámico. Al elegir un "Nivel de Aplicación" (ej. Categoría o Moneda), el campo inferior se vacía y repuebla usando opciones maestras ocultas, logrando un filtrado instantáneo para seleccionar el objetivo correcto.
+- **Frontend Mejorado**: Se aplicaron micro-animaciones, tablas limpias, y alertas estéticas. El ancho del modal fue ajustado (800px) para acomodar los selectores cómodamente.
+
+### Integración con CapyPOS
+- **Backend (PosIntegrationController)**: Expone el endpoint `/api/pos/promotions` que entrega la lista de promociones activas (cuya fecha de inicio/fin abarque el día actual) para el POS. Los productos buscados ahora exportan su `category_id` y `department_id`.
+- **Frontend (CapyPOS `home.blade.php`)**: Descarga el arreglo de promociones al iniciar sesión (`fetchPromotions`). Al escanear productos, el motor de `updateTotals()` cruza el producto, su categoría, y su departamento con las promociones, seleccionando y aplicando automáticamente el descuento mayor. Además, al momento de pagar (`calculateCheckoutTotalBase`), recalcula toda la factura en tiempo real si el usuario elige una moneda o método de pago bonificado.

@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('currencies', function (Blueprint $table) {
-            $table->boolean('is_base')->default(false)->after('is_default');
-        });
+        if (!Schema::hasColumn('currencies', 'is_base')) {
+            Schema::table('currencies', function (Blueprint $table) {
+                $table->boolean('is_base')->default(false)->after('is_default');
+            });
+        }
     }
 
     /**

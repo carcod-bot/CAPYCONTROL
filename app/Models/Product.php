@@ -77,4 +77,8 @@ class Product extends Model
     {
         return $this->batches()->where('current_quantity', '>', 0)->orderBy('created_at', 'asc')->get();
     }
+    public function promotions()
+    {
+        return $this->morphMany(Promotion::class, 'promotable');
+    }
 }

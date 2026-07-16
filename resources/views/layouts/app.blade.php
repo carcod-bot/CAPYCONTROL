@@ -55,7 +55,7 @@
 
                         @if(Auth::user()->hasPermission('inventory.view'))
                         <div class="topbar-dropdown" id="inventarioDropdown">
-                            <button class="topbar-dropdown-toggle {{ request()->routeIs('products.*', 'categories.*', 'departments.*', 'settings.*', 'brands.*', 'providers.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('inventarioDropdown')">
+                            <button class="topbar-dropdown-toggle {{ request()->routeIs('products.*', 'categories.*', 'departments.*', 'settings.*', 'brands.*', 'providers.*', 'promotions.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('inventarioDropdown')">
                                 <i class="fa-solid fa-box"></i> Inventario <i class="fa-solid fa-chevron-down chevron"></i>
                             </button>
                             <div class="topbar-dropdown-menu">
@@ -78,6 +78,9 @@
                                     <i class="fa-solid fa-cog"></i> Configuración
                                 </a>
                                 <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+                                <a href="{{ route('promotions.index') }}" class="topbar-dropdown-item {{ request()->routeIs('promotions.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-percent"></i> Promociones
+                                </a>
                                 <a href="{{ route('inventory-adjustments.index') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory-adjustments.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-scale-balanced"></i> Ajustes y Conteo
                                 </a>

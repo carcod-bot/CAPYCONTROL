@@ -16,4 +16,8 @@ class PaymentMethod extends Model
     {
         return $this->belongsTo(Currency::class);
     }
+    public function promotions()
+    {
+        return $this->morphMany(Promotion::class, 'promotable');
+    }
 }
