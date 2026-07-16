@@ -994,5 +994,4 @@ Se creó un sistema completo para gestionar promociones y descuentos dinámicos 
 - **Frontend Mejorado**: Se aplicaron micro-animaciones, tablas limpias, y alertas estéticas. El ancho del modal fue ajustado (800px) para acomodar los selectores cómodamente.
 
 ### Integración con CapyPOS
-- **Backend (PosIntegrationController)**: Expone el endpoint `/api/pos/promotions` que entrega la lista de promociones activas (cuya fecha de inicio/fin abarque el día actual) para el POS. Los productos buscados ahora exportan su `category_id` y `department_id`.
-- **Frontend (CapyPOS `home.blade.php`)**: Descarga el arreglo de promociones al iniciar sesión (`fetchPromotions`). Al escanear productos, el motor de `updateTotals()` cruza el producto, su categoría, y su departamento con las promociones, seleccionando y aplicando automáticamente el descuento mayor. Además, al momento de pagar (`calculateCheckoutTotalBase`), recalcula toda la factura en tiempo real si el usuario elige una moneda o método de pago bonificado.
+- **Backend (PosIntegrationController)**: Expone el endpoint `/api/pos/promotions` que entrega la lista de promociones activas (cuya fecha de inicio/fin abarque el día actual) para el POS. Los productos buscados ahora exportan su `category_id` y `department_id` para que el punto de venta (CapyPOS) pueda aplicar la lógica de descuentos.
