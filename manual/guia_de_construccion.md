@@ -236,6 +236,12 @@ capycontrol/
 | `deposit(Request $request, CashSession)` | `/pos-control/sessions/{cashSession}/deposit` | POST | Registra un depósito de dinero en la caja. |
 | `show(CashSession)` | `/pos-control/sessions/{cashSession}` | GET | Devuelve los detalles de una sesión específica. |
 
+### PosEventController (`app/Http/Controllers/PosEventController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `index(Request $request)` | `/pos-control/events` | GET | Muestra el registro de Operaciones Autorizadas (como reportes Z, retiros, apertura de gavetas). Permite filtrar por tipo de evento y búsqueda libre (supervisor, detalles, etc). |
+
 ---
 
 ## 📦 Modelos
@@ -596,6 +602,16 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 | `index(Request $request)` | `/inventory-adjustments` | GET | Muestra el historial de ajustes y conteos físicos. Permite filtrar por tipo y producto. |
 | `store(Request $request)` | `/inventory-adjustments` | POST | Registra un nuevo ajuste y gestiona los **Lotes (ProductBatches)** mediante metodología **FIFO**. Las entradas (`in`) crean lotes nuevos, las salidas (`out`) descuentan el stock de los lotes más viejos activos. Un conteo físico (`set`) calcula la diferencia e ingresa un lote de ajuste o descuenta lotes según sea necesario. |
 | `searchProducts(Request $request)` | `/inventory-adjustments/search-products` | GET | Retorna resultados de búsqueda JSON (AJAX) para seleccionar productos en el formulario de ajuste. |
+
+---
+
+### PrintController (`app/Http/Controllers/Inventory/PrintController.php`)
+
+| Método | Ruta | Tipo | Descripción |
+|--------|------|------|-------------|
+| `index()` | `/inventory/prints` | GET | Interfaz para preparar la cola de impresión de etiquetas y habladores. |
+| `search(Request $request)` | `/inventory/prints/search` | GET | Búsqueda AJAX de productos activos. |
+| `generate(Request $request)` | `/inventory/prints/generate` | POST | Genera la vista de impresión en HTML para el navegador. Configurable por tipo (`labels`, `talkers`), código (`ean`, `private`) y dimensiones. |
 
 ---
 
