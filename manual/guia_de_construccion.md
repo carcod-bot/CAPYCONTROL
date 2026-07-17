@@ -169,6 +169,7 @@ capycontrol/
 | `edit(Product $product)` | `/products/{product}/edit` | GET | Retorna datos del producto para edición. Soporta respuesta JSON (AJAX) o vista Blade. Carga departamentos, categorías, marcas y proveedores. |
 | `update(Request $request, Product)` | `/products/{product}` | PUT | Actualiza un producto existente. Elimina imagen anterior si se sube una nueva. Misma lógica de validación y genéricos que `store`. |
 | `destroy(Request $request, Product)` | `/products/{product}` | DELETE | Elimina un producto y su imagen asociada del disco. |
+| `massivePriceAdjustment(Request $request)` | `/products/massive-adjustment` | POST | Realiza ajustes masivos de precio (aumentos o descuentos en porcentaje o monto fijo) aplicando a múltiples productos mediante filtros por categoría, departamento, marca, proveedor, o seleccionando productos específicos mediante una tabla dinámica. Registra una traza en `AuditLog`. |
 
 **Rutas excluidas del resource:** `show`
 
@@ -276,6 +277,22 @@ Almacena los productos individuales que han sido devueltos a la tienda en una De
 | `status` | string (pending_review, restocked, discarded) |
 
 
+
+### AuditLog (`app/Models/AuditLog.php`)
+
+Almacena el historial de cambios importantes en el sistema (ej: ajustes masivos de precio) para propósitos de auditoría y rastreo de acciones por usuario.
+
+| Campo | Tipo |
+|-------|------|
+| `user_id` | foreignId |
+| `action` | string |
+| `model_type` | string (nullable) |
+| `model_id` | unsignedBigInteger (nullable) |
+| `old_values` | json (nullable) |
+| `new_values` | json (nullable) |
+| `details` | json (nullable) |
+
+---
 
 ### User (`app/Models/User.php`)
 
@@ -770,7 +787,9 @@ User (independiente con roles y permisos)
 - ✅ Soporte dual: respuestas AJAX/JSON y redirecciones tradicionales
 - ✅ Carga dinámica de categorías por departamento
 - ✅ Protección de rutas con middleware `auth`
-- ✅ Mensajes y validaciones en español
+- ✅ Mensajes, alertas y validaciones en español, utilizando **SweetAlert2** para modales estéticos
+- ✅ Ajuste Masivo de Precios con filtros por Categoría, Departamento, Marca, Proveedor o Selección Específica.
+- ✅ Registro de auditoría (AuditLog) para trazabilidad de cambios críticos.
 
 ---
 

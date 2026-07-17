@@ -25,6 +25,10 @@ class UserController extends Controller
         'pos_control.sessions',
         'configuraciones.view',
         'configuraciones.edit',
+        'promotions.view',
+        'promotions.edit',
+        'admin.view',
+        'admin.edit',
     ];
 
     /**
@@ -43,6 +47,10 @@ class UserController extends Controller
         'pos_control.sessions' => ['label' => 'Abrir / Cerrar Turnos',       'group' => 'CapyControl — Módulos'],
         'configuraciones.view' => ['label' => 'Ver Configuraciones',         'group' => 'CapyControl — Módulos'],
         'configuraciones.edit' => ['label' => 'Editar Usuarios y Roles',     'group' => 'CapyControl — Módulos'],
+        'promotions.view'      => ['label' => 'Ver Promociones',             'group' => 'CapyControl — Módulos'],
+        'promotions.edit'      => ['label' => 'Editar Promociones',          'group' => 'CapyControl — Módulos'],
+        'admin.view'           => ['label' => 'Ver Administración',          'group' => 'CapyControl — Módulos'],
+        'admin.edit'           => ['label' => 'Gestionar Administración',    'group' => 'CapyControl — Módulos'],
     ];
 
     public function index()

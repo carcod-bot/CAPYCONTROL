@@ -38,12 +38,16 @@ Route::middleware('auth')->group(function () {
         Route::resource('providers', ProviderController::class)->only(['index']);
         Route::get('departments/{department}/categories', [CategoryController::class, 'getByDepartment'])->name('departments.categories');
         Route::resource('products', ProductController::class)->only(['index']);
-        Route::resource('promotions', PromotionController::class)->only(['index']);
         
         Route::get('/inventory-adjustments', [InventoryAdjustmentController::class, 'index'])->name('inventory-adjustments.index');
         Route::get('/inventory-adjustments/search-products', [InventoryAdjustmentController::class, 'searchProducts'])->name('inventory-adjustments.search-products');
         Route::get('/inventory-adjustments/{id}/lifecycle', [InventoryAdjustmentController::class, 'getBatchLifecycle'])->name('inventory-adjustments.lifecycle');
         Route::get('/inventory-adjustments/{id}/batches/edit', [InventoryAdjustmentController::class, 'editBatches'])->name('inventory-adjustments.edit-batches');
+        
+        // Printing
+        Route::get('inventory/prints', [\App\Http\Controllers\Inventory\PrintController::class, 'index'])->name('inventory.prints');
+        Route::get('inventory/prints/search', [\App\Http\Controllers\Inventory\PrintController::class, 'search'])->name('inventory.prints.search');
+        Route::post('inventory/prints/generate', [\App\Http\Controllers\Inventory\PrintController::class, 'generate'])->name('inventory.prints.generate');
         
         Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
     });
@@ -53,32 +57,45 @@ Route::middleware('auth')->group(function () {
         Route::resource('categories', CategoryController::class)->except(['index', 'create', 'show']);
         Route::resource('brands', BrandController::class)->except(['index', 'create', 'show']);
         Route::resource('providers', ProviderController::class)->except(['index', 'create', 'show']);
-        Route::resource('products', ProductController::class)->except(['index', 'show']);
-        Route::resource('promotions', PromotionController::class)->except(['index', 'create', 'show', 'edit']);
         
+        Route::post('/products/massive-adjustment', [ProductController::class, 'massivePriceAdjustment'])->name('products.massive-adjustment');
+        Route::resource('products', ProductController::class)->except(['index', 'show']);
+
         Route::post('/inventory-adjustments', [InventoryAdjustmentController::class, 'store'])->name('inventory-adjustments.store');
         Route::put('/inventory-adjustments/{id}/batches', [InventoryAdjustmentController::class, 'updateBatches'])->name('inventory-adjustments.update-batches');
         Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
     });
 
+    // --- Promotions Module ---
+    Route::middleware('permission:promotions.view')->group(function () {
+        Route::resource('promotions', PromotionController::class)->only(['index']);
+    });
+    
+    Route::middleware('permission:promotions.edit')->group(function () {
+        Route::resource('promotions', PromotionController::class)->except(['index', 'create', 'show', 'edit']);
+    });
+
     // --- Administration Module ---
-    Route::middleware('permission:finances.view')->group(function () {
+    Route::middleware('permission:admin.view')->group(function () {
         Route::get('admin/cuadre', [\App\Http\Controllers\Administration\CuadreController::class, 'index'])->name('admin.cuadre.index');
         Route::get('admin/cuadre/{session}/declaration-fields', [\App\Http\Controllers\Administration\CuadreController::class, 'declarationFields']);
-        Route::post('admin/cuadre/{session}/force-close', [\App\Http\Controllers\Administration\CuadreController::class, 'forceClose'])->name('admin.cuadre.force-close');
         
         Route::get('admin/invoices', [\App\Http\Controllers\Administration\InvoiceController::class, 'index'])->name('admin.invoices.index');
         Route::get('admin/invoices/{invoice}', [\App\Http\Controllers\Administration\InvoiceController::class, 'show'])->name('admin.invoices.show');
+
+        // Declarations
+        Route::get('finances/declarations', [App\Http\Controllers\DeclarationReportController::class, 'index'])->name('declarations.index');
+        Route::get('finances/declarations/{session}', [App\Http\Controllers\DeclarationReportController::class, 'show'])->name('declarations.show');
+    });
+
+    Route::middleware('permission:admin.edit')->group(function () {
+        Route::post('admin/cuadre/{session}/force-close', [\App\Http\Controllers\Administration\CuadreController::class, 'forceClose'])->name('admin.cuadre.force-close');
     });
 
     // --- Finances Module ---
     Route::middleware('permission:finances.view')->group(function () {
         Route::get('currencies', [App\Http\Controllers\CurrencyController::class, 'index'])->name('currencies.index');
         Route::get('api/currencies', [App\Http\Controllers\CurrencyController::class, 'fetchAll']);
-        
-        // Declarations
-        Route::get('finances/declarations', [App\Http\Controllers\DeclarationReportController::class, 'index'])->name('declarations.index');
-        Route::get('finances/declarations/{session}', [App\Http\Controllers\DeclarationReportController::class, 'show'])->name('declarations.show');
     });
     Route::middleware('permission:finances.edit')->group(function () {
         Route::post('api/currencies', [App\Http\Controllers\CurrencyController::class, 'store']);
@@ -93,6 +110,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:pos_control.view')->group(function () {
         Route::get('/pos-control', [CashRegisterController::class, 'index'])->name('pos-control.index');
         Route::get('/pos-control/registers', [CashRegisterController::class, 'registers'])->name('pos-control.registers');
+        Route::get('/pos-control/events', [App\Http\Controllers\PosEventController::class, 'index'])->name('pos-control.events');
         Route::get('/pos-control/registers/{cashRegister}/sessions', [CashRegisterController::class, 'sessions'])->name('pos-control.registers.sessions');
         Route::get('/pos-control/sessions/{cashSession}', [CashSessionController::class, 'show'])->name('pos-control.sessions.show');
     });

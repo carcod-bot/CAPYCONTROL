@@ -12,15 +12,23 @@
     .tab-pane { display: none; padding-top: 1.5rem; }
     .tab-pane.active { display: block; }
     
-    .permissions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
-    .permission-group { background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-    .permission-group-title { font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+    .permissions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+    .permission-group { display: flex; flex-direction: column; gap: 0.75rem; }
+    .permission-group-items { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem 1rem; }
+    .permission-group-title { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
     .permission-group-title i { color: var(--primary); }
     
-    .permission-checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; cursor: pointer; }
-    .permission-checkbox:last-child { margin-bottom: 0; }
-    .permission-checkbox input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
-    .permission-label-text { font-size: 0.85rem; font-weight: 500; color: var(--text-main); }
+    .permission-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 10px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; margin-left: -10px; }
+    .permission-item:hover { background-color: rgba(79, 70, 229, 0.05); }
+    
+    .toggle-switch { position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; margin-top: 2px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .3s ease; border-radius: 34px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .3s ease; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle-switch input:checked + .toggle-slider { background-color: var(--primary); }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+    
+    .permission-label-text { font-size: 0.85rem; font-weight: 500; color: var(--text-main); user-select: none; line-height: 1.25; padding-top: 3px; }
     
     .badge-role { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: #f1f5f9; color: #64748b; }
     .badge-role.system { background: #dcfce7; color: #16a34a; }
@@ -150,7 +158,7 @@
                                 <td class="text-muted" style="font-size: 0.9rem;">{{ $r->description }}</td>
                                 <td>
                                     <span style="font-size:0.85rem; font-weight:700; color:var(--primary); background:var(--primary-light); padding:4px 8px; border-radius:8px;">
-                                        {{ count($r->permissions ?? []) }} / {{ count($allPermissions) }}
+                                        {{ $r->name === 'Administrador' ? count($allPermissions) : count($r->permissions ?? []) }} / {{ count($allPermissions) }}
                                     </span>
                                 </td>
                                 <td>
@@ -179,7 +187,7 @@
 <!-- MODAL: USUARIO -->
 <!-- ============================================== -->
 <div id="userModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 850px;">
+    <div class="modal-content" style="max-width: 950px;">
         <div class="modal-header">
             <h3 id="userModalTitle"><i class="fa-solid fa-user-plus" style="color:var(--primary); margin-right:8px;"></i> Nuevo Usuario</h3>
             <button type="button" class="modal-close" onclick="closeModal('userModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -230,12 +238,17 @@
                                 <div class="permission-group-title">
                                     <i class="fa-solid fa-layer-group"></i> {{ $groupName }}
                                 </div>
-                                @foreach($keys as $key)
-                                    <label class="permission-checkbox">
-                                        <input type="checkbox" name="u_perms[]" value="{{ $key }}">
-                                        <span class="permission-label-text">{{ $permissionLabels[$key]['label'] }}</span>
-                                    </label>
-                                @endforeach
+                                <div class="permission-group-items">
+                                    @foreach($keys as $key)
+                                        <label class="permission-item">
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" name="u_perms[]" value="{{ $key }}">
+                                                <span class="toggle-slider"></span>
+                                            </div>
+                                            <span class="permission-label-text">{{ $permissionLabels[$key]['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -253,7 +266,7 @@
 <!-- MODAL: ROL -->
 <!-- ============================================== -->
 <div id="roleModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 850px;">
+    <div class="modal-content" style="max-width: 950px;">
         <div class="modal-header">
             <h3 id="roleModalTitle"><i class="fa-solid fa-shield-plus" style="color:var(--primary); margin-right:8px;"></i> Nuevo Rol</h3>
             <button type="button" class="modal-close" onclick="closeModal('roleModal')"><i class="fa-solid fa-xmark"></i></button>
@@ -286,12 +299,17 @@
                                 <div class="permission-group-title">
                                     <i class="fa-solid fa-layer-group"></i> {{ $groupName }}
                                 </div>
-                                @foreach($keys as $key)
-                                    <label class="permission-checkbox">
-                                        <input type="checkbox" name="r_perms[]" value="{{ $key }}">
-                                        <span class="permission-label-text">{{ $permissionLabels[$key]['label'] }}</span>
-                                    </label>
-                                @endforeach
+                                <div class="permission-group-items">
+                                    @foreach($keys as $key)
+                                        <label class="permission-item">
+                                            <div class="toggle-switch">
+                                                <input type="checkbox" name="r_perms[]" value="{{ $key }}">
+                                                <span class="toggle-slider"></span>
+                                            </div>
+                                            <span class="permission-label-text">{{ $permissionLabels[$key]['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -498,7 +516,11 @@
         document.getElementById('roleModalTitle').innerHTML = '<i class="fa-solid fa-shield-halved" style="color:var(--primary); margin-right:8px;"></i> Editar Rol';
         
         document.querySelectorAll('input[name="r_perms[]"]').forEach(cb => {
-            cb.checked = perms.includes(cb.value);
+            if (isSystem && name === 'Administrador') {
+                cb.checked = true;
+            } else {
+                cb.checked = perms.includes(cb.value);
+            }
         });
 
         if (isSystem && name === 'Administrador') {

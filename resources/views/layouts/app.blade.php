@@ -53,12 +53,13 @@
                         </a>
                         @endif
 
-                        @if(Auth::user()->hasPermission('inventory.view'))
+                        @if(Auth::user()->hasPermission('inventory.view') || Auth::user()->hasPermission('promotions.view'))
                         <div class="topbar-dropdown" id="inventarioDropdown">
                             <button class="topbar-dropdown-toggle {{ request()->routeIs('products.*', 'categories.*', 'departments.*', 'settings.*', 'brands.*', 'providers.*', 'promotions.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('inventarioDropdown')">
                                 <i class="fa-solid fa-box"></i> Inventario <i class="fa-solid fa-chevron-down chevron"></i>
                             </button>
                             <div class="topbar-dropdown-menu">
+                                @if(Auth::user()->hasPermission('inventory.view'))
                                 <a href="{{ route('products.index') }}" class="topbar-dropdown-item {{ request()->routeIs('products.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-cube"></i> Productos
                                 </a>
@@ -77,13 +78,24 @@
                                 <a href="{{ route('settings.index') }}" class="topbar-dropdown-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-cog"></i> Configuración
                                 </a>
+                                @endif
+                                
+                                @if(Auth::user()->hasPermission('promotions.view'))
                                 <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
                                 <a href="{{ route('promotions.index') }}" class="topbar-dropdown-item {{ request()->routeIs('promotions.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-percent"></i> Promociones
                                 </a>
+                                @endif
+
+                                @if(Auth::user()->hasPermission('inventory.view'))
                                 <a href="{{ route('inventory-adjustments.index') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory-adjustments.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-scale-balanced"></i> Ajustes y Conteo
                                 </a>
+                                <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
+                                <a href="{{ route('inventory.prints') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory.prints') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-print"></i> Impresiones
+                                </a>
+                                @endif
                             </div>
                         </div>
                         @endif                        @if(Auth::user()->hasPermission('finances.view'))
@@ -99,7 +111,7 @@
                         </div>
                         @endif
 
-                        @if(Auth::user()->hasPermission('finances.view') || Auth::user()->hasPermission('pos_control.view'))
+                        @if(Auth::user()->hasPermission('admin.view'))
                         <div class="topbar-dropdown" id="adminDropdown">
                             <button class="topbar-dropdown-toggle {{ request()->routeIs('declarations.*', 'admin.*') ? 'active' : '' }}" onclick="toggleTopbarDropdown('adminDropdown')">
                                 <i class="fa-solid fa-user-tie"></i> Administración <i class="fa-solid fa-chevron-down chevron"></i>
@@ -132,6 +144,9 @@
                                     <i class="fa-solid fa-server"></i> Gestión de Cajas
                                 </a>
                                 @endif
+                                <a href="{{ route('pos-control.events') }}" class="topbar-dropdown-item {{ request()->routeIs('pos-control.events') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-shield-halved"></i> Operaciones Autorizadas
+                                </a>
                             </div>
                         </div>
                         @endif
@@ -319,29 +334,42 @@
         }
 
         async function deleteAjax(url, successCallback) {
-            if(!confirm('¿Estás seguro de eliminar este registro?')) return;
-            showGlobalLoader();
-            try {
-                const response = await fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            Swal.fire({
+                title: '¿Eliminar registro?',
+                text: "Esta acción no se puede deshacer.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: 'var(--border)',
+                confirmButtonText: '<i class="fa-solid fa-trash"></i> Sí, eliminar',
+                cancelButtonText: 'Cancelar',
+                background: document.body.classList.contains('dark-mode') ? 'var(--surface)' : '#fff',
+                color: document.body.classList.contains('dark-mode') ? 'var(--text-main)' : '#545454'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    showGlobalLoader();
+                    try {
+                        const response = await fetch(url, {
+                            method: 'DELETE',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            if(successCallback) successCallback(data);
+                        } else {
+                            showToast(data.message || 'Error al eliminar');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('Error de conexión.');
                     }
-                });
-                const data = await response.json();
-                if (response.ok && data.success) {
-                    if(successCallback) successCallback(data);
-                } else {
-                    showToast(data.message || 'Error al eliminar');
+                    hideGlobalLoader();
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Error de conexión.');
-
-            }
-            hideGlobalLoader();
+            });
         }
     </script>
     @stack('scripts')

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Department;
 use App\Models\Category;
 use App\Models\Setting;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,7 +40,7 @@ class ProductController extends Controller
             $query->where('price_usd', '<=', $request->price_max);
         }
 
-        $products = $query->orderBy('name')->paginate(20)->withQueryString();
+        $products = $query->orderBy('name')->paginate(10)->withQueryString();
         
         // Modal variables
         $departments = Department::where('active', true)->orderBy('name')->get();
@@ -196,5 +197,157 @@ class ProductController extends Controller
             return response()->json(['success' => true, 'message' => 'Producto eliminado exitosamente']);
         }
         return redirect()->route('products.index')->with('success', 'Producto eliminado exitosamente');
+    }
+
+    public function massivePriceAdjustment(Request $request)
+    {
+        $rules = [
+            'apply_to' => 'required|in:category,department,brand,provider,products',
+        ];
+
+        if ($request->apply_to === 'products') {
+            $rules['products'] = 'required|array|min:1';
+            $rules['products.*.product_id'] = 'required|exists:products,id';
+            $rules['products.*.adjustment_type'] = 'required|in:percent_inc,percent_dec,fixed_inc,fixed_dec';
+            $rules['products.*.adjustment_value'] = 'required|numeric|min:0.01';
+        } else {
+            $rules['category_id'] = 'required_if:apply_to,category';
+            $rules['department_id'] = 'required_if:apply_to,department';
+            $rules['brand_id'] = 'required_if:apply_to,brand';
+            $rules['provider_id'] = 'required_if:apply_to,provider';
+            $rules['adjustment_type'] = 'required|in:percent_inc,percent_dec,fixed_inc,fixed_dec';
+            $rules['adjustment_value'] = 'required|numeric|min:0.01';
+        }
+
+        $request->validate($rules);
+
+        $oldValues = [];
+        $newValues = [];
+        $affectedCount = 0;
+
+        if ($request->apply_to === 'products') {
+            foreach ($request->products as $item) {
+                $product = Product::find($item['product_id']);
+                if (!$product) continue;
+                
+                $oldPrice = floatval($product->price_usd);
+                $newPrice = $oldPrice;
+                $val = floatval($item['adjustment_value']);
+                $type = $item['adjustment_type'];
+
+                if ($type == 'percent_inc') {
+                    $newPrice = $oldPrice * (1 + ($val / 100));
+                } elseif ($type == 'percent_dec') {
+                    $newPrice = $oldPrice * (1 - ($val / 100));
+                } elseif ($type == 'fixed_inc') {
+                    $newPrice = $oldPrice + $val;
+                } elseif ($type == 'fixed_dec') {
+                    $newPrice = $oldPrice - $val;
+                }
+
+                if ($newPrice < 0) $newPrice = 0;
+                $newPrice = round($newPrice, 2);
+
+                $oldValues[$product->id] = $oldPrice;
+                $newValues[$product->id] = $newPrice;
+
+                $product->price_usd = $newPrice;
+                $product->save();
+                $affectedCount++;
+            }
+            
+            if ($affectedCount === 0) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'No se encontraron productos para actualizar.']);
+                }
+                return redirect()->back()->with('error', 'No se encontraron productos para actualizar.');
+            }
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'massive_price_adjustment',
+                'model_type' => Product::class,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'details' => json_encode([
+                    'apply_to' => 'products',
+                    'affected_count' => $affectedCount
+                ])
+            ]);
+        } else {
+            $query = Product::query();
+
+            if ($request->apply_to == 'category') {
+                $query->where('category_id', $request->category_id);
+            } elseif ($request->apply_to == 'department') {
+                $query->where('department_id', $request->department_id);
+            } elseif ($request->apply_to == 'brand') {
+                $query->where('brand_id', $request->brand_id);
+            } elseif ($request->apply_to == 'provider') {
+                $query->where('provider_id', $request->provider_id);
+            }
+
+            $products = $query->get();
+            if ($products->isEmpty()) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'No se encontraron productos para actualizar.']);
+                }
+                return redirect()->back()->with('error', 'No se encontraron productos para actualizar.');
+            }
+
+            $val = floatval($request->adjustment_value);
+            $type = $request->adjustment_type;
+
+            foreach ($products as $product) {
+                $oldPrice = floatval($product->price_usd);
+                $newPrice = $oldPrice;
+
+                if ($type == 'percent_inc') {
+                    $newPrice = $oldPrice * (1 + ($val / 100));
+                } elseif ($type == 'percent_dec') {
+                    $newPrice = $oldPrice * (1 - ($val / 100));
+                } elseif ($type == 'fixed_inc') {
+                    $newPrice = $oldPrice + $val;
+                } elseif ($type == 'fixed_dec') {
+                    $newPrice = $oldPrice - $val;
+                }
+
+                if ($newPrice < 0) $newPrice = 0;
+                $newPrice = round($newPrice, 2);
+
+                $oldValues[$product->id] = $oldPrice;
+                $newValues[$product->id] = $newPrice;
+
+                $product->price_usd = $newPrice;
+                $product->save();
+            }
+            $affectedCount = $products->count();
+
+            $targetId = null;
+            if ($request->apply_to == 'category') $targetId = $request->category_id;
+            elseif ($request->apply_to == 'department') $targetId = $request->department_id;
+            elseif ($request->apply_to == 'brand') $targetId = $request->brand_id;
+            elseif ($request->apply_to == 'provider') $targetId = $request->provider_id;
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'massive_price_adjustment',
+                'model_type' => Product::class,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'details' => json_encode([
+                    'apply_to' => $request->apply_to,
+                    'target_id' => $targetId,
+                    'type' => $type,
+                    'value' => $val,
+                    'affected_count' => $affectedCount
+                ])
+            ]);
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Precios actualizados masivamente exitosamente. (' . $affectedCount . ' productos afectados)']);
+        }
+        return redirect()->route('products.index')->with('success', 'Precios actualizados exitosamente.');
     }
 }
