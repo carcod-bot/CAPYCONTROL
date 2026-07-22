@@ -42,6 +42,9 @@ class CustomerController extends Controller
 
         Customer::create($data);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Cliente creado exitosamente.']);
+        }
         return back()->with('success', 'Cliente creado exitosamente.');
     }
 
@@ -61,16 +64,26 @@ class CustomerController extends Controller
 
         $customer->update($data);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Cliente actualizado exitosamente.']);
+        }
         return back()->with('success', 'Cliente actualizado exitosamente.');
     }
 
     public function destroy(Customer $customer)
     {
         if ($customer->current_balance > 0) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'No se puede eliminar un cliente que tiene deudas pendientes.'], 403);
+            }
             return back()->with('error', 'No se puede eliminar un cliente que tiene deudas pendientes.');
         }
 
         $customer->delete();
+        
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Cliente eliminado.']);
+        }
         return back()->with('success', 'Cliente eliminado.');
     }
 }

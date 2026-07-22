@@ -35,3 +35,5 @@ class CreditAccount extends Model
     {
         return $this->hasMany(CreditPayment::class);
     }
+
+}
