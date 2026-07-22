@@ -25,6 +25,7 @@ class PaymentMethodController extends Controller
             'auto_declare' => 'boolean',
             'auto_deposit' => 'boolean',
             'used_in_admin_billing' => 'boolean',
+            'is_credit' => 'boolean',
         ]);
 
         $pm = PaymentMethod::create($data);
@@ -49,6 +50,7 @@ class PaymentMethodController extends Controller
             'auto_declare' => 'boolean',
             'auto_deposit' => 'boolean',
             'used_in_admin_billing' => 'boolean',
+            'is_credit' => 'boolean',
         ]);
 
         $paymentMethod->update($data);

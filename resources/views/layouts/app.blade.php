@@ -107,6 +107,12 @@
                                 <a href="{{ route('currencies.index') }}" class="topbar-dropdown-item {{ request()->routeIs('currencies.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-coins"></i> Monedas y Métodos de Pago
                                 </a>
+                                <a href="{{ route('customers.index') }}" class="topbar-dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-users"></i> Clientes
+                                </a>
+                                <a href="{{ route('credits.index') }}" class="topbar-dropdown-item {{ request()->routeIs('credits.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i> Cuentas por Cobrar
+                                </a>
                             </div>
                         </div>
                         @endif

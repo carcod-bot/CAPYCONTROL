@@ -75,6 +75,13 @@ class InventoryAdjustmentController extends Controller
         $brands = \App\Models\Brand::where('active', true)->orderBy('name')->get();
         $providers = \App\Models\Provider::where('active', true)->orderBy('name')->get();
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'isStockView' => $isStockView,
+                'data' => $isStockView ? $stockProducts : $adjustments
+            ]);
+        }
+
         return view('inventory.adjustments.index', compact('adjustments', 'brands', 'providers', 'isStockView', 'stockProducts'));
     }
 

@@ -429,6 +429,9 @@
                         <label class="checkbox-group" title="Permite recibir pagos mayores al total para entregarle la diferencia en efectivo al cliente.">
                             <input type="checkbox" id="pm_cash_advance"> Avance de Efectivo
                         </label>
+                        <label class="checkbox-group" title="Indica que este método representa un crédito o cuenta por cobrar para un cliente registrado.">
+                            <input type="checkbox" id="pm_is_credit"> Es Crédito / Cuentas x Cobrar
+                        </label>
                     </div>
                 </form>
             </div>
@@ -639,6 +642,7 @@
         document.getElementById('pm_auto_declare').checked = pm.auto_declare;
         document.getElementById('pm_auto_deposit').checked = pm.auto_deposit;
         document.getElementById('pm_used_in_admin_billing').checked = pm.used_in_admin_billing;
+        document.getElementById('pm_is_credit').checked = pm.is_credit;
         
         currentCurrencyId = currencyId;
         currentPmId = pm.id;
@@ -716,6 +720,7 @@
             auto_declare: document.getElementById('pm_auto_declare').checked ? 1 : 0,
             auto_deposit: document.getElementById('pm_auto_deposit').checked ? 1 : 0,
             used_in_admin_billing: document.getElementById('pm_used_in_admin_billing').checked ? 1 : 0,
+            is_credit: document.getElementById('pm_is_credit').checked ? 1 : 0,
             _token: '{{ csrf_token() }}'
         };
         

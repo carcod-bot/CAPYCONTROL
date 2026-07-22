@@ -96,8 +96,15 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:finances.view')->group(function () {
         Route::get('currencies', [App\Http\Controllers\CurrencyController::class, 'index'])->name('currencies.index');
         Route::get('api/currencies', [App\Http\Controllers\CurrencyController::class, 'fetchAll']);
+        
+        // Customers & Credits
+        Route::resource('customers', App\Http\Controllers\CustomerController::class)->only(['index']);
+        Route::get('finances/credits', [App\Http\Controllers\Finances\CreditController::class, 'index'])->name('credits.index');
+        Route::get('finances/credits/{customer}', [App\Http\Controllers\Finances\CreditController::class, 'show'])->name('credits.show');
     });
     Route::middleware('permission:finances.edit')->group(function () {
+        Route::resource('customers', App\Http\Controllers\CustomerController::class)->except(['index', 'create', 'show', 'edit']);
+        
         Route::post('api/currencies', [App\Http\Controllers\CurrencyController::class, 'store']);
         Route::put('api/currencies/{currency}', [App\Http\Controllers\CurrencyController::class, 'update']);
         Route::delete('api/currencies/{currency}', [App\Http\Controllers\CurrencyController::class, 'destroy']);

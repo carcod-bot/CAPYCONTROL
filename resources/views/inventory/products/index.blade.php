@@ -17,7 +17,7 @@
 
     <!-- Filtros de Búsqueda -->
     <div style="border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-        <form action="{{ route('products.index') }}" method="GET">
+        <form id="searchProductsForm" onsubmit="event.preventDefault(); loadData(1);">
             <div class="flex gap-4" style="flex-wrap: wrap; align-items: flex-end;">
                 <div class="form-group" style="flex: 1; min-width: 180px; margin-bottom: 0;">
                     <label class="form-label text-muted" style="font-size: 0.8rem; margin-bottom: 4px;">Código o EAN</label>
@@ -58,9 +58,7 @@
                 
                 <div class="flex items-end gap-2">
                     <button type="submit" class="btn btn-primary" style="padding: 0.85rem 1rem;"><i class="fa-solid fa-search"></i> Buscar</button>
-                    @if(request()->hasAny(['search_code', 'category_id', 'brand_id', 'price_min', 'price_max']))
-                        <a href="{{ route('products.index') }}" class="btn btn-secondary" style="padding: 0.85rem 1rem;" title="Limpiar"><i class="fa-solid fa-eraser"></i></a>
-                    @endif
+                    <button type="button" class="btn btn-secondary" style="padding: 0.85rem 1rem;" title="Limpiar" onclick="clearFilters()"><i class="fa-solid fa-eraser"></i></button>
                 </div>
             </div>
         </form>
@@ -74,7 +72,7 @@
                 <button class="modal-close" onclick="closeModal('createProductModal')"><i class="fa-solid fa-times"></i></button>
             </div>
             
-            <form id="createProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => window.location.reload())">
+            <form id="createProductForm" action="{{ route('products.store') }}" method="POST" enctype="multipart/form-data" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { closeModal('createProductModal'); loadData(currentPage); })">
                 @csrf
                 <div class="flex gap-4" style="flex-wrap: wrap;">
                     <div class="form-group" style="flex: 1; min-width: 250px;">
@@ -163,7 +161,7 @@
                 <button class="modal-close" onclick="closeModal('editProductModal')"><i class="fa-solid fa-times"></i></button>
             </div>
             
-            <form id="editProductForm" method="POST" enctype="multipart/form-data" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => window.location.reload())">
+            <form id="editProductForm" method="POST" enctype="multipart/form-data" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { closeModal('editProductModal'); loadData(currentPage); })">
                 @csrf
                 @method('PUT')
                 <div class="flex gap-4" style="flex-wrap: wrap;">
@@ -378,41 +376,13 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach($products as $product)
-                <tr id="row-{{ $product->id }}">
-                    <td>
-                        @if($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.outerHTML='<div style=\'width: 40px; height: 40px; border-radius: 8px; background: var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted);\'><i class=\'fa-solid fa-image\'></i></div>'">
-                        @else
-                            <div style="width: 40px; height: 40px; border-radius: 8px; background: var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted);"><i class="fa-solid fa-box"></i></div>
-                        @endif
-                    </td>
-                    <td style="font-family: monospace;">{{ $product->private_code }}</td>
-                    <td style="font-weight: 600;">{{ $product->name }}<br><small class="text-muted">{{ $product->ean_code }}</small></td>
-                    <td>
-                        <span class="badge" style="background:var(--primary-light); color:var(--primary);">{{ $product->department->name ?? 'N/A' }}</span>
-                        <span class="badge" style="background:#f1f5f9; color:#475569;">{{ $product->category->name ?? 'N/A' }}</span>
-                        <br>
-                        <span class="badge" style="background:#e0e7ff; color:#3730a3; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-copyright"></i> {{ optional($product->brand)->name ?? 'Genérico' }}</span>
-                        <span class="badge" style="background:#fef3c7; color:#92400e; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-truck"></i> {{ optional($product->provider)->name ?? 'Genérico' }}</span>
-                    </td>
-                    <td style="font-weight: 700; color: {{ $product->stock <= 0 ? 'var(--danger)' : 'var(--text-main)' }};">{{ floatval($product->stock) }}</td>
-                    <td style="font-weight: 700; color: #10b981;">${{ number_format($product->price_usd, 2) }}</td>
-                    <td>
-                        <button type="button" class="btn btn-secondary" onclick="editProduct({{ $product->id }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-edit"></i></button>
-                        <button type="button" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteAjax('{{ route('products.destroy', $product) }}', () => document.getElementById('row-{{ $product->id }}').remove())">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                @endforeach
+            <tbody id="products-tbody">
+                <tr><td colspan="7" class="text-center text-muted">Cargando productos...</td></tr>
             </tbody>
         </table>
     </div>
     
-    <div class="mt-4" style="padding: 0 1.5rem 1.5rem;">
-        {{ $products->links('pagination::bootstrap-4') }}
+    <div id="products-pagination" class="mt-4 flex justify-between items-center text-sm" style="display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem 1.5rem;">
     </div>
 </div>
 @endsection
@@ -449,7 +419,117 @@
 
         // Inicializar estado de los campos requeridos
         toggleAdjustmentTarget();
+        
+        loadData(1);
     });
+
+    let currentPage = 1;
+
+    async function loadData(page = 1) {
+        currentPage = page;
+        const tbody = document.getElementById('products-tbody');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Cargando productos...</td></tr>';
+        
+        // Build query string
+        const form = document.getElementById('searchProductsForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        params.append('page', page);
+
+        try {
+            const response = await fetch(`{{ route('products.index') }}?${params.toString()}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            renderTable(data.data);
+            renderPagination(data);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar datos.</td></tr>';
+        }
+    }
+
+    function clearFilters() {
+        document.getElementById('searchProductsForm').reset();
+        $('.filter-select2').val('').trigger('change');
+        loadData(1);
+    }
+
+    function renderTable(products) {
+        const tbody = document.getElementById('products-tbody');
+        tbody.innerHTML = '';
+        
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No se encontraron productos.</td></tr>';
+            return;
+        }
+
+        products.forEach(product => {
+            const deptName = product.department ? product.department.name : 'N/A';
+            const catName = product.category ? product.category.name : 'N/A';
+            const brandName = product.brand ? product.brand.name : 'Genérico';
+            const provName = product.provider ? product.provider.name : 'Genérico';
+            
+            const stockColor = product.stock <= 0 ? 'var(--danger)' : 'var(--text-main)';
+            
+            let imgHtml = `<div style="width: 40px; height: 40px; border-radius: 8px; background: var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted);"><i class="fa-solid fa-box"></i></div>`;
+            if (product.image) {
+                // Ensure correct path relative to storage
+                const imgUrl = `{{ asset('storage') }}/${product.image}`;
+                imgHtml = `<img src="${imgUrl}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" onerror="this.outerHTML='<div style=\\\'width: 40px; height: 40px; border-radius: 8px; background: var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted);\\\'><i class=\\\'fa-solid fa-image\\\'></i></div>'">`;
+            }
+
+            const eanHtml = product.ean_code ? `<br><small class="text-muted">${product.ean_code}</small>` : '';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${imgHtml}</td>
+                <td style="font-family: monospace;">${product.private_code}</td>
+                <td style="font-weight: 600;">${product.name}${eanHtml}</td>
+                <td>
+                    <span class="badge" style="background:var(--primary-light); color:var(--primary);">${deptName}</span>
+                    <span class="badge" style="background:#f1f5f9; color:#475569;">${catName}</span>
+                    <br>
+                    <span class="badge" style="background:#e0e7ff; color:#3730a3; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-copyright"></i> ${brandName}</span>
+                    <span class="badge" style="background:#fef3c7; color:#92400e; margin-top:4px; font-size:0.7rem;"><i class="fa-solid fa-truck"></i> ${provName}</span>
+                </td>
+                <td style="font-weight: 700; color: ${stockColor};">${parseFloat(product.stock)}</td>
+                <td style="font-weight: 700; color: #10b981;">$${parseFloat(product.price_usd).toFixed(2)}</td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="editProduct(${product.id})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-edit"></i></button>
+                    <button type="button" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteAjax('{{ url('products') }}/${product.id}', () => loadData(currentPage))">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPagination(data) {
+        const paginationContainer = document.getElementById('products-pagination');
+        if (data.last_page <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let buttonsHTML = `<div class="pagination-info text-muted">Mostrando ${data.from || 0} a ${data.to || 0} de ${data.total} resultados</div>`;
+        buttonsHTML += `<div style="display:flex; gap: 0.25rem;">`;
+        
+        if (data.current_page > 1) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page - 1})">&laquo; Ant</button>`;
+        }
+        
+        if (data.current_page < data.last_page) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page + 1})">Sig &raquo;</button>`;
+        }
+        
+        buttonsHTML += `</div>`;
+        paginationContainer.innerHTML = buttonsHTML;
+    }
 
     let massiveRowCount = 0;
     function addMassiveProductRow() {
@@ -662,7 +742,7 @@
                 submitAjaxForm(form, '{{ route("products.massive-adjustment") }}', function() {
                     closeModal('massiveAdjustmentModal');
                     showToast('Ajuste masivo aplicado exitosamente', 'success');
-                    setTimeout(() => window.location.reload(), 1500);
+                    loadData(currentPage);
                 });
             }
         });

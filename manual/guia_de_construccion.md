@@ -1030,3 +1030,20 @@ Se creó un sistema completo para gestionar promociones y descuentos dinámicos 
 
 ### Integración con CapyPOS
 - **Backend (PosIntegrationController)**: Expone el endpoint `/api/pos/promotions` que entrega la lista de promociones activas (cuya fecha de inicio/fin abarque el día actual) para el POS. Los productos buscados ahora exportan su `category_id` y `department_id` para que el punto de venta (CapyPOS) pueda aplicar la lógica de descuentos.
+
+## ⚙️ Actualizaciones Recientes (22/07/2026)
+### Mejoras de Interfaz y Experiencia de Usuario (UI/UX)
+- **Paginación en Tablas:** Se implementó paginación nativa de Laravel (Bootstrap 5) en diversas tablas, como Productos, Clientes, Cuentas por Cobrar y Operaciones Autorizadas, con soporte para 20 registros por página preservando los parámetros de búsqueda (Query Strings).
+- **Alertas SwalFire:** Se integraron alertas atractivas no intrusivas en la parte superior derecha de la pantalla (Toast de SweetAlert2) para notificar con éxito acciones críticas, por ejemplo, la confirmación de la carga de lotes de inventario y ajustes masivos.
+
+### Ampliación de Entidades en Ajustes y Descuentos
+- **Marcas y Proveedores:** Las entidades de Marca (Brand) y Proveedor (Provider) fueron incorporadas tanto en la interfaz y lógica de los **Ajustes de Inventario**, permitiendo filtrar y aplicar lotes de productos según su proveedor/marca. De la misma manera, se incluyeron en el **Módulo de Promociones y Descuentos**, para aplicar rebajas porcentuales o fijas de manera global a una marca o proveedor específico en CapyPOS.
+
+### Módulo de Operaciones Autorizadas
+- **Registro PosEvent:** Se creó el modelo, controlador y vista (PosEventController) en el backoffice que documenta todas las acciones sensibles que ocurren en caja (ej: devoluciones, retiros, cancelaciones de facturas) y quién las autorizó, permitiendo a los administradores mantener un historial inmutable de auditoría.
+
+### 💳 Módulo de Cuentas por Cobrar (Créditos)
+- **Modelos:** Se amplió Customer (incluyendo límite y deuda actual) y PaymentMethod (bandera de crédito). Se crearon CreditAccount (facturas pendientes) y CreditPayment (abonos).
+- **Integración API POS:** En PosIntegrationController, cuando se recibe un pago de crédito en la venta (storeSale), se genera la deuda del cliente validando su límite, y el monto a crédito no se suma al dinero físico de la caja (expected_amount). Se agregó el endpoint /api/pos/credit/pay para el cobro o abono de deudas. Los abonos distribuyen el pago (FIFO) en las cuentas pendientes y el cajero recibe este dinero ingresándolo al saldo de la caja de su turno activo.
+- **Controladores y Vistas:** Se implementó CustomerController (CRUD de clientes) y CreditController (estado de cuenta detallado de la deuda por cada factura).
+

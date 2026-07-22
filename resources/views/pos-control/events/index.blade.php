@@ -15,11 +15,19 @@
     <div class="card" style="padding: 1.5rem;">
         
         <!-- Search and Filter Form -->
-        <form method="GET" action="{{ route('pos-control.events') }}" class="mb-4 flex flex-wrap" style="gap: 1rem;">
-            <div class="form-group" style="flex: 1; min-width: 250px;">
+        <form method="GET" action="{{ route('pos-control.events') }}" class="mb-4 flex flex-wrap" style="gap: 1rem; align-items: flex-start;">
+            <div style="flex: 1; min-width: 250px;">
                 <input type="text" name="q" class="form-control" placeholder="Buscar por supervisor, detalles o cajero..." value="{{ request('q') }}">
             </div>
-            <div class="form-group" style="width: 200px;">
+            <div style="width: 200px;">
+                <select name="cash_register_id" class="form-control">
+                    <option value="">Todas las cajas</option>
+                    @foreach($cashRegisters as $caja)
+                        <option value="{{ $caja->id }}" {{ request('cash_register_id') == $caja->id ? 'selected' : '' }}>{{ $caja->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div style="width: 200px;">
                 <select name="event_type" class="form-control">
                     <option value="">Todos los eventos</option>
                     <option value="open_drawer" {{ request('event_type') == 'open_drawer' ? 'selected' : '' }}>Abrir Gaveta</option>
@@ -28,8 +36,10 @@
                     <option value="void_sale" {{ request('event_type') == 'void_sale' ? 'selected' : '' }}>Anulación</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-filter"></i> Filtrar</button>
-            <a href="{{ route('pos-control.events') }}" class="btn btn-secondary">Limpiar</a>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem;"><i class="fa-solid fa-filter"></i> Filtrar</button>
+                <a href="{{ route('pos-control.events') }}" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; display: flex; align-items: center;">Limpiar</a>
+            </div>
         </form>
 
         <div class="table-container">

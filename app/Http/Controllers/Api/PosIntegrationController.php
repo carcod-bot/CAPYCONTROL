@@ -303,10 +303,18 @@ class PosIntegrationController extends Controller
             // 2. Process Payments
             $totalTenderedBase = 0;
             $paymentMethodIds = [];
+            $totalCreditBase = 0;
+            $creditPaymentMethods = [];
             
             foreach ($request->payments as $p) {
                 $totalTenderedBase += $p['amount_base'];
                 $paymentMethodIds[] = $p['payment_method_id'];
+                
+                $pm = \App\Models\PaymentMethod::find($p['payment_method_id']);
+                if ($pm && $pm->is_credit) {
+                    $totalCreditBase += $p['amount_base'];
+                    $creditPaymentMethods[] = $pm;
+                }
             }
 
             $primaryPaymentMethodId = count($paymentMethodIds) === 1 ? $paymentMethodIds[0] : null;
@@ -324,6 +332,17 @@ class PosIntegrationController extends Controller
                     ]
                 );
                 $customerId = $newCust->id;
+            }
+
+            // Credit validation
+            if ($totalCreditBase > 0) {
+                if (!$customerId) {
+                    throw new \Exception('Se requiere un cliente registrado para pagos a crédito.');
+                }
+                $customer = \App\Models\Customer::find($customerId);
+                if (!$customer || !$customer->hasAvailableCredit($totalCreditBase)) {
+                    throw new \Exception('El cliente no tiene límite de crédito suficiente.');
+                }
             }
 
             // 3. Create Sale
@@ -436,8 +455,23 @@ class PosIntegrationController extends Controller
 
             // 4. Update Cash Session totals
             $session->total_sales += 1;
-            $session->expected_amount += $request->total_amount;
+            // Solo se suma al monto esperado lo que NO es crédito (el crédito no entra en caja física)
+            $session->expected_amount += ($request->total_amount - $totalCreditBase);
             $session->save();
+
+            // 5. Handle Credit Account creation
+            if ($totalCreditBase > 0) {
+                \App\Models\CreditAccount::create([
+                    'customer_id' => $customerId,
+                    'sale_id' => $sale->id,
+                    'amount' => $totalCreditBase,
+                    'paid_amount' => 0,
+                    'status' => 'pending',
+                ]);
+                
+                $customer = \App\Models\Customer::find($customerId);
+                $customer->addDebt($totalCreditBase);
+            }
 
             DB::commit();
 
@@ -921,5 +955,107 @@ class PosIntegrationController extends Controller
             'success' => true,
             'promotions' => $promotions
         ]);
+    }
+
+    /**
+     * Process a credit payment (abono) from POS
+     */
+    public function payCredit(Request $request)
+    {
+        $userId = $request->header('X-User-Id');
+        
+        if (!$userId) {
+            return response()->json(['error' => 'Usuario no identificado'], 401);
+        }
+
+        $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'payment_method_id' => 'required|exists:payment_methods,id',
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $session = CashSession::where('user_id', $userId)
+                ->where('status', 'open')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$session) {
+                throw new \Exception('No hay turno abierto.');
+            }
+
+            $customer = \App\Models\Customer::find($request->customer_id);
+
+            // Verify they don't overpay
+            if ($request->amount > $customer->current_balance) {
+                throw new \Exception('El monto a abonar supera la deuda actual del cliente.');
+            }
+
+            // Record payment
+            \App\Models\CreditPayment::create([
+                'customer_id' => $customer->id,
+                'amount' => $request->amount,
+                'payment_method_id' => $request->payment_method_id,
+                'cash_session_id' => $session->id,
+                'user_id' => $userId,
+                'notes' => 'Abono desde Punto de Venta',
+            ]);
+
+            // Create cash movement (income)
+            \App\Models\CashMovement::create([
+                'cash_session_id' => $session->id,
+                'user_id' => $userId,
+                'type' => 'income',
+                'amount' => $request->amount,
+                'reason' => 'Cobranza de Crédito',
+                'payment_method_id' => $request->payment_method_id,
+            ]);
+
+            // Update session expected amount
+            $session->expected_amount += $request->amount;
+            $session->save();
+
+            // Reduce debt
+            $customer->reduceDebt($request->amount);
+            
+            // Distribute payment across pending accounts (FIFO)
+            $pendingAccounts = \App\Models\CreditAccount::where('customer_id', $customer->id)
+                ->whereIn('status', ['pending', 'partial'])
+                ->orderBy('created_at', 'asc')
+                ->get();
+                
+            $remainingPayment = $request->amount;
+            
+            foreach ($pendingAccounts as $account) {
+                if ($remainingPayment <= 0) break;
+                
+                $debt = $account->amount - $account->paid_amount;
+                
+                if ($remainingPayment >= $debt) {
+                    $account->paid_amount = $account->amount;
+                    $account->status = 'paid';
+                    $remainingPayment -= $debt;
+                } else {
+                    $account->paid_amount += $remainingPayment;
+                    $account->status = 'partial';
+                    $remainingPayment = 0;
+                }
+                $account->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Abono procesado exitosamente',
+                'new_balance' => $customer->current_balance
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

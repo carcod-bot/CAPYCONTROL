@@ -15,7 +15,7 @@
 
 <!-- Filters -->
 <div class="card mb-4" style="padding: 1.5rem;">
-    <form action="{{ route('inventory-adjustments.index') }}" method="GET" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+    <form id="filtersForm" onsubmit="event.preventDefault(); loadData(1);" style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
         <div style="flex: 1; min-width: 250px;">
             <label class="form-label">Buscar Producto</label>
             <input type="text" name="search" class="form-control" placeholder="Nombre o código..." value="{{ request('search') }}">
@@ -37,7 +37,7 @@
         </div>
         <div>
             <button type="submit" class="btn btn-secondary"><i class="fa-solid fa-filter"></i> Filtrar</button>
-            <a href="{{ route('inventory-adjustments.index') }}" class="btn btn-secondary">Limpiar</a>
+            <button type="button" class="btn btn-secondary" onclick="clearFilters()">Limpiar</button>
         </div>
     </form>
 </div>
@@ -45,135 +45,17 @@
 <!-- Table -->
 <div class="card" style="padding: 0; overflow: hidden;">
     <div class="table-container" style="border: none; margin: 0; box-shadow: none;">
-        @if($isStockView)
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Código Privado</th>
-                        <th>Producto</th>
-                        <th>Categoría</th>
-                        <th>Marca</th>
-                        <th class="text-center">Stock Actual</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($stockProducts as $prod)
-                    <tr>
-                        <td class="font-bold" style="font-family: monospace;">{{ $prod->private_code }}</td>
-                        <td class="font-bold">{{ $prod->name }}</td>
-                        <td>{{ $prod->category ? $prod->category->name : 'N/A' }}</td>
-                        <td>{{ $prod->brand ? $prod->brand->name : 'N/A' }}</td>
-                        <td class="font-bold text-center {{ $prod->stock <= 0 ? 'text-danger' : 'text-success' }}">{{ number_format($prod->stock, 2) }}</td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted" style="padding: 3rem;">
-                            <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                            No se encontraron productos.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            <!-- Paginación -->
-            @if($stockProducts->hasPages())
-                <div style="padding: 1rem; border-top: 1px solid var(--border);">
-                    {{ $stockProducts->links('pagination::bootstrap-4') }}
-                </div>
-            @endif
-        @else
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Producto</th>
-                        <th>Tipo</th>
-                        <th>Lote</th>
-                        <th>Cant.</th>
-                        <th>Stock Anterior</th>
-                        <th>Nuevo Stock</th>
-                        <th>Motivo</th>
-                        <th>Usuario</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($adjustments as $adj)
-                    <tr style="cursor: pointer;" onclick="loadLifecycle({{ $adj->id }})" class="hover-bg">
-                        <td>{{ $adj->created_at->format('d/m/Y h:i a') }}</td>
-                        <td>
-                            <div class="font-bold">{{ $adj->product->name }}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ $adj->product->private_code }}</div>
-                        </td>
-                        <td>
-                            @if($adj->type === 'in')
-                                <span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-down"></i> Entrada</span>
-                            @elseif($adj->type === 'out')
-                                <span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-up"></i> Salida</span>
-                            @else
-                                <span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-check-double"></i> Conteo</span>
-                            @endif
-                        </td>
-                        <td>
-                            @if($adj->batches->count() > 0)
-                                @foreach($adj->batches->unique('batch_number') as $batch)
-                                    @php
-                                        $statusBadge = '';
-                                        if($batch->expiration_date) {
-                                            $exp = \Carbon\Carbon::parse($batch->expiration_date)->startOfDay();
-                                            $today = \Carbon\Carbon::now()->startOfDay();
-                                            $days = $today->diffInDays($exp, false);
-                                            
-                                            if($days < 0) {
-                                                $statusBadge = '<span class="badge" style="background:#fee2e2; color:#991b1b; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vencido</span>';
-                                            } elseif($days <= 30) {
-                                                $statusBadge = '<span class="badge" style="background:#fef08a; color:#854d0e; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Por Vencer</span>';
-                                            } else {
-                                                $statusBadge = '<span class="badge" style="background:#dcfce7; color:#166534; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vigente</span>';
-                                            }
-                                        }
-                                    @endphp
-                                    <div style="margin-bottom: 3px;">
-                                        <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">{{ $batch->batch_number }}</span>
-                                        {!! $statusBadge !!}
-                                    </div>
-                                @endforeach
-                            @else
-                                <span class="text-muted" style="font-size: 0.8rem;">-</span>
-                            @endif
-                        </td>
-                        <td class="font-bold text-center">{{ number_format($adj->quantity, 2) }}</td>
-                        <td class="text-center text-muted">{{ number_format($adj->previous_stock, 2) }}</td>
-                        <td class="font-bold text-center">{{ number_format($adj->new_stock, 2) }}</td>
-                        <td>{{ $adj->reason }}</td>
-                        <td>{{ $adj->user->username }}</td>
-                        <td onclick="event.stopPropagation()">
-                            @if($adj->type !== 'out')
-                                <button class="btn btn-secondary btn-sm" onclick="editAdjustmentBatches({{ $adj->id }})" title="Editar Lote(s)">
-                                    <i class="fa-solid fa-pen"></i> Editar
-                                </button>
-                            @else
-                                <span class="text-muted" style="font-size: 0.8rem;">No Editable</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="text-center text-muted" style="padding: 3rem;">
-                            <i class="fa-solid fa-scale-balanced" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                            No se encontraron registros de ajustes.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            <!-- Paginación -->
-            @if($adjustments->hasPages())
-                <div style="padding: 1rem; border-top: 1px solid var(--border);">
-                    {{ $adjustments->links('pagination::bootstrap-4') }}
-                </div>
-            @endif
-        @endif
+        <table class="table" id="dataTable">
+            <thead id="dataThead">
+                <!-- Dinámico -->
+            </thead>
+            <tbody id="dataTbody">
+                <tr><td class="text-center text-muted" style="padding: 3rem;">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+        
+        <div id="dataPagination" style="padding: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        </div>
     </div>
 </div>
 
@@ -306,6 +188,7 @@
 @push('scripts')
 <script>
     let rowCount = 0;
+    let currentPage = 1;
 
     $(document).ready(function() {
         $('.select2-filter').select2();
@@ -313,7 +196,225 @@
         $('#adjType').on('change', function() {
             updateQtyLabel();
         });
+
+        loadData(1);
     });
+
+    function clearFilters() {
+        document.getElementById('filtersForm').reset();
+        $('.select2-filter').val('').trigger('change');
+        loadData(1);
+    }
+
+    async function loadData(page = 1) {
+        currentPage = page;
+        const tbody = document.getElementById('dataTbody');
+        const thead = document.getElementById('dataThead');
+        
+        const form = document.getElementById('filtersForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        params.append('page', page);
+
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding: 3rem;">Cargando datos...</td></tr>';
+        
+        try {
+            const response = await fetch(`{{ route('inventory-adjustments.index') }}?${params.toString()}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const result = await response.json();
+            
+            if (result.isStockView) {
+                renderStockTable(result.data, thead, tbody);
+            } else {
+                renderAdjustmentsTable(result.data, thead, tbody);
+            }
+            renderPagination(result.data);
+            
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger" style="padding: 3rem;">Error al cargar datos.</td></tr>';
+        }
+    }
+
+    function renderStockTable(data, thead, tbody) {
+        thead.innerHTML = `
+            <tr>
+                <th>Código Privado</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Marca</th>
+                <th class="text-center">Stock Actual</th>
+            </tr>
+        `;
+        tbody.innerHTML = '';
+
+        if (!data.data || data.data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted" style="padding: 3rem;">
+                        <i class="fa-solid fa-box-open" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                        No se encontraron productos.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.data.forEach(prod => {
+            const stockColor = parseFloat(prod.stock) <= 0 ? 'text-danger' : 'text-success';
+            const catName = prod.category ? prod.category.name : 'N/A';
+            const brandName = prod.brand ? prod.brand.name : 'N/A';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="font-bold" style="font-family: monospace;">${prod.private_code}</td>
+                <td class="font-bold">${prod.name}</td>
+                <td>${catName}</td>
+                <td>${brandName}</td>
+                <td class="font-bold text-center ${stockColor}">${parseFloat(prod.stock).toFixed(2)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderAdjustmentsTable(data, thead, tbody) {
+        thead.innerHTML = `
+            <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Lote</th>
+                <th>Cant.</th>
+                <th>Stock Anterior</th>
+                <th>Nuevo Stock</th>
+                <th>Motivo</th>
+                <th>Usuario</th>
+                <th>Acciones</th>
+            </tr>
+        `;
+        tbody.innerHTML = '';
+
+        if (!data.data || data.data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted" style="padding: 3rem;">
+                        <i class="fa-solid fa-scale-balanced" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+                        No se encontraron registros de ajustes.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.data.forEach(adj => {
+            const dateStr = new Date(adj.created_at).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            
+            let typeBadge = '';
+            if (adj.type === 'in') typeBadge = '<span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-down"></i> Entrada</span>';
+            else if (adj.type === 'out') typeBadge = '<span class="badge" style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-arrow-up"></i> Salida</span>';
+            else typeBadge = '<span class="badge" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap;"><i class="fa-solid fa-check-double"></i> Conteo</span>';
+
+            let batchesHtml = '';
+            if (adj.batches && adj.batches.length > 0) {
+                // Filter unique by batch_number
+                const uniqueBatches = [];
+                const map = new Map();
+                for (const item of adj.batches) {
+                    if(!map.has(item.batch_number)){
+                        map.set(item.batch_number, true);
+                        uniqueBatches.push(item);
+                    }
+                }
+                
+                uniqueBatches.forEach(batch => {
+                    let statusBadge = '';
+                    if (batch.expiration_date) {
+                        const expDate = new Date(batch.expiration_date);
+                        const today = new Date();
+                        today.setHours(0,0,0,0);
+                        expDate.setHours(0,0,0,0);
+                        
+                        const diffTime = expDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays < 0) {
+                            statusBadge = '<span class="badge" style="background:#fee2e2; color:#991b1b; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vencido</span>';
+                        } else if (diffDays <= 30) {
+                            statusBadge = '<span class="badge" style="background:#fef08a; color:#854d0e; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Por Vencer</span>';
+                        } else {
+                            statusBadge = '<span class="badge" style="background:#dcfce7; color:#166534; font-size: 0.65rem; padding: 2px 5px; margin-left: 5px; border-radius: 4px;">Vigente</span>';
+                        }
+                    }
+                    batchesHtml += `
+                        <div style="margin-bottom: 3px;">
+                            <span style="font-family: monospace; font-size: 0.85rem;" class="text-primary">${batch.batch_number}</span>
+                            ${statusBadge}
+                        </div>
+                    `;
+                });
+            } else {
+                batchesHtml = '<span class="text-muted" style="font-size: 0.8rem;">-</span>';
+            }
+
+            let actionHtml = '';
+            if (adj.type !== 'out') {
+                actionHtml = `
+                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); editAdjustmentBatches(${adj.id})" title="Editar Lote(s)">
+                        <i class="fa-solid fa-pen"></i> Editar
+                    </button>
+                `;
+            } else {
+                actionHtml = '<span class="text-muted" style="font-size: 0.8rem;">No Editable</span>';
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.className = 'hover-bg';
+            tr.onclick = () => loadLifecycle(adj.id);
+            tr.innerHTML = `
+                <td>${dateStr}</td>
+                <td>
+                    <div class="font-bold">${adj.product.name}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">${adj.product.private_code}</div>
+                </td>
+                <td>${typeBadge}</td>
+                <td>${batchesHtml}</td>
+                <td class="font-bold text-center">${parseFloat(adj.quantity).toFixed(2)}</td>
+                <td class="text-center text-muted">${parseFloat(adj.previous_stock).toFixed(2)}</td>
+                <td class="font-bold text-center">${parseFloat(adj.new_stock).toFixed(2)}</td>
+                <td>${adj.reason}</td>
+                <td>${adj.user.username}</td>
+                <td onclick="event.stopPropagation()">${actionHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPagination(data) {
+        const paginationContainer = document.getElementById('dataPagination');
+        if (!data || data.last_page <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let buttonsHTML = `<div class="pagination-info text-muted">Mostrando ${data.from || 0} a ${data.to || 0} de ${data.total} resultados</div>`;
+        buttonsHTML += `<div style="display:flex; gap: 0.25rem;">`;
+        
+        if (data.current_page > 1) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page - 1})">&laquo; Ant</button>`;
+        }
+        
+        if (data.current_page < data.last_page) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page + 1})">Sig &raquo;</button>`;
+        }
+        
+        buttonsHTML += `</div>`;
+        paginationContainer.innerHTML = buttonsHTML;
+    }
 
     function updateQtyLabel() {
         const type = document.getElementById('adjType').value;
@@ -408,7 +509,7 @@
 
         submitAjaxForm(form, '{{ route("inventory-adjustments.store") }}', () => {
             closeModal('adjustmentModal');
-            window.location.reload();
+            loadData(currentPage);
         });
     }
 
@@ -619,7 +720,7 @@
         
         submitAjaxForm(form, `{{ url('inventory-adjustments') }}/${id}/batches`, () => {
             closeModal('editBatchesModal');
-            window.location.reload();
+            loadData(currentPage);
         });
     }
 </script>

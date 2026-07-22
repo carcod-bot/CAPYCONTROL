@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $departments = Department::orderBy('name')->paginate(20)->withQueryString();
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($departments);
+        }
+        
         return view('inventory.departments.index', compact('departments'));
     }
 

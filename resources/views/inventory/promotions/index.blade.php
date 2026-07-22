@@ -24,54 +24,12 @@
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                @foreach($promotions as $promo)
-                <tr id="row-{{ $promo->id }}">
-                    <td style="font-weight: 600;">{{ $promo->name }}</td>
-                    <td>
-                        <span class="badge badge-info">
-                            {{ $promo->discount_type === 'percentage' ? number_format($promo->discount_value, 0) . '%' : '$' . number_format($promo->discount_value, 2) }}
-                        </span>
-                    </td>
-                    <td>
-                        @php
-                            $targetName = 'Desconocido';
-                            $typeLabel = 'N/A';
-                            if ($promo->promotable) {
-                                if ($promo->promotable_type === 'App\Models\Product') { $typeLabel = 'Producto'; $targetName = $promo->promotable->name; }
-                                elseif ($promo->promotable_type === 'App\Models\Category') { $typeLabel = 'Categoría'; $targetName = $promo->promotable->name; }
-                                elseif ($promo->promotable_type === 'App\Models\Department') { $typeLabel = 'Departamento'; $targetName = $promo->promotable->name; }
-                                elseif ($promo->promotable_type === 'App\Models\Currency') { $typeLabel = 'Moneda'; $targetName = $promo->promotable->description; }
-                                elseif ($promo->promotable_type === 'App\Models\PaymentMethod') { $typeLabel = 'Método Pago'; $targetName = $promo->promotable->description; }
-                            }
-                        @endphp
-                        <small class="text-muted">{{ $typeLabel }}</small><br>
-                        <strong>{{ $targetName }}</strong>
-                    </td>
-                    <td>
-                        <small>
-                            Desde: {{ $promo->start_date ? $promo->start_date->format('d/m/Y') : 'Siempre' }}<br>
-                            Hasta: {{ $promo->end_date ? $promo->end_date->format('d/m/Y') : 'Siempre' }}
-                        </small>
-                    </td>
-                    <td>
-                        <span class="badge" style="background: {{ $promo->active ? 'var(--primary-light)' : '#fee2e2' }}; color: {{ $promo->active ? 'var(--primary)' : '#991b1b' }};">
-                            {{ $promo->active ? 'Activo' : 'Inactivo' }}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-secondary" onclick="editPromo({{ $promo->id }}, '{{ addslashes($promo->name) }}', '{{ $promo->discount_type }}', {{ $promo->discount_value }}, '{{ addslashes($promo->promotable_type) }}', {{ $promo->promotable_id }}, '{{ $promo->start_date ? $promo->start_date->format('Y-m-d\TH:i') : '' }}', '{{ $promo->end_date ? $promo->end_date->format('Y-m-d\TH:i') : '' }}', {{ $promo->active }})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-edit"></i></button>
-                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteAjax('{{ route('promotions.destroy', $promo) }}', () => document.getElementById('row-{{ $promo->id }}').remove())">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                @endforeach
+            <tbody id="promotions-tbody">
+                <tr><td colspan="6" class="text-center text-muted">Cargando promociones...</td></tr>
             </tbody>
         </table>
-        @if($promotions->hasPages())
-        <div class="mt-4">{{ $promotions->links('pagination::bootstrap-4') }}</div>
-        @endif
+        <div id="promotions-pagination" class="mt-4 flex justify-between items-center text-sm" style="display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem 1.5rem;">
+        </div>
     </div>
 </div>
 
@@ -82,7 +40,7 @@
             <h3 id="promoModalTitle">Nueva Promoción</h3>
             <button class="modal-close" onclick="closeModal('promoModal')"><i class="fa-solid fa-times"></i></button>
         </div>
-        <form id="promoForm" action="{{ route('promotions.store') }}" method="POST" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => window.location.reload())">
+        <form id="promoForm" action="{{ route('promotions.store') }}" method="POST" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { closeModal('promoModal'); loadData(currentPage); })">
             @csrf
             <input type="hidden" name="_method" id="promoMethod" value="POST">
             
@@ -113,6 +71,8 @@
                         <option value="App\Models\Product">Producto Individual</option>
                         <option value="App\Models\Category">Categoría Completa</option>
                         <option value="App\Models\Department">Departamento Completo</option>
+                        <option value="App\Models\Brand">Marca Completa</option>
+                        <option value="App\Models\Provider">Proveedor Completo</option>
                         <option value="App\Models\PaymentMethod">Método de Pago</option>
                         <option value="App\Models\Currency">Moneda</option>
                     </select>
@@ -136,6 +96,14 @@
                         <!-- Departamentos -->
                         @foreach($departments as $d)
                         <option value="{{ $d->id }}" data-type="App\Models\Department">{{ $d->name }}</option>
+                        @endforeach
+                        <!-- Marcas -->
+                        @foreach($brands as $b)
+                        <option value="{{ $b->id }}" data-type="App\Models\Brand">{{ $b->name }}</option>
+                        @endforeach
+                        <!-- Proveedores -->
+                        @foreach($providers as $prov)
+                        <option value="{{ $prov->id }}" data-type="App\Models\Provider">{{ $prov->name }}</option>
                         @endforeach
                         <!-- Metodos -->
                         @foreach($paymentMethods as $pm)
@@ -197,7 +165,144 @@
         $('#promo_promotable_type').on('change', function() {
             filterTargets();
         });
+
+        loadData(1);
     });
+
+    let currentPage = 1;
+
+    async function loadData(page = 1) {
+        currentPage = page;
+        const tbody = document.getElementById('promotions-tbody');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Cargando promociones...</td></tr>';
+        
+        try {
+            const response = await fetch(`{{ route('promotions.index') }}?page=${page}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await response.json();
+            renderTable(data.data);
+            renderPagination(data);
+        } catch (error) {
+            console.error('Error fetching promotions:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error al cargar datos.</td></tr>';
+        }
+    }
+
+    function renderTable(promotions) {
+        const tbody = document.getElementById('promotions-tbody');
+        tbody.innerHTML = '';
+        
+        if (promotions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No se encontraron promociones.</td></tr>';
+            return;
+        }
+
+        const now = new Date();
+
+        promotions.forEach(promo => {
+            const discountBadge = promo.discount_type === 'percentage' 
+                ? `${parseFloat(promo.discount_value)}%` 
+                : `$${parseFloat(promo.discount_value).toFixed(2)}`;
+
+            let targetName = 'Desconocido';
+            let typeLabel = 'N/A';
+            if (promo.promotable) {
+                if (promo.promotable_type === 'App\\Models\\Product') { typeLabel = 'Producto'; targetName = promo.promotable.name; }
+                else if (promo.promotable_type === 'App\\Models\\Category') { typeLabel = 'Categoría'; targetName = promo.promotable.name; }
+                else if (promo.promotable_type === 'App\\Models\\Department') { typeLabel = 'Departamento'; targetName = promo.promotable.name; }
+                else if (promo.promotable_type === 'App\\Models\\Brand') { typeLabel = 'Marca'; targetName = promo.promotable.name; }
+                else if (promo.promotable_type === 'App\\Models\\Provider') { typeLabel = 'Proveedor'; targetName = promo.promotable.name; }
+                else if (promo.promotable_type === 'App\\Models\\Currency') { typeLabel = 'Moneda'; targetName = promo.promotable.description; }
+                else if (promo.promotable_type === 'App\\Models\\PaymentMethod') { typeLabel = 'Método Pago'; targetName = promo.promotable.description; }
+            }
+
+            const formatStringDate = (dateString) => {
+                if (!dateString) return 'Siempre';
+                const d = new Date(dateString);
+                return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            };
+
+            let statusLabel = 'Inactivo';
+            let statusBg = '#fee2e2';
+            let statusColor = '#991b1b';
+            
+            if (promo.active) {
+                const isExpired = promo.end_date && new Date(promo.end_date) < now;
+                const isScheduled = promo.start_date && new Date(promo.start_date) > now;
+                
+                if (isExpired) {
+                    statusLabel = 'Expirada';
+                    statusBg = '#f3f4f6';
+                    statusColor = '#4b5563';
+                } else if (isScheduled) {
+                    statusLabel = 'Programada';
+                    statusBg = '#fef3c7';
+                    statusColor = '#92400e';
+                } else {
+                    statusLabel = 'Activo';
+                    statusBg = 'var(--primary-light)';
+                    statusColor = 'var(--primary)';
+                }
+            }
+
+            const editName = promo.name.replace(/'/g, "\\'");
+            const editType = promo.promotable_type.replace(/\\/g, '\\\\');
+            const startDateFormatted = promo.start_date ? promo.start_date.substring(0, 16) : '';
+            const endDateFormatted = promo.end_date ? promo.end_date.substring(0, 16) : '';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 600;">${promo.name}</td>
+                <td><span class="badge badge-info">${discountBadge}</span></td>
+                <td>
+                    <small class="text-muted">${typeLabel}</small><br>
+                    <strong>${targetName}</strong>
+                </td>
+                <td>
+                    <small>
+                        Desde: ${formatStringDate(promo.start_date)}<br>
+                        Hasta: ${formatStringDate(promo.end_date)}
+                    </small>
+                </td>
+                <td>
+                    <span class="badge" style="background: ${statusBg}; color: ${statusColor};">${statusLabel}</span>
+                </td>
+                <td>
+                    <button class="btn btn-secondary" onclick="editPromo(${promo.id}, '${editName}', '${promo.discount_type}', ${promo.discount_value}, '${editType}', ${promo.promotable_id}, '${startDateFormatted}', '${endDateFormatted}', ${promo.active})" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"><i class="fa-solid fa-edit"></i></button>
+                    <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteAjax('{{ url('promotions') }}/${promo.id}', () => loadData(currentPage))">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPagination(data) {
+        const paginationContainer = document.getElementById('promotions-pagination');
+        if (data.last_page <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        let buttonsHTML = `<div class="pagination-info text-muted">Mostrando ${data.from || 0} a ${data.to || 0} de ${data.total} resultados</div>`;
+        buttonsHTML += `<div style="display:flex; gap: 0.25rem;">`;
+        
+        if (data.current_page > 1) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page - 1})">&laquo; Ant</button>`;
+        }
+        
+        if (data.current_page < data.last_page) {
+            buttonsHTML += `<button class="btn btn-secondary" style="padding: 0.25rem 0.5rem;" onclick="loadData(${data.current_page + 1})">Sig &raquo;</button>`;
+        }
+        
+        buttonsHTML += `</div>`;
+        paginationContainer.innerHTML = buttonsHTML;
+    }
 
     function filterTargets(selectedId = null) {
         const type = document.getElementById('promo_promotable_type').value;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PosEvent;
+use App\Models\CashRegister;
 use Illuminate\Http\Request;
 
 class PosEventController extends Controller
@@ -30,8 +31,17 @@ class PosEventController extends Controller
             $query->where('event_type', $request->event_type);
         }
 
-        $events = $query->latest()->paginate(20)->withQueryString();
+        // Filtrar por caja
+        if ($request->filled('cash_register_id')) {
+            $query->whereHas('session', function($s) use ($request) {
+                $s->where('cash_register_id', $request->cash_register_id);
+            });
+        }
 
-        return view('pos-control.events.index', compact('events'));
+        $events = $query->latest()->paginate(20)->withQueryString();
+        
+        $cashRegisters = CashRegister::all();
+
+        return view('pos-control.events.index', compact('events', 'cashRegisters'));
     }
 }

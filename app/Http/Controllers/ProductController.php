@@ -42,6 +42,10 @@ class ProductController extends Controller
 
         $products = $query->orderBy('name')->paginate(10)->withQueryString();
         
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($products);
+        }
+        
         // Modal variables
         $departments = Department::where('active', true)->orderBy('name')->get();
         $categories = Category::where('active', true)->orderBy('name')->get();

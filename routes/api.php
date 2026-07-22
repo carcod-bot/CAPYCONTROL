@@ -20,9 +20,11 @@ Route::prefix('pos')->group(function () {
     Route::get('/sales/{ticket}', [PosIntegrationController::class, 'getSale']);
     Route::post('/refund', [PosIntegrationController::class, 'storeRefund']);
     
-    // Clientes
+    // Clientes y Créditos
     Route::get('/customers', [PosIntegrationController::class, 'searchCustomers']);
     Route::post('/customers', [PosIntegrationController::class, 'storeCustomer']);
+    Route::post('/credit/pay', [PosIntegrationController::class, 'payCredit']);
+    
     // Promociones
     Route::get('/promotions', [PosIntegrationController::class, 'getPromotions']);
 });

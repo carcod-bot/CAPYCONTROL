@@ -8,9 +8,14 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $categories = Category::with('department')->orderBy('name')->paginate(20)->withQueryString();
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($categories);
+        }
+        
         $departments = Department::where('active', true)->orderBy('name')->get();
         return view('inventory.categories.index', compact('categories', 'departments'));
     }

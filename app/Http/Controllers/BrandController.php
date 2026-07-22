@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 
 class BrandController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $brands = Brand::orderBy('name')->paginate(20)->withQueryString();
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($brands);
+        }
+        
         return view('inventory.brands.index', compact('brands'));
     }
 

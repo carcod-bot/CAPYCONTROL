@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 
 class ProviderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $providers = Provider::orderBy('name')->paginate(20)->withQueryString();
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($providers);
+        }
+        
         return view('inventory.providers.index', compact('providers'));
     }
 

@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Department;
 use App\Models\Currency;
 use App\Models\PaymentMethod;
+use App\Models\Brand;
+use App\Models\Provider;
 use Illuminate\Http\Request;
 
 class PromotionController extends Controller
@@ -16,13 +18,19 @@ class PromotionController extends Controller
     {
         $promotions = Promotion::with('promotable')->orderBy('created_at', 'desc')->paginate(15);
         
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json($promotions);
+        }
+        
         $products = Product::where('active', true)->get();
         $categories = Category::where('active', true)->get();
         $departments = Department::where('active', true)->get();
         $currencies = Currency::where('is_active', true)->get();
         $paymentMethods = PaymentMethod::all();
+        $brands = Brand::where('active', true)->get();
+        $providers = Provider::where('active', true)->get();
         
-        return view('inventory.promotions.index', compact('promotions', 'products', 'categories', 'departments', 'currencies', 'paymentMethods'));
+        return view('inventory.promotions.index', compact('promotions', 'products', 'categories', 'departments', 'currencies', 'paymentMethods', 'brands', 'providers'));
     }
 
     public function store(Request $request)
