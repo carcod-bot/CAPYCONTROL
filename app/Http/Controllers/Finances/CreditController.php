@@ -30,7 +30,7 @@ class CreditController extends Controller
     {
         $customer->load(['creditAccounts' => function($q) {
             $q->orderBy('created_at', 'desc');
-        }, 'creditAccounts.sale']);
+        }, 'creditAccounts.sale', 'creditAccounts.installments']);
 
         return view('finances.credits.show', compact('customer'));
     }

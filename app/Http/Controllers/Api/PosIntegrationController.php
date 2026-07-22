@@ -459,9 +459,26 @@ class PosIntegrationController extends Controller
             $session->expected_amount += ($request->total_amount - $totalCreditBase);
             $session->save();
 
+            // Update Customer Purchases and Level
+            if ($customerId) {
+                $customerForUpdate = \App\Models\Customer::find($customerId);
+                if ($customerForUpdate) {
+                    $customerForUpdate->total_purchases += 1;
+                    
+                    // Auto-update Credit Level
+                    $bestLevel = \App\Models\CreditLevel::where('required_purchases', '<=', $customerForUpdate->total_purchases)
+                                    ->orderBy('required_purchases', 'desc')
+                                    ->first();
+                    if ($bestLevel && $customerForUpdate->credit_level_id !== $bestLevel->id) {
+                        $customerForUpdate->credit_level_id = $bestLevel->id;
+                    }
+                    $customerForUpdate->save();
+                }
+            }
+
             // 5. Handle Credit Account creation
             if ($totalCreditBase > 0) {
-                \App\Models\CreditAccount::create([
+                $creditAccount = \App\Models\CreditAccount::create([
                     'customer_id' => $customerId,
                     'sale_id' => $sale->id,
                     'amount' => $totalCreditBase,
@@ -471,6 +488,32 @@ class PosIntegrationController extends Controller
                 
                 $customer = \App\Models\Customer::find($customerId);
                 $customer->addDebt($totalCreditBase);
+                
+                // Generate Installments if customer has credit level
+                if ($customer->credit_level_id) {
+                    $level = \App\Models\CreditLevel::find($customer->credit_level_id);
+                    if ($level && $level->installments_count > 0) {
+                        $installmentAmount = $totalCreditBase / $level->installments_count;
+                        $currentDate = now();
+                        
+                        for ($i = 1; $i <= $level->installments_count; $i++) {
+                            if ($level->payment_frequency === 'weekly') {
+                                $dueDate = $currentDate->copy()->addWeeks($i);
+                            } elseif ($level->payment_frequency === 'biweekly') {
+                                $dueDate = $currentDate->copy()->addDays(15 * $i);
+                            } else {
+                                $dueDate = $currentDate->copy()->addMonths($i);
+                            }
+                            
+                            \App\Models\CreditInstallment::create([
+                                'credit_account_id' => $creditAccount->id,
+                                'installment_number' => $i,
+                                'due_date' => $dueDate,
+                                'amount' => $installmentAmount,
+                            ]);
+                        }
+                    }
+                }
             }
 
             DB::commit();
@@ -501,16 +544,44 @@ class PosIntegrationController extends Controller
     {
         $term = $request->input('term');
         
-        $query = \App\Models\Customer::query();
+        $query = \App\Models\Customer::with('creditLevel');
         if ($term) {
             $query->where('name', 'LIKE', "%{$term}%")
                   ->orWhere('document_id', 'LIKE', "%{$term}%")
                   ->orWhere('phone', 'LIKE', "%{$term}%");
         }
         
+        $customers = $query->limit(20)->get();
+        foreach ($customers as $c) {
+            $c->updateCreditLevel();
+            $c->load('creditLevel');
+        }
+        
         return response()->json([
             'success' => true,
-            'customers' => $query->limit(20)->get()
+            'customers' => $customers
+        ]);
+    }
+
+    /**
+     * Get Customer Credit Details
+     */
+    public function getCustomerCreditDetails($id)
+    {
+        $customer = \App\Models\Customer::with(['creditAccounts' => function($q) {
+            $q->whereIn('status', ['pending', 'partial'])
+              ->with(['installments' => function($q2) {
+                  $q2->whereIn('status', ['pending', 'partial'])->orderBy('due_date', 'asc');
+              }]);
+        }])->find($id);
+
+        if (!$customer) {
+            return response()->json(['success' => false, 'message' => 'Cliente no encontrado'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'customer' => $customer
         ]);
     }
 
@@ -536,6 +607,9 @@ class PosIntegrationController extends Controller
                 'address' => $request->address ?? null,
             ]
         );
+        
+        $customer->updateCreditLevel();
+        $customer->load('creditLevel');
 
         return response()->json([
             'success' => true,
@@ -971,7 +1045,10 @@ class PosIntegrationController extends Controller
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'payment_method_id' => 'required|exists:payment_methods,id',
-            'amount' => 'required|numeric|min:0.01',
+            'amount_base' => 'required|numeric|min:0.01',
+            'amount_local' => 'required|numeric|min:0.01',
+            'currency_id' => 'required|exists:currencies,id',
+            'exchange_rate' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -988,15 +1065,15 @@ class PosIntegrationController extends Controller
 
             $customer = \App\Models\Customer::find($request->customer_id);
 
-            // Verify they don't overpay
-            if ($request->amount > $customer->current_balance) {
+            // Verify they don't overpay (adding a small epsilon for floating point errors)
+            if ($request->amount_base > $customer->current_balance + 0.05) {
                 throw new \Exception('El monto a abonar supera la deuda actual del cliente.');
             }
 
             // Record payment
             \App\Models\CreditPayment::create([
                 'customer_id' => $customer->id,
-                'amount' => $request->amount,
+                'amount' => $request->amount_base, // Base currency for debt reduction
                 'payment_method_id' => $request->payment_method_id,
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
@@ -1008,17 +1085,17 @@ class PosIntegrationController extends Controller
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
                 'type' => 'income',
-                'amount' => $request->amount,
+                'amount' => $request->amount_local, // Local currency for physical cash tracking
                 'reason' => 'Cobranza de Crédito',
                 'payment_method_id' => $request->payment_method_id,
             ]);
 
-            // Update session expected amount
-            $session->expected_amount += $request->amount;
+            // Update session expected amount (Base Currency)
+            $session->expected_amount += $request->amount_base;
             $session->save();
 
             // Reduce debt
-            $customer->reduceDebt($request->amount);
+            $customer->reduceDebt($request->amount_base);
             
             // Distribute payment across pending accounts (FIFO)
             $pendingAccounts = \App\Models\CreditAccount::where('customer_id', $customer->id)
@@ -1026,12 +1103,13 @@ class PosIntegrationController extends Controller
                 ->orderBy('created_at', 'asc')
                 ->get();
                 
-            $remainingPayment = $request->amount;
+            $remainingPayment = $request->amount_base;
             
             foreach ($pendingAccounts as $account) {
                 if ($remainingPayment <= 0) break;
                 
                 $debt = $account->amount - $account->paid_amount;
+                $appliedToAccount = min($remainingPayment, $debt);
                 
                 if ($remainingPayment >= $debt) {
                     $account->paid_amount = $account->amount;
@@ -1043,6 +1121,32 @@ class PosIntegrationController extends Controller
                     $remainingPayment = 0;
                 }
                 $account->save();
+                
+                // Distribute appliedToAccount across installments
+                if ($appliedToAccount > 0) {
+                    $installments = \App\Models\CreditInstallment::where('credit_account_id', $account->id)
+                        ->whereIn('status', ['pending', 'partial'])
+                        ->orderBy('due_date', 'asc')
+                        ->get();
+                        
+                    $remainingForInstallments = $appliedToAccount;
+                    
+                    foreach ($installments as $inst) {
+                        if ($remainingForInstallments <= 0) break;
+                        
+                        $instDebt = $inst->amount - $inst->paid_amount;
+                        if ($remainingForInstallments >= $instDebt) {
+                            $inst->paid_amount = $inst->amount;
+                            $inst->status = 'paid';
+                            $remainingForInstallments -= $instDebt;
+                        } else {
+                            $inst->paid_amount += $remainingForInstallments;
+                            $inst->status = 'partial';
+                            $remainingForInstallments = 0;
+                        }
+                        $inst->save();
+                    }
+                }
             }
 
             DB::commit();

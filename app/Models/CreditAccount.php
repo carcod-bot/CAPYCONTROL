@@ -36,4 +36,9 @@ class CreditAccount extends Model
         return $this->hasMany(CreditPayment::class);
     }
 
+    public function installments()
+    {
+        return $this->hasMany(CreditInstallment::class)->orderBy('installment_number');
+    }
+
 }

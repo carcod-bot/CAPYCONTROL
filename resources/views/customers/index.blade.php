@@ -114,7 +114,7 @@
                     <th>Documento</th>
                     <th>Nombre</th>
                     <th>Teléfono</th>
-                    <th>Límite de Crédito</th>
+                    <th>Nivel de Crédito</th>
                     <th>Deuda Actual</th>
                     <th>Estado Crédito</th>
                     @if(Auth::user()->hasPermission('finances.edit'))
@@ -128,7 +128,15 @@
                     <td>{{ $c->document_id }}</td>
                     <td style="font-weight: 600; color: var(--primary);">{{ $c->name }}</td>
                     <td>{{ $c->phone ?: '-' }}</td>
-                    <td>${{ number_format($c->credit_limit, 2) }}</td>
+                    <td>
+                        @if($c->creditLevel)
+                        <span style="background: rgba(59,130,246,0.1); color:#3b82f6; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 700;">
+                            {{ $c->creditLevel->name }}
+                        </span>
+                        @else
+                        <span style="color: var(--text-muted); font-size: 0.85rem;">Ninguno</span>
+                        @endif
+                    </td>
                     <td style="color: {{ $c->current_balance > 0 ? 'var(--danger)' : 'inherit' }}; font-weight: {{ $c->current_balance > 0 ? '700' : 'normal' }}">
                         ${{ number_format($c->current_balance, 2) }}
                     </td>
@@ -198,20 +206,47 @@
               </div>
               <hr style="border-color: var(--border); margin: 1.5rem 0;">
               <h6 style="color: var(--primary); font-weight: 700; margin-bottom: 1rem; font-size: 1.1rem;">Configuración de Crédito</h6>
-              <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-                  <div style="flex: 1;">
-                      <label class="form-label">Límite de Crédito ($)</label>
-                      <input type="number" step="0.01" name="credit_limit" id="credit_limit" class="form-control" value="0.00">
-                  </div>
-                  <div style="flex: 1;">
-                      <label class="form-label">Estado de Crédito</label>
-                      <select name="credit_status" id="credit_status" class="form-control">
-                          <option value="active">Activo</option>
-                          <option value="suspended">Suspendido</option>
-                      </select>
-                  </div>
-              </div>
-              <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Límite de Crédito Base ($)</label>
+                        <input type="number" step="0.01" name="credit_limit" id="credit_limit" class="form-control" value="0.00">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Estado de Crédito</label>
+                        <select name="credit_status" id="credit_status" class="form-control">
+                            <option value="active">Activo</option>
+                            <option value="suspended">Suspendido</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="credit_level_widget" style="display: none; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Nivel Actual</span>
+                            <div id="widget_current_level" style="font-size: 1.4rem; font-weight: 800; color: var(--primary);">Bronce</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Próximo Nivel</span>
+                            <div id="widget_next_level" style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">Plata</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--surface); height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;">
+                        <div id="widget_progress_bar" style="background: var(--primary); height: 100%; width: 50%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        <span id="widget_purchases_text">2 de 5 compras</span>
+                        <span id="widget_remaining_text">Faltan 3 compras</span>
+                    </div>
+
+                    <div id="widget_benefit_box" style="background: rgba(16, 185, 129, 0.1); color: #059669; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-arrow-trend-up"></i>
+                        <span id="widget_benefit_text">Al alcanzar este nivel, tu límite base aumentará en un +100%</span>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('customerModal')">Cancelar</button>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar</button>
               </div>
@@ -224,12 +259,14 @@
 @push('scripts')
 <script>
     const form = document.getElementById('customerForm');
+    const creditLevels = @json($creditLevels ?? []);
     
     function openCreateModal() {
         document.getElementById('modalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Nuevo Cliente';
         document.getElementById('formMethod').value = 'POST';
         form.action = "{{ route('customers.store') }}";
         form.reset();
+        document.getElementById('credit_level_widget').style.display = 'none';
         openModal('customerModal');
     }
     
@@ -246,7 +283,70 @@
         document.getElementById('credit_limit').value = parseFloat(customer.credit_limit || 0).toFixed(2);
         document.getElementById('credit_status').value = customer.credit_status || 'active';
         
+        if (customer.id) {
+            updateCreditWidget(customer);
+        }
+        
         openModal('customerModal');
+    }
+
+    function updateCreditWidget(customer) {
+        let currentPurchases = customer.total_purchases || 0;
+        let currentLvl = null;
+        let nextLvl = null;
+
+        for (let i = 0; i < creditLevels.length; i++) {
+            if (currentPurchases >= creditLevels[i].required_purchases) {
+                currentLvl = creditLevels[i];
+            } else if (!nextLvl) {
+                nextLvl = creditLevels[i];
+            }
+        }
+
+        const widget = document.getElementById('credit_level_widget');
+        if (creditLevels.length === 0) {
+            widget.style.display = 'none';
+            return;
+        }
+
+        widget.style.display = 'block';
+
+        if (currentLvl) {
+            document.getElementById('widget_current_level').innerText = currentLvl.name;
+        } else {
+            document.getElementById('widget_current_level').innerText = 'Ninguno';
+        }
+
+        if (nextLvl) {
+            document.getElementById('widget_next_level').innerText = nextLvl.name;
+            
+            let req = nextLvl.required_purchases;
+            let start = currentLvl ? currentLvl.required_purchases : 0;
+            
+            let progress = 0;
+            if (req - start > 0) {
+                progress = ((currentPurchases - start) / (req - start)) * 100;
+            }
+            
+            document.getElementById('widget_progress_bar').style.width = Math.min(100, progress) + '%';
+            document.getElementById('widget_purchases_text').innerText = `${currentPurchases} de ${req} compras`;
+            document.getElementById('widget_remaining_text').innerText = `Faltan ${req - currentPurchases} compras`;
+            
+            document.getElementById('widget_benefit_box').style.display = 'flex';
+            let increase = parseFloat(nextLvl.limit_increase_percentage);
+            if(increase > 0) {
+                document.getElementById('widget_benefit_text').innerText = `Al alcanzar este nivel, el límite base aumentará en un +${increase}%`;
+            } else {
+                document.getElementById('widget_benefit_text').innerText = `Al alcanzar este nivel, tendrá mejores condiciones de crédito.`;
+            }
+
+        } else {
+            document.getElementById('widget_next_level').innerText = 'Máximo Nivel';
+            document.getElementById('widget_progress_bar').style.width = '100%';
+            document.getElementById('widget_purchases_text').innerText = `${currentPurchases} compras realizadas`;
+            document.getElementById('widget_remaining_text').innerText = '';
+            document.getElementById('widget_benefit_box').style.display = 'none';
+        }
     }
 
     async function performSearch() {

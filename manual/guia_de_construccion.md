@@ -307,6 +307,83 @@ Almacena el historial de cambios importantes en el sistema (ej: ajustes masivos 
 
 ---
 
+### PosEvent (`app/Models/PosEvent.php`)
+
+Registra operaciones sensibles o excepcionales realizadas en el Punto de Venta (ej. anulaciones, retiros de efectivo, apertura de gaveta) con detalles del autorizador para auditoría de caja.
+
+| Campo | Tipo |
+|-------|------|
+| `cash_session_id` | foreignId |
+| `cashier_id` | foreignId |
+| `authorizer_id` | foreignId (nullable) |
+| `event_type` | string |
+| `description` | text |
+| `metadata` | json (nullable) |
+
+---
+
+### Promotion (`app/Models/Promotion.php`)
+
+Motor de descuentos dinámicos. Utiliza relaciones polimórficas para aplicarse a nivel de Producto, Categoría, Departamento o Moneda/Método de Pago.
+
+| Campo | Tipo |
+|-------|------|
+| `name` | string |
+| `promotable_type` | string (polymorphic) |
+| `promotable_id` | unsignedBigInteger |
+| `discount_type` | string (percentage, fixed) |
+| `discount_value` | decimal |
+| `start_date` | date |
+| `end_date` | date |
+| `active` | boolean |
+
+---
+
+### CreditLevel (`app/Models/CreditLevel.php`)
+
+Niveles de fidelización para clientes a crédito, escalando su límite automáticamente según su historial de compras.
+
+| Campo | Tipo |
+|-------|------|
+| `name` | string |
+| `required_purchases` | integer |
+| `limit_increase_percentage` | decimal |
+
+---
+
+### CreditAccount (`app/Models/CreditAccount.php`)
+
+Representa una deuda o cuenta por cobrar de un cliente, vinculada a una factura (`Sale`) específica.
+
+| Campo | Tipo |
+|-------|------|
+| `customer_id` | foreignId |
+| `sale_id` | foreignId |
+| `amount` | decimal |
+| `paid_amount` | decimal |
+| `status` | string (pending, partial, paid) |
+| `due_date` | date |
+
+**Relaciones principales:** `customer()`, `sale()`, `payments()`, `installments()`.
+
+---
+
+### CreditPayment (`app/Models/CreditPayment.php`)
+
+Registra los abonos realizados por los clientes para amortizar sus cuentas por cobrar (`CreditAccount`).
+
+| Campo | Tipo |
+|-------|------|
+| `credit_account_id` | foreignId (nullable) |
+| `customer_id` | foreignId |
+| `amount` | decimal |
+| `payment_method_id` | foreignId |
+| `cash_session_id` | foreignId |
+| `user_id` | foreignId |
+| `notes` | text (nullable) |
+
+---
+
 ### User (`app/Models/User.php`)
 
 | Campo | Tipo |
@@ -1057,4 +1134,4 @@ Se creó un sistema completo para gestionar promociones y descuentos dinámicos 
 - **Modelos:** Se amplió Customer (incluyendo límite y deuda actual) y PaymentMethod (bandera de crédito). Se crearon CreditAccount (facturas pendientes) y CreditPayment (abonos).
 - **Integración API POS:** En PosIntegrationController, cuando se recibe un pago de crédito en la venta (storeSale), se genera la deuda del cliente validando su límite, y el monto a crédito no se suma al dinero físico de la caja (expected_amount). Se agregó el endpoint /api/pos/credit/pay para el cobro o abono de deudas. Los abonos distribuyen el pago (FIFO) en las cuentas pendientes y el cajero recibe este dinero ingresándolo al saldo de la caja de su turno activo.
 - **Controladores y Vistas:** Se implementó CustomerController (CRUD de clientes) y CreditController (estado de cuenta detallado de la deuda por cada factura).
-
+- **Sistema de Niveles de Crédito:** Se implementó el modelo `CreditLevel` con configuración de incremento automático. En el backend de CapyControl, el modelo `Customer` verifica el total de compras del cliente y ajusta automáticamente (multiplicador) el límite de crédito del cliente si este sube de nivel.

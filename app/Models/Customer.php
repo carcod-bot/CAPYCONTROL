@@ -15,6 +15,8 @@ class Customer extends Model
         'credit_limit',
         'current_balance',
         'credit_status',
+        'credit_level_id',
+        'total_purchases',
     ];
 
     protected $casts = [
@@ -69,5 +71,31 @@ class Customer extends Model
             $this->current_balance = 0;
         }
         $this->save();
+    }
+
+    public function creditLevel()
+    {
+        return $this->belongsTo(CreditLevel::class);
+    }
+
+    /**
+     * Auto-update credit level based on total purchases
+     */
+    public function updateCreditLevel()
+    {
+        $bestLevel = \App\Models\CreditLevel::where('required_purchases', '<=', $this->total_purchases)
+            ->orderBy('required_purchases', 'desc')
+            ->first();
+            
+        if ($bestLevel && $this->credit_level_id !== $bestLevel->id) {
+            $this->credit_level_id = $bestLevel->id;
+            
+            if ($bestLevel->limit_increase_percentage > 0) {
+                $increaseFactor = $bestLevel->limit_increase_percentage / 100;
+                $this->credit_limit += ($this->credit_limit * $increaseFactor);
+            }
+            
+            $this->save();
+        }
     }
 }

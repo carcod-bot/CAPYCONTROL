@@ -101,6 +101,9 @@ Route::middleware('auth')->group(function () {
         Route::resource('customers', App\Http\Controllers\CustomerController::class)->only(['index']);
         Route::get('finances/credits', [App\Http\Controllers\Finances\CreditController::class, 'index'])->name('credits.index');
         Route::get('finances/credits/{customer}', [App\Http\Controllers\Finances\CreditController::class, 'show'])->name('credits.show');
+        
+        // Credit Levels
+        Route::resource('finances/credit-levels', App\Http\Controllers\CreditLevelController::class)->except(['create', 'show', 'edit']);
     });
     Route::middleware('permission:finances.edit')->group(function () {
         Route::resource('customers', App\Http\Controllers\CustomerController::class)->except(['index', 'create', 'show', 'edit']);

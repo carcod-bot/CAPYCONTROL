@@ -9,7 +9,7 @@ class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::query();
+        $query = Customer::with('creditLevel');
 
         if ($request->filled('q')) {
             $q = $request->q;
@@ -22,8 +22,9 @@ class CustomerController extends Controller
         }
 
         $customers = $query->orderBy('name')->paginate(20)->withQueryString();
+        $creditLevels = \App\Models\CreditLevel::orderBy('required_purchases', 'asc')->get();
 
-        return view('customers.index', compact('customers'));
+        return view('customers.index', compact('customers', 'creditLevels'));
     }
 
     public function store(Request $request)

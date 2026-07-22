@@ -110,8 +110,10 @@
                                 <a href="{{ route('customers.index') }}" class="topbar-dropdown-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-users"></i> Clientes
                                 </a>
-                                <a href="{{ route('credits.index') }}" class="topbar-dropdown-item {{ request()->routeIs('credits.*') ? 'active' : '' }}">
+                                <a href="{{ route('credits.index') }}" class="topbar-dropdown-item {{ request()->routeIs('credits.*') && !request()->routeIs('credit-levels.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-hand-holding-dollar"></i> Cuentas por Cobrar
+                                <a href="{{ route('credit-levels.index') }}" class="topbar-dropdown-item {{ request()->routeIs('credit-levels.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-layer-group"></i> Niveles de Crédito
                                 </a>
                             </div>
                         </div>
