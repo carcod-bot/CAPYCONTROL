@@ -24,6 +24,9 @@ capycontrol/
 │   │   ├── SettingController.php
 │   │   ├── CurrencyController.php
 │   │   ├── PaymentMethodController.php
+│   │   ├── CustomerController.php
+│   │   ├── Finances/
+│   │   │   └── CreditController.php
 │   │   ├── CashRegisterController.php
 │   │   ├── CashSessionController.php
 │   │   ├── Administration/
@@ -40,6 +43,9 @@ capycontrol/
 │   │   ├── Setting.php
 │   │   ├── Currency.php
 │   │   ├── PaymentMethod.php
+│   │   ├── Customer.php
+│   │   ├── CreditAccount.php
+│   │   ├── CreditPayment.php
 │   │   ├── CashRegister.php
 │   │   ├── CashSession.php
 │   │   ├── CashMovement.php
@@ -193,9 +199,10 @@ capycontrol/
 ---
 
 ## 💰 Módulo de Finanzas
-
 ### CurrencyController (`app/Http/Controllers/CurrencyController.php`)
-
+### PaymentMethodController (`app/Http/Controllers/PaymentMethodController.php`)
+### CreditController (`app/Http/Controllers/Finances/CreditController.php`)
+### CustomerController (`app/Http/Controllers/CustomerController.php`)
 | Método | Ruta | Tipo | Descripción |
 |--------|------|------|-------------|
 | `index()` | `/currencies` | GET | Renderiza la vista `finances.currencies.index`. |
@@ -456,6 +463,10 @@ Almacena el historial de cambios importantes en el sistema (ej: ajustes masivos 
 ---
 
 ### PaymentMethod (`app/Models/PaymentMethod.php`)
+### Customer (`app/Models/Customer.php`)
+### CreditAccount (`app/Models/CreditAccount.php`)
+### CreditPayment (`app/Models/CreditPayment.php`)
+### CashRegister (`app/Models/CashRegister.php`)
 
 | Campo | Tipo |
 |-------|------|
