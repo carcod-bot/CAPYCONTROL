@@ -1135,3 +1135,11 @@ Se cre√≥ un sistema completo para gestionar promociones y descuentos din√°micos 
 - **Integraci√≥n API POS:** En PosIntegrationController, cuando se recibe un pago de cr√©dito en la venta (storeSale), se genera la deuda del cliente validando su l√≠mite, y el monto a cr√©dito no se suma al dinero f√≠sico de la caja (expected_amount). Se agreg√≥ el endpoint /api/pos/credit/pay para el cobro o abono de deudas. Los abonos distribuyen el pago (FIFO) en las cuentas pendientes y el cajero recibe este dinero ingres√°ndolo al saldo de la caja de su turno activo.
 - **Controladores y Vistas:** Se implement√≥ CustomerController (CRUD de clientes) y CreditController (estado de cuenta detallado de la deuda por cada factura).
 - **Sistema de Niveles de Cr√©dito:** Se implement√≥ el modelo `CreditLevel` con configuraci√≥n de incremento autom√°tico. En el backend de CapyControl, el modelo `Customer` verifica el total de compras del cliente y ajusta autom√°ticamente (multiplicador) el l√≠mite de cr√©dito del cliente si este sube de nivel.
+
+### ?? Dashboard y EstadÌsticas R·pidas (23/07/2026)
+- **Controlador (`HomeController.php`):** Se integraron las consultas hacia los modelos `Sale`, `CreditAccount`, `CashSession` y `Product` para nutrir la vista de inicio del administrador.
+- **Vista (`home.blade.php`):** Se transformÛ de una vista en blanco a un panel interactivo moderno usando CSS Grid, variables CSS din·micas y Chart.js.
+  - Se visualizan en tiempo real: Ventas del dÌa, Cantidad de Tickets, Monto total de Cuentas por Cobrar y Turnos Activos.
+  - Un gr·fico muestra la tendencia de ventas de los ˙ltimos 7 dÌas.
+  - Tableros secundarios que listan las ˙ltimas 5 ventas (en tiempo real) y un monitor que alerta sobre los productos cuyo inventario sea igual o inferior a 10 unidades (stock crÌtico).
+
