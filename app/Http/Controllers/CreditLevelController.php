@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 
 class CreditLevelController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $levels = CreditLevel::orderBy('required_purchases', 'asc')->get();
+        $levels = CreditLevel::orderBy('required_purchases', 'asc')->paginate(10);
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($levels);
+        }
+        
         return view('finances.credits.levels.index', compact('levels'));
     }
 

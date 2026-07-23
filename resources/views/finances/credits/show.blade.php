@@ -170,7 +170,8 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Factura Origen</th>
-                        <th class="text-end">Monto Total</th>
+                        <th class="text-end">Inicial</th>
+                        <th class="text-end">Monto Crédito</th>
                         <th class="text-end">Monto Pagado</th>
                         <th class="text-end">Restante</th>
                         <th class="text-center">Estado</th>
@@ -178,6 +179,12 @@
                 </thead>
                 <tbody>
                     @forelse($customer->creditAccounts as $account)
+                    @php
+                        $inicial = 0;
+                        if($account->sale) {
+                            $inicial = max(0, $account->sale->total_amount - $account->amount);
+                        }
+                    @endphp
                     <tr>
                         <td style="white-space: nowrap;">
                             @if($account->installments->count() > 0)
@@ -194,6 +201,7 @@
                                 <span style="color: var(--text-muted);">N/A</span>
                             @endif
                         </td>
+                        <td class="text-end" style="color: var(--text-muted);">${{ number_format($inicial, 2) }}</td>
                         <td class="text-end" style="font-weight: 600;">${{ number_format($account->amount, 2) }}</td>
                         <td class="text-end" style="color: #10b981; font-weight: 500;">${{ number_format($account->paid_amount, 2) }}</td>
                         <td class="text-end" style="color: var(--danger); font-weight: 700;">
@@ -210,8 +218,8 @@
                         </td>
                     </tr>
                     @if($account->installments->count() > 0)
-                    <tr id="installments-{{ $account->id }}" style="display: none; background: rgba(0,0,0,0.1);">
-                        <td colspan="6" style="padding: 1.5rem;">
+                    <tr id="installments-{{ $account->id }}" style="display: none; background: var(--background); border-bottom: 1px solid var(--border);">
+                        <td colspan="7" style="padding: 1.5rem; border: none;">
                             <h5 style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-main);"><i class="fa-solid fa-calendar-days"></i> Cronograma de Pagos</h5>
                             <table class="table table-sm" style="background: transparent; margin: 0;">
                                 <thead>
