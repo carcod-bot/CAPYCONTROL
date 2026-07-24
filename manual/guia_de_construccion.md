@@ -763,7 +763,7 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 | M茅todo | Ruta | Tipo | Descripci贸n |
 |--------|------|------|-------------|
 | `checkSession` | `/api/pos/session-status` | GET | Verifica si el cajero tiene un turno abierto y devuelve la configuraci贸n global `pos_config` (`tax_type`, `tax_amount`, `tax_included`, `currencies`, `payment_methods`). |
-| `storeSale` | `/api/pos/sales` | POST | Recibe el carrito, descuenta stock global y **descuenta de lotes (FIFO)**, registra la venta y sus 铆tems. |
+| "storeSale" | /api/pos/sales | POST | Recibe el carrito, descuenta stock global y **descuenta de lotes (FIFO)**, registra la venta y sus 韙ems. Valida idempotencia con ticket_number. |
 | `searchCustomers` | `/api/pos/customers` | GET | Busca clientes por nombre o DNI. |
 | `storeCustomer` | `/api/pos/customers` | POST | Crea un cliente de forma r谩pida desde la caja. |
 | `withdrawCash` | `/api/pos/session/withdraw` | POST | Registra un retiro de efectivo en la caja actual. |
@@ -771,6 +771,8 @@ Maneja el stock por lotes (FIFO). Las entradas de inventario crean nuevos lotes 
 | `logEvent` | `/api/pos/session/log-event` | POST | Registra eventos de punto de venta (gaveta, reportes Z y X, autorizaciones). |
 | `getSale` | `/api/pos/sales/{ticket}` | GET | Busca una factura interna y sus productos para gestionar devoluciones. |
 | `storeRefund` | `/api/pos/refund` | POST | Registra los productos devueltos a la tienda tras emitir una Nota de Cr茅dito. |
+| "getSyncData" | /api/pos/sync-data | GET | Exporta cat醠ogo completo (productos, clientes, usuarios) para el modo offline de CapyPOS. |
+| "syncSessions" | /api/pos/session/sync-sessions | POST | Recibe transacciones procesadas offline (aperturas, cierres, cobros). |
 
 ---
 
@@ -1143,3 +1145,15 @@ Se cre贸 un sistema completo para gestionar promociones y descuentos din谩micos 
   - Un gr醘ico muestra la tendencia de ventas de los 鷏timos 7 d韆s.
   - Tableros secundarios que listan las 鷏timas 5 ventas (en tiempo real) y un monitor que alerta sobre los productos cuyo inventario sea igual o inferior a 10 unidades (stock cr韙ico).
 
+
+#### Actualizaciones del 23/07/2026:
+- **Gesti贸n de POS en Modo H铆brido/Off-Line:**
+  - **Sincronizaci贸n de Cajas (Sesiones):** Se desarroll贸 el endpoint /api/pos/session/sync-sessions en el PosIntegrationController para recibir en bloque las sesiones abiertas, cerradas, declaraciones de efectivo y pagos de cr茅dito procesados de forma local por el Punto de Venta sin internet.
+  - **Recepci贸n de Datos Completos (Usuarios):** Se corrigi贸 la l贸gica en /api/pos/sync-data cambiando el constructor por un Query Builder (DB::table('users')->get()) para garantizar que se empaqueten los campos ocultos (como la contrase帽a y token) y el POS pueda autenticar a los empleados localmente.
+  - **Idempotencia (Ventas):** El endpoint /api/pos/sales ahora respeta el 	icket_number nativo generado por CapyPOS de forma as铆ncrona. Se implement贸 una barrera que bloquea (con estado success silencioso) la duplicaci贸n de ventas y de descuentos de inventario si el POS reenv铆a transacciones debido a tiempos de espera (timeout) originados por intermitencias del Wi-Fi.
+  - **SweetAlert2 para Alineaci贸n:** Todas las confirmaciones para "Alinear Cajas" (descarga forzada de ventas desconectadas) desde la vista de Puntos de Venta (Dashboard) fueron migradas de alertas nativas del navegador a modales de SweetAlert2 (Swal.fire), manteniendo la coherencia est茅tica con el resto de la interfaz.
+
+
+#### Actualizaciones del 24/07/2026:
+- **Limpieza de Entorno y Seguridad:** Se eliminaron los m煤ltiples scripts temporales de prueba en la ra铆z del proyecto para asegurar un entorno de producci贸n limpio.
+- **Auditor铆a Estricta de Sincronizaci贸n:** Se ratifica el requerimiento y validaci贸n del encabezado HTTP X-User-Id en las peticiones de subida de ventas offline (/api/pos/sales). Esto garantiza que, incluso cuando la sincronizaci贸n ocurre de forma invisible en segundo plano, toda factura importada desde una caja desconectada mantenga la trazabilidad exacta e inmutable del cajero original en la base de datos central.

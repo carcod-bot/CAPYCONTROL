@@ -20,6 +20,10 @@ Route::prefix('pos')->group(function () {
     Route::get('/sales/{ticket}', [PosIntegrationController::class, 'getSale']);
     Route::post('/refund', [PosIntegrationController::class, 'storeRefund']);
     
+    // Productos
+    Route::get('/products/search', [PosIntegrationController::class, 'searchProduct']);
+    Route::get('/products/search-by-name', [PosIntegrationController::class, 'searchProductByName']);
+    
     // Clientes y Créditos
     Route::get('/customers', [PosIntegrationController::class, 'searchCustomers']);
     Route::get('/customers/{id}/credit-details', [PosIntegrationController::class, 'getCustomerCreditDetails']);
@@ -28,4 +32,8 @@ Route::prefix('pos')->group(function () {
     
     // Promociones
     Route::get('/promotions', [PosIntegrationController::class, 'getPromotions']);
+    
+    // Sincronización Offline
+    Route::get('/sync-data', [PosIntegrationController::class, 'getSyncData']);
+    Route::post('/sync-sessions', [PosIntegrationController::class, 'syncSessions']);
 });

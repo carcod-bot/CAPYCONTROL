@@ -17,6 +17,9 @@
         <a href="{{ route('pos-control.index') }}" class="btn btn-secondary">
             <i class="fa-solid fa-desktop"></i> Monitoreo
         </a>
+        <button class="btn btn-info text-white" onclick="alignAllRegisters()">
+            <i class="fa-solid fa-sync"></i> Alinear Todas
+        </button>
         <button class="btn btn-primary" onclick="openModal('addRegisterModal')">
             <i class="fa-solid fa-plus"></i> Nueva Caja
         </button>
@@ -86,6 +89,10 @@
                                 <button class="btn-icon btn-icon-info" title="Ver Historial"
                                     onclick="viewSessionHistory({{ $register->id }}, '{{ $register->number }}')">
                                     <i class="fa-solid fa-clock-rotate-left"></i>
+                                </button>
+                                <button class="btn-icon" style="background-color: var(--info); color: white;" title="Alinear Caja"
+                                    onclick="alignRegister({{ $register->id }})">
+                                    <i class="fa-solid fa-sync"></i>
                                 </button>
                                 <button class="btn-icon btn-icon-secondary" title="Editar Caja"
                                     onclick="openEditRegisterModal(
@@ -419,6 +426,82 @@
         })
         .catch(() => {
             document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error al cargar historial</td></tr>';
+        });
+    }
+
+    function alignRegister(id) {
+        Swal.fire({
+            title: '¿Alinear Caja?',
+            text: '¿Desea enviar la orden de alinear a esta caja?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, Alinear',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/capycontrol/public/pos-control/registers/${id}/align`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('¡Éxito!', data.message, 'success');
+                    } else {
+                        Swal.fire('Error', data.error || 'Error al alinear', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                });
+            }
+        });
+    }
+
+    function alignAllRegisters() {
+        Swal.fire({
+            title: '¿Alinear Todas las Cajas?',
+            text: '¿Desea alinear todas las cajas registradas? (Tolerancia máxima 20 segundos)',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, Alinear Todas',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Not standard to get event.currentTarget inside a timeout/promise, but we can disable visually via Swal
+                Swal.fire({
+                    title: 'Alineando...',
+                    text: 'Por favor espere, procesando todas las cajas.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                fetch(`/capycontrol/public/pos-control/registers/align-all`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('¡Proceso Completado!', data.message, 'success');
+                    } else {
+                        Swal.fire('Error', data.error || 'Error en alineación masiva', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'Error de conexión', 'error');
+                });
+            }
         });
     }
 </script>

@@ -117,4 +117,99 @@ class CashRegisterController extends Controller
 
         return response()->json($sessions);
     }
+
+    public function align(CashRegister $cashRegister)
+    {
+        $ip = $cashRegister->ip_address;
+
+        if (!$ip) {
+            return response()->json(['error' => 'La caja no tiene una IP configurada.'], 400);
+        }
+
+        try {
+            // Se usa Http::timeout para no colgar el servidor si la caja está apagada
+            $url = "http://{$ip}/capypos/public/api/sync-local";
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($url);
+
+            if ($response->successful()) {
+                return response()->json(['success' => true, 'message' => 'Caja alineada correctamente.']);
+            }
+
+            // Fallback for local testing (if IP fails, try localhost if it's the same machine)
+            if (request()->ip() === '127.0.0.1' || request()->ip() === '::1') {
+                 $url = "http://127.0.0.1/capypos/public/api/sync-local";
+                 $response = \Illuminate\Support\Facades\Http::timeout(5)->get($url);
+                 if ($response->successful()) {
+                     return response()->json(['success' => true, 'message' => 'Caja alineada correctamente usando localhost.']);
+                 }
+            }
+
+            return response()->json(['error' => 'La caja respondió con error: ' . $response->status()], 500);
+
+        } catch (\Exception $e) {
+            // Fallback for local testing
+            if (request()->ip() === '127.0.0.1' || request()->ip() === '::1') {
+                 try {
+                     $url = "http://127.0.0.1/capypos/public/api/sync-local";
+                     $response = \Illuminate\Support\Facades\Http::timeout(5)->get($url);
+                     if ($response->successful()) {
+                         return response()->json(['success' => true, 'message' => 'Caja alineada correctamente usando localhost.']);
+                     }
+                 } catch (\Exception $e2) {
+                     // ignore
+                 }
+            }
+            return response()->json(['error' => 'No se pudo conectar con la caja: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function alignAll()
+    {
+        $registers = CashRegister::whereNotNull('ip_address')->get();
+
+        if ($registers->isEmpty()) {
+            return response()->json(['error' => 'No hay cajas con IP configurada.'], 400);
+        }
+
+        $responses = [];
+        $promises = [];
+        
+        $pool = \Illuminate\Support\Facades\Http::pool(function (\Illuminate\Http\Client\Pool $pool) use ($registers, &$promises) {
+            foreach ($registers as $register) {
+                $url = "http://{$register->ip_address}/capypos/public/api/sync-local";
+                $promises[$register->id] = $pool->as($register->id)->timeout(20)->get($url);
+            }
+        });
+
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($registers as $register) {
+            $response = $pool[$register->id] ?? null;
+            
+            if ($response && $response instanceof \Illuminate\Http\Client\Response && $response->successful()) {
+                $successCount++;
+            } else {
+                // Try localhost fallback if applicable
+                if (request()->ip() === '127.0.0.1' || request()->ip() === '::1') {
+                    try {
+                        $url = "http://127.0.0.1/capypos/public/api/sync-local";
+                        $res = \Illuminate\Support\Facades\Http::timeout(20)->get($url);
+                        if ($res->successful()) {
+                            $successCount++;
+                            continue;
+                        }
+                    } catch (\Exception $e) {
+                        // fail
+                    }
+                }
+                $failCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => "Proceso completado. $successCount cajas alineadas, $failCount fallaron."
+        ]);
+    }
 }

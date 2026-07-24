@@ -136,6 +136,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/pos-control/sessions/{cashSession}/close', [CashSessionController::class, 'close'])->name('pos-control.sessions.close');
         Route::post('/pos-control/sessions/{cashSession}/withdraw', [CashSessionController::class, 'withdraw'])->name('pos-control.sessions.withdraw');
         Route::post('/pos-control/sessions/{cashSession}/deposit', [CashSessionController::class, 'deposit'])->name('pos-control.sessions.deposit');
+
+        // Align routes
+        Route::post('/pos-control/registers/align-all', [CashRegisterController::class, 'alignAll'])->name('pos-control.registers.align-all');
+        Route::post('/pos-control/registers/{cashRegister}/align', [CashRegisterController::class, 'align'])->name('pos-control.registers.align');
     });
 
     // Configuraciones Module

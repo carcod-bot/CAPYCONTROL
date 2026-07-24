@@ -258,6 +258,66 @@ class PosIntegrationController extends Controller
         ], 200);
     }
 
+    public function searchProduct(Request $request)
+    {
+        $code = $request->input('code');
+        if (!$code) return response()->json(['error' => 'No code provided'], 400);
+
+        $productRecord = \Illuminate\Support\Facades\DB::table('products')
+            ->where('ean_code', $code)
+            ->orWhere('private_code', $code)
+            ->first();
+
+        if ($productRecord) {
+            return response()->json([
+                'success' => true,
+                'product' => [
+                    'id' => $productRecord->id,
+                    'name' => $productRecord->name,
+                    'description' => $productRecord->description ?? '',
+                    'price' => isset($productRecord->base_price_usd) && !isset($productRecord->price_usd) ? $productRecord->base_price_usd : ($productRecord->price_usd ?? 0),
+                    'code' => $productRecord->ean_code ?: $productRecord->private_code,
+                    'stock' => $productRecord->stock ?? 0,
+                    'category_id' => $productRecord->category_id ?? null,
+                    'department_id' => $productRecord->department_id ?? null,
+                ]
+            ]);
+        }
+        return response()->json(['success' => false, 'message' => 'Producto no encontrado'], 404);
+    }
+
+    public function searchProductByName(Request $request)
+    {
+        $term = $request->input('term');
+        if (!$term) return response()->json(['success' => true, 'products' => []]);
+
+        $records = \Illuminate\Support\Facades\DB::table('products')
+            ->where('name', 'LIKE', "%{$term}%")
+            ->orWhere('description', 'LIKE', "%{$term}%")
+            ->limit(20)
+            ->get();
+
+        $products = $records->map(function($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'description' => $p->description ?? '',
+                'price' => isset($p->base_price_usd) && !isset($p->price_usd) ? $p->base_price_usd : ($p->price_usd ?? 0),
+                'ean_code' => $p->ean_code,
+                'private_code' => $p->private_code,
+                'code' => $p->ean_code ?: $p->private_code,
+                'stock' => $p->stock ?? 0,
+                'category_id' => $p->category_id ?? null,
+                'department_id' => $p->department_id ?? null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'products' => $products
+        ]);
+    }
+
     /**
      * Process a sale from CapyPOS
      */
@@ -289,6 +349,19 @@ class PosIntegrationController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Idempotency check: if offline POS sends a ticket_number that already exists, it's a duplicate sync
+            if ($request->has('ticket_number')) {
+                $existingSale = Sale::where('ticket_number', $request->ticket_number)->first();
+                if ($existingSale) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Sale already processed',
+                        'ticket_number' => $existingSale->ticket_number
+                    ]);
+                }
+            }
 
             // 1. Verify Session
             $session = CashSession::where('user_id', $userId)
@@ -1080,11 +1153,11 @@ class PosIntegrationController extends Controller
                 'notes' => 'Abono desde Punto de Venta',
             ]);
 
-            // Create cash movement (income)
+            // Create cash movement (deposit)
             \App\Models\CashMovement::create([
                 'cash_session_id' => $session->id,
                 'user_id' => $userId,
-                'type' => 'income',
+                'type' => 'deposit',
                 'amount' => $request->amount_local, // Local currency for physical cash tracking
                 'reason' => 'Cobranza de Crédito',
                 'payment_method_id' => $request->payment_method_id,
@@ -1161,5 +1234,113 @@ class PosIntegrationController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function getSyncData()
+    {
+        $products = \Illuminate\Support\Facades\DB::table('products')->get();
+        $customers = \Illuminate\Support\Facades\DB::table('customers')->get();
+        $promotions = \Illuminate\Support\Facades\DB::table('promotions')->get();
+        $currencies = \Illuminate\Support\Facades\DB::table('currencies')->get();
+        $paymentMethods = \Illuminate\Support\Facades\DB::table('payment_methods')->get();
+        $settings = \App\Models\Setting::pluck('value', 'key');
+        $users = \Illuminate\Support\Facades\DB::table('users')->get();
+        
+        return response()->json([
+            'products' => $products,
+            'customers' => $customers,
+            'promotions' => $promotions,
+            'currencies' => $currencies,
+            'payment_methods' => $paymentMethods,
+            'settings' => $settings,
+            'users' => $users,
+        ]);
+    }
+
+    public function syncSessions(Request $request)
+    {
+        $payloads = $request->input('payloads', []);
+        
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        foreach ($payloads as $uuid => $payload) {
+            try {
+                DB::beginTransaction();
+
+                $type = $payload['type'] ?? '';
+                $userId = $payload['user_id'] ?? null;
+                $registerId = $payload['register_id'] ?? null;
+
+                if ($type === 'open') {
+                    $existing = CashSession::where('user_id', $userId)
+                                           ->where('status', 'open')
+                                           ->first();
+                    if (!$existing) {
+                        CashSession::create([
+                            'user_id' => $userId,
+                            'cash_register_id' => $registerId,
+                            'opened_at' => $payload['opened_at'],
+                            'status' => 'open',
+                            'initial_balance' => $payload['initial_balance'] ?? 0
+                        ]);
+                    }
+                } elseif ($type === 'close') {
+                    $session = CashSession::where('user_id', $userId)
+                                          ->where('status', 'open')
+                                          ->first();
+                    if ($session) {
+                        $session->update([
+                            'closed_at' => $payload['closed_at'],
+                            'status' => 'closed',
+                            'final_balance_expected' => $payload['final_balance_expected'] ?? 0,
+                            'final_balance_actual' => $payload['final_balance_actual'] ?? 0,
+                            'difference' => $payload['difference'] ?? 0,
+                            'close_notes' => $payload['close_notes'] ?? null,
+                            'cashier_declarations' => $payload['cashier_declarations'] ?? null
+                        ]);
+                    }
+                } elseif ($type === 'movement') {
+                    $session = CashSession::where('user_id', $userId)
+                                          ->where('status', 'open')
+                                          ->first();
+                    if ($session) {
+                        CashMovement::create([
+                            'cash_session_id' => $session->id,
+                            'type' => $payload['movement_type'],
+                            'amount' => $payload['amount'],
+                            'reason' => $payload['reason'],
+                            'user_id' => $userId
+                        ]);
+                        if ($payload['movement_type'] === 'withdrawal') {
+                            $session->increment('total_withdrawals', $payload['amount']);
+                        } elseif ($payload['movement_type'] === 'deposit') {
+                            $session->increment('total_deposits', $payload['amount']);
+                        }
+                    }
+                } elseif ($type === 'credit_pay') {
+                    $customer = \App\Models\Customer::find($payload['customer_id']);
+                    if ($customer) {
+                        $customer->decrement('current_balance', $payload['amount']);
+                        // Here we could register the payment in a specific table if needed
+                    }
+                }
+
+                DB::commit();
+                $successCount++;
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $errorCount++;
+                $errors[] = "Error procesando $uuid: " . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'processed' => $successCount,
+            'errors' => $errorCount,
+            'error_details' => $errors
+        ]);
     }
 }

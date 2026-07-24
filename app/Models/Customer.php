@@ -83,7 +83,8 @@ class Customer extends Model
      */
     public function updateCreditLevel()
     {
-        $bestLevel = \App\Models\CreditLevel::where('required_purchases', '<=', $this->total_purchases)
+        $purchases = $this->total_purchases ?? 0;
+        $bestLevel = \App\Models\CreditLevel::where('required_purchases', '<=', $purchases)
             ->orderBy('required_purchases', 'desc')
             ->first();
             
