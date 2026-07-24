@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Instalación - CapyControl</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #2563eb;
+            margin-top: 35px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #1e40af;
+        }
+
+        .alert {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: #f8fafc;
+            font-weight: normal;
+        }
+
+        .step {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .step-number {
+            background-color: #1e3a8a;
+            color: white;
+            min-width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .step-content {
+            padding-top: 4px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚙️ Manual de Instalación: CapyControl (Backend)</h1>
+        <p>Esta guía detalla paso a paso cómo desplegar el servidor central <strong>CapyControl</strong> en un entorno
+            Windows usando XAMPP. Este sistema es el cerebro administrativo que gestiona el inventario, créditos y
+            consolidación de todas las sucursales (CapyPOS).</p>
+
+        <h2>1. Requisitos Previos</h2>
+        <ul>
+            <li><strong>XAMPP</strong> con PHP 8.2 o superior y MySQL/MariaDB activados.</li>
+            <li><strong>Composer</strong> instalado globalmente en el servidor.</li>
+            <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos y scripts del panel de control).
+            </li>
+        </ul>
+
+        <h2>2. Despliegue de Archivos y Base de Datos</h2>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Copiar los archivos</h3>
+                Pega la carpeta entera del proyecto <code>capycontrol</code> dentro de la carpeta pública de tu servidor
+                web (Usualmente <code>C:\xampp\htdocs\capycontrol\</code>).
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Crear la Base de Datos Maestra</h3>
+                Abre phpMyAdmin (<code>http://localhost/phpmyadmin</code>) y crea una nueva base de datos vacía. Te
+                sugerimos llamarla <code>capycontrol_db o vad1</code>.
+            </div>
+        </div>
+
+        <h2>3. Configuración del Entorno (Laravel)</h2>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Archivo de Configuración (.env)</h3>
+                Duplica el archivo <code>.env.example</code> que está en la raíz de la carpeta y renómbralo a
+                <code>.env</code>. Edítalo para asegurar la conexión con la base de datos (y cambiar el driver de sqlite
+                a mysql):
+                <pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=capycontrol_db o vad1
+DB_USERNAME=root
+DB_PASSWORD=</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>Instalación de Dependencias, Base de Datos y Enlaces</h3>
+                Abre la consola de comandos (CMD o PowerShell) dentro de la carpeta de CapyControl y ejecuta
+                secuencialmente:
+                <pre><code>composer install
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link</code></pre>
+                <div class="alert">
+                    <strong>Nota Importante:</strong> El comando <code>--seed</code> es crucial porque inyecta los datos
+                    maestros iniciales en el sistema (como el usuario Administrador y las configuraciones base). <br>El
+                    comando <code>storage:link</code> permite que las imágenes de los productos sean visibles
+                    públicamente.
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+                <h3>Compilación de Recursos Frontend (Vite)</h3>
+                Para que el diseño del panel administrativo se vea correctamente, en la misma consola ejecuta:
+                <pre><code>npm install
+npm run build</code></pre>
+            </div>
+        </div>
+
+        <h2>4. ¡Sistema Listo!</h2>
+        <div class="success" style="background-color: #eff6ff; border-color: #3b82f6;">
+            <strong>🚀 CapyControl ha sido instalado exitosamente.</strong><br>
+            Puedes acceder al panel administrativo ingresando desde cualquier navegador a
+            <code>http://localhost/capycontrol/public/</code>.
+            <br><br>
+            <strong>Credenciales por Defecto (si se ejecutó el Seeder):</strong><br>
+            Suelen ser definidas en los archivos DatabaseSeeder, usualmente:<br>
+            Usuario: <code>admin</code> o <code>admin@capycontrol.com</code><br>
+            Clave: <code>password</code> o <code>12345678</code>
+        </div>
+    </div>
+</body>
+
+</html>
