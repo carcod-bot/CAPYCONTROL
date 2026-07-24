@@ -36,4 +36,16 @@ Route::prefix('pos')->group(function () {
     // Sincronización Offline
     Route::get('/sync-data', [PosIntegrationController::class, 'getSyncData']);
     Route::post('/sync-sessions', [PosIntegrationController::class, 'syncSessions']);
+    
+    // Cajas Abiertas (Para la App Móvil)
+    Route::get('/active-registers', [PosIntegrationController::class, 'getActiveRegisters']);
+    
+    // Facturas en Espera Remotas
+    Route::post('/remote-parked-sales', [PosIntegrationController::class, 'storeRemoteParkedSale']);
+    Route::get('/remote-parked-sales/{registerId}', [PosIntegrationController::class, 'getRemoteParkedSales']);
+    Route::post('/remote-parked-sales/{id}/process', [PosIntegrationController::class, 'processRemoteParkedSale']);
+});
+
+Route::get('/ping', function () {
+    return response()->json(['status' => 'pong']);
 });

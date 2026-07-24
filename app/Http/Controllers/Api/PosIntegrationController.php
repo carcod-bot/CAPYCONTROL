@@ -135,13 +135,15 @@ class PosIntegrationController extends Controller
 
         return response()->json([
             'success'   => true,
+            'status'    => 'open',
             'user_role' => optional(User::find($userId))->role ?? 'cashier',
             'session'   => [
-                'id'             => $session->id,
-                'register'       => $register ? ($register->name ?? $register->number) : '—',
-                'register_number'=> $register ? $register->number : '—',
-                'hostname'       => $register ? $register->hostname : null,
-                'turn_number'    => $session->turn_number,
+                'id'               => $session->id,
+                'cash_register_id' => $session->cash_register_id,
+                'register'         => $register ? ($register->name ?? $register->number) : '—',
+                'register_number'  => $register ? $register->number : '—',
+                'hostname'         => $register ? $register->hostname : null,
+                'turn_number'      => $session->turn_number,
             ],
             'pos_config' => [
                 'currencies'      => $currencies,
@@ -1342,5 +1344,57 @@ class PosIntegrationController extends Controller
             'errors' => $errorCount,
             'error_details' => $errors
         ]);
+    }
+
+    // --- Remote Parked Sales (For CapyApp and CapyPOS) ---
+
+    public function getActiveRegisters()
+    {
+        $registers = CashRegister::where('active', true)
+            ->whereHas('sessions', fn($q) => $q->where('status', 'open'))
+            ->get(['id', 'number', 'name']);
+            
+        return response()->json($registers);
+    }
+
+    public function storeRemoteParkedSale(Request $request)
+    {
+        $request->validate([
+            'cash_register_id' => 'required|exists:cash_registers,id',
+            'customer_name' => 'required|string',
+            'customer_id' => 'nullable|integer',
+            'items' => 'required|array',
+            'total' => 'required|numeric'
+        ]);
+        
+        $sale = \App\Models\RemoteParkedSale::create([
+            'cash_register_id' => $request->cash_register_id,
+            'customer_id' => $request->customer_id,
+            'customer_name' => $request->customer_name,
+            'items' => $request->items,
+            'total' => $request->total,
+            'status' => 'pending'
+        ]);
+        
+        return response()->json(['success' => true, 'id' => $sale->id]);
+    }
+
+    public function getRemoteParkedSales($registerId)
+    {
+        $sales = \App\Models\RemoteParkedSale::where('cash_register_id', $registerId)
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
+            ->get();
+            
+        return response()->json($sales);
+    }
+
+    public function processRemoteParkedSale($id)
+    {
+        $sale = \App\Models\RemoteParkedSale::find($id);
+        if ($sale) {
+            $sale->update(['status' => 'processed']);
+        }
+        return response()->json(['success' => true]);
     }
 }
