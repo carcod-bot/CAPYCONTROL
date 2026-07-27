@@ -245,8 +245,22 @@
                                         <td class="text-center">
                                             @if($inst->status === 'paid')
                                                 <span class="status-badge status-paid" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;">Pagado</span>
+                                                @if($inst->paymentUser)
+                                                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                                                        Cajero: {{ $inst->paymentUser->name }}<br>
+                                                        Caja: {{ $inst->paymentSession ? $inst->paymentSession->cashRegister->name : 'N/A' }}<br>
+                                                        Método: <span style="font-weight:bold;">{{ $inst->paymentMethod ? $inst->paymentMethod->name : 'N/A' }}</span>
+                                                    </div>
+                                                @endif
                                             @elseif($inst->status === 'partial')
                                                 <span class="status-badge status-partial" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;">Abono</span>
+                                                @if($inst->paymentUser)
+                                                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;">
+                                                        Últ. Abono por:<br>
+                                                        {{ $inst->paymentUser->name }}<br>
+                                                        Vía: <span style="font-weight:bold;">{{ $inst->paymentMethod ? $inst->paymentMethod->name : 'N/A' }}</span>
+                                                    </div>
+                                                @endif
                                             @else
                                                 <span class="status-badge status-pending" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;">Pendiente</span>
                                             @endif

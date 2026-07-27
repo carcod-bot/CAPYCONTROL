@@ -294,6 +294,7 @@ class PosIntegrationController extends Controller
         if (!$term) return response()->json(['success' => true, 'products' => []]);
 
         $records = \Illuminate\Support\Facades\DB::table('products')
+            ->select('id', 'name', 'description', 'base_price_usd', 'price_usd', 'ean_code', 'private_code', 'stock')
             ->where('name', 'LIKE', "%{$term}%")
             ->orWhere('description', 'LIKE', "%{$term}%")
             ->limit(20)
@@ -628,10 +629,6 @@ class PosIntegrationController extends Controller
         }
         
         $customers = $query->limit(20)->get();
-        foreach ($customers as $c) {
-            $c->updateCreditLevel();
-            $c->load('creditLevel');
-        }
         
         return response()->json([
             'success' => true,
@@ -1182,12 +1179,12 @@ class PosIntegrationController extends Controller
             $remainingPayment = $request->amount_base;
             
             foreach ($pendingAccounts as $account) {
-                if ($remainingPayment <= 0) break;
+                if ($remainingPayment <= 0.005) break;
                 
                 $debt = $account->amount - $account->paid_amount;
                 $appliedToAccount = min($remainingPayment, $debt);
                 
-                if ($remainingPayment >= $debt) {
+                if (($remainingPayment + 0.01) >= $debt) {
                     $account->paid_amount = $account->amount;
                     $account->status = 'paid';
                     $remainingPayment -= $debt;
@@ -1208,16 +1205,22 @@ class PosIntegrationController extends Controller
                     $remainingForInstallments = $appliedToAccount;
                     
                     foreach ($installments as $inst) {
-                        if ($remainingForInstallments <= 0) break;
+                        if ($remainingForInstallments <= 0.005) break;
                         
                         $instDebt = $inst->amount - $inst->paid_amount;
-                        if ($remainingForInstallments >= $instDebt) {
+                        if (($remainingForInstallments + 0.01) >= $instDebt) {
                             $inst->paid_amount = $inst->amount;
                             $inst->status = 'paid';
+                            $inst->payment_cash_session_id = $session->id;
+                            $inst->payment_user_id = $userId;
+                            $inst->payment_method_id = $request->payment_method_id;
                             $remainingForInstallments -= $instDebt;
                         } else {
                             $inst->paid_amount += $remainingForInstallments;
                             $inst->status = 'partial';
+                            $inst->payment_cash_session_id = $session->id;
+                            $inst->payment_user_id = $userId;
+                            $inst->payment_method_id = $request->payment_method_id;
                             $remainingForInstallments = 0;
                         }
                         $inst->save();

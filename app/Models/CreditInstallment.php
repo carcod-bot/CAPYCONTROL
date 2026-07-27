@@ -13,6 +13,9 @@ class CreditInstallment extends Model
         'amount',
         'paid_amount',
         'status',
+        'payment_cash_session_id',
+        'payment_user_id',
+        'payment_method_id',
     ];
 
     protected $casts = [
@@ -24,5 +27,20 @@ class CreditInstallment extends Model
     public function creditAccount()
     {
         return $this->belongsTo(CreditAccount::class);
+    }
+
+    public function paymentSession()
+    {
+        return $this->belongsTo(CashSession::class, 'payment_cash_session_id');
+    }
+
+    public function paymentUser()
+    {
+        return $this->belongsTo(User::class, 'payment_user_id');
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id');
     }
 }

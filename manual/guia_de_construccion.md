@@ -1,4 +1,4 @@
-﻿# ðŸ“‹ GuÃ­a de ConstrucciÃ³n â€” CapyControl
+# ðŸ“‹ GuÃ­a de ConstrucciÃ³n â€” CapyControl
 
 > **Sistema**: CapyControl (Panel de AdministraciÃ³n e Inventario)  
 > **Framework**: Laravel 11  
@@ -1165,6 +1165,10 @@ Se creÃ³ un sistema completo para gestionar promociones y descuentos dinÃ¡mi
 - **TransiciÃ³n y Experiencia de Usuario (UI/UX):**
   - **Dark Mode DinÃ¡mico:** Se modificÃ³ la funcionalidad de cambio a modo oscuro (	oggleDarkMode en pp.blade.php). En vez de hacer un location.reload() tras la peticiÃ³n, ahora alterna las clases (.dark-mode) directamente en el cliente mediante Javascript.
   - **TransiciÃ³n Global:** Se incorporÃ³ en esources/css/app.css una regla base global (	ransition-colors duration-300) que provee animaciones suaves a todos los cambios de fondo, texto y bordes.
-- **Correcciones en MÃ³dulo de Productos:**
+- **Correcciones en MÃ³dulo de Productos y Búsquedas:**
   - Se solucionÃ³ un bug en la vista de inventario de productos (index.blade.php) donde el botÃ³n de "Nuevo Producto" apuntaba al ID incorrecto productModal. Se ajustÃ³ para apuntar al nombre de la ventana correcto createProductModal.
+  - Se aplicaron optimizaciones para evitar recargas completas innecesarias en las búsquedas de productos y clientes.
+- **Correcciones Financieras Críticas (Precisión Decimal y Abonos a Crédito):**
+  - **Bug de Cuotas Fantasmas:** Se solucionó un problema crítico originado por el estándar de flotantes (IEEE 754) en PHP. La resta sucesiva del abono contra las deudas dejaba residuos microscópicos (ej. `0.00000000001`), lo que provocaba que las facturas no se marcaran como "pagadas" en su totalidad y permanecieran pendientes en el sistema POS. Se incluyó un `epsilon` de mitigación (`+ 0.01`) al comparar montos en el `PosIntegrationController` garantizando el cierre absoluto de las deudas y cuotas.
+  - **Trazabilidad de Abonos en Cuotas:** Las cuotas individuales (`credit_installments`) ahora almacenan detalladamente las llaves foráneas completas del pago: `payment_cash_session_id`, `payment_user_id` y `payment_method_id` (Caja, Cajero y Vía de Pago). Esta información ahora se expone visualmente en el desglose interactivo del perfil del cliente (Cronograma de Pagos) de CapyControl.
 
