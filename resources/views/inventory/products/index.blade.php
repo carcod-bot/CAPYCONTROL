@@ -9,7 +9,7 @@
             <button class="btn btn-secondary" onclick="openModal('massiveAdjustmentModal')">
                 <i class="fa-solid fa-tags"></i> Ajuste Masivo
             </button>
-            <button class="btn btn-primary" onclick="openModal('productModal')">
+            <button class="btn btn-primary" onclick="openModal('createProductModal')">
                 <i class="fa-solid fa-plus"></i> Nuevo Producto
             </button>
         </div>

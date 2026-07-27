@@ -23,15 +23,22 @@ class HomeController extends Controller
         $activeSessions = \App\Models\CashSession::where('status', 'open')->count();
 
         // 4. Chart: Últimos 7 días
+        $startDate = \Carbon\Carbon::today()->subDays(6);
+        $endDate = \Carbon\Carbon::today()->endOfDay();
+        
+        $salesData = \App\Models\Sale::selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereIn('status', ['completed', 'paid', 'approved', 'closed'])
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
         $chartDates = [];
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = \Carbon\Carbon::today()->subDays($i);
+            $dateString = $date->format('Y-m-d');
             $chartDates[] = $date->format('d/m');
-            $dayTotal = \App\Models\Sale::whereDate('created_at', $date)
-                ->whereIn('status', ['completed', 'paid', 'approved', 'closed'])
-                ->sum('total_amount');
-            $chartData[] = $dayTotal;
+            $chartData[] = isset($salesData[$dateString]) ? $salesData[$dateString] : 0;
         }
 
         // 5. Alerta Stock Bajo

@@ -237,13 +237,29 @@
 
     <script>
         function toggleDarkMode() {
+            // Inmediatamente alternamos la clase en el body para la transición visual
+            document.body.classList.toggle('dark-mode');
+            
+            // Alternamos el icono del botón
+            const icon = document.querySelector('.dark-mode-btn i');
+            if (icon) {
+                if (document.body.classList.contains('dark-mode')) {
+                    icon.classList.remove('fa-moon');
+                    icon.classList.add('fa-sun');
+                } else {
+                    icon.classList.remove('fa-sun');
+                    icon.classList.add('fa-moon');
+                }
+            }
+
+            // Enviamos la petición en segundo plano para guardar la preferencia
             fetch('{{ route("toggle-dark-mode") }}', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json'
                 }
-            }).then(() => window.location.reload());
+            });
         }
 
         // Topbar Dropdown Toggle

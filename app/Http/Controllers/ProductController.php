@@ -47,10 +47,10 @@ class ProductController extends Controller
         }
         
         // Modal variables
-        $departments = Department::where('active', true)->orderBy('name')->get();
-        $categories = Category::where('active', true)->orderBy('name')->get();
-        $brands = \App\Models\Brand::orderBy('name')->get();
-        $providers = \App\Models\Provider::orderBy('name')->get();
+        $departments = Department::where('active', true)->orderBy('name')->select('id', 'name')->get();
+        $categories = Category::where('active', true)->orderBy('name')->select('id', 'name', 'department_id')->get();
+        $brands = \App\Models\Brand::orderBy('name')->select('id', 'name')->get();
+        $providers = \App\Models\Provider::orderBy('name')->select('id', 'name')->get();
         $nextCode = Product::generatePrivateCode();
         $codeMode = Setting::get('private_code_mode', 'incremental');
 
@@ -59,8 +59,8 @@ class ProductController extends Controller
 
     public function create()
     {
-        $departments = Department::where('active', true)->orderBy('name')->get();
-        $categories = Category::where('active', true)->orderBy('name')->get();
+        $departments = Department::where('active', true)->orderBy('name')->select('id', 'name')->get();
+        $categories = Category::where('active', true)->orderBy('name')->select('id', 'name', 'department_id')->get();
         $nextCode = Product::generatePrivateCode();
         $codeMode = Setting::get('private_code_mode', 'incremental');
 
@@ -120,10 +120,10 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        $departments = Department::orderBy('name')->get();
-        $categories = Category::orderBy('name')->get();
-        $brands = \App\Models\Brand::orderBy('name')->get();
-        $providers = \App\Models\Provider::orderBy('name')->get();
+        $departments = Department::orderBy('name')->select('id', 'name')->get();
+        $categories = Category::orderBy('name')->select('id', 'name', 'department_id')->get();
+        $brands = \App\Models\Brand::orderBy('name')->select('id', 'name')->get();
+        $providers = \App\Models\Provider::orderBy('name')->select('id', 'name')->get();
         
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([

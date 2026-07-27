@@ -121,6 +121,7 @@
         <h2>1. Requisitos Previos</h2>
         <ul>
             <li><strong>XAMPP</strong> con PHP 8.2 o superior y MySQL/MariaDB activados.</li>
+            <li><strong>Extensiones PHP requeridas:</strong> Asegúrate de que las extensiones <code>fileinfo</code> y <code>zip</code> estén habilitadas en tu archivo <code>php.ini</code>.</li>
             <li><strong>Composer</strong> instalado globalmente en el servidor.</li>
             <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos y scripts del panel de control).
             </li>
@@ -160,7 +161,13 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=capycontrol_db o vad1
 DB_USERNAME=root
-DB_PASSWORD=</code></pre>
+DB_PASSWORD=
+
+SESSION_DRIVER=file
+CACHE_STORE=file</code></pre>
+                <div class="alert" style="margin-top:10px;">
+                    <strong>Optimización:</strong> Es vital cambiar <code>SESSION_DRIVER</code> y <code>CACHE_STORE</code> a <code>file</code> (o <code>redis</code>) en lugar de <code>database</code> para evitar sobrecargar el servidor y prevenir lentitud en el sistema.
+                </div>
             </div>
         </div>
 

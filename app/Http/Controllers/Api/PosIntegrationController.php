@@ -311,6 +311,7 @@ class PosIntegrationController extends Controller
                 'stock' => $p->stock ?? 0,
                 'category_id' => $p->category_id ?? null,
                 'department_id' => $p->department_id ?? null,
+                'image' => $p->image ?? null,
             ];
         });
 
