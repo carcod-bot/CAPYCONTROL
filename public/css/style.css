@@ -319,7 +319,16 @@ body.dark-mode .topbar-user-action:hover {
 }
 
 /* ===== MAIN CONTENT (no sidebar margin) ===== */
-.main-content { flex: 1; display: flex; flex-direction: column; }
+@keyframes pageFadeIn {
+    0% { opacity: 0; transform: translateY(15px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.main-content { 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    animation: pageFadeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
 .page-header {
     padding: 1.5rem 2rem 0 2rem;
     max-width: 1600px;

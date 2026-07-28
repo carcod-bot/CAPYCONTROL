@@ -277,7 +277,7 @@ class PosIntegrationController extends Controller
                     'id' => $productRecord->id,
                     'name' => $productRecord->name,
                     'description' => $productRecord->description ?? '',
-                    'price' => isset($productRecord->base_price_usd) && !isset($productRecord->price_usd) ? $productRecord->base_price_usd : ($productRecord->price_usd ?? 0),
+                    'price' => $productRecord->price_usd ?? 0,
                     'code' => $productRecord->ean_code ?: $productRecord->private_code,
                     'stock' => $productRecord->stock ?? 0,
                     'category_id' => $productRecord->category_id ?? null,
@@ -294,9 +294,10 @@ class PosIntegrationController extends Controller
         if (!$term) return response()->json(['success' => true, 'products' => []]);
 
         $records = \Illuminate\Support\Facades\DB::table('products')
-            ->select('id', 'name', 'description', 'base_price_usd', 'price_usd', 'ean_code', 'private_code', 'stock')
-            ->where('name', 'LIKE', "%{$term}%")
-            ->orWhere('description', 'LIKE', "%{$term}%")
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+            ->select('products.id', 'products.name', 'products.description', 'products.price_usd', 'products.ean_code', 'products.private_code', 'products.stock', 'products.image', 'products.category_id', 'products.department_id', 'categories.name as category_name')
+            ->where('products.name', 'LIKE', "%{$term}%")
+            ->orWhere('products.description', 'LIKE', "%{$term}%")
             ->limit(20)
             ->get();
 
@@ -305,12 +306,13 @@ class PosIntegrationController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'description' => $p->description ?? '',
-                'price' => isset($p->base_price_usd) && !isset($p->price_usd) ? $p->base_price_usd : ($p->price_usd ?? 0),
+                'price' => $p->price_usd ?? 0,
                 'ean_code' => $p->ean_code,
                 'private_code' => $p->private_code,
                 'code' => $p->ean_code ?: $p->private_code,
                 'stock' => $p->stock ?? 0,
                 'category_id' => $p->category_id ?? null,
+                'category_name' => $p->category_name ?? 'Sin Categoría',
                 'department_id' => $p->department_id ?? null,
                 'image' => $p->image ?? null,
             ];
