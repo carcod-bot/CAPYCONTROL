@@ -221,11 +221,19 @@
 
     function generatePrint() {
         if (printItems.length === 0) {
-            showToast("Agrega al menos un producto a la cola.");
+            alert("Agrega al menos un producto a la cola.");
             return;
         }
         document.getElementById('itemsPayload').value = JSON.stringify(printItems);
-        document.getElementById('printForm').submit();
+        
+        // Abrir una ventana "limpia" (sin barra de direcciones, tipo App)
+        const windowFeatures = "width=1024,height=800,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes";
+        window.open('', 'PrintResultWindow', windowFeatures);
+        
+        // Apuntar el formulario a esa nueva ventana
+        const form = document.getElementById('printForm');
+        form.target = 'PrintResultWindow';
+        form.submit();
     }
 </script>
 @endpush
