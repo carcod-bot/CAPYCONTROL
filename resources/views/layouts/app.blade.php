@@ -91,6 +91,9 @@
                                 <a href="{{ route('inventory-adjustments.index') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory-adjustments.*') ? 'active' : '' }}">
                                     <i class="fa-solid fa-scale-balanced"></i> Ajustes y Conteo
                                 </a>
+                                <a href="{{ route('returned-products.index') }}" class="topbar-dropdown-item {{ request()->routeIs('returned-products.*') ? 'active' : '' }}">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i> Productos Devueltos
+                                </a>
                                 <div style="border-top: 1px solid var(--border); margin: 0.5rem 0;"></div>
                                 <a href="{{ route('inventory.prints') }}" class="topbar-dropdown-item {{ request()->routeIs('inventory.prints') ? 'active' : '' }}">
                                     <i class="fa-solid fa-print"></i> Impresiones
@@ -397,5 +400,6 @@
         }
     </script>
     @stack('scripts')
+    @stack('modals')
 </body>
 </html>

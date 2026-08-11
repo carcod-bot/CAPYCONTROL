@@ -49,6 +49,8 @@ Route::middleware('auth')->group(function () {
         Route::get('inventory/prints/search', [\App\Http\Controllers\Inventory\PrintController::class, 'search'])->name('inventory.prints.search');
         Route::post('inventory/prints/generate', [\App\Http\Controllers\Inventory\PrintController::class, 'generate'])->name('inventory.prints.generate');
         
+        Route::get('inventory/returned-products', [\App\Http\Controllers\Inventory\ReturnedProductController::class, 'index'])->name('returned-products.index');
+
         Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
     });
 
@@ -63,6 +65,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/inventory-adjustments', [InventoryAdjustmentController::class, 'store'])->name('inventory-adjustments.store');
         Route::put('/inventory-adjustments/{id}/batches', [InventoryAdjustmentController::class, 'updateBatches'])->name('inventory-adjustments.update-batches');
+        Route::post('inventory/returned-products/{id}/status', [\App\Http\Controllers\Inventory\ReturnedProductController::class, 'updateStatus'])->name('returned-products.update-status');
         Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
     });
 

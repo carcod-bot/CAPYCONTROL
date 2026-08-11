@@ -59,6 +59,7 @@
     </div>
 </div>
 
+@push('modals')
 <!-- Modal Adjustment -->
 <div class="modal-overlay" id="adjustmentModal">
     <div class="modal-content" style="max-width: 1100px;">
@@ -183,6 +184,8 @@
         </form>
     </div>
 </div>
+@endpush
+
 @endsection
 
 @push('scripts')
