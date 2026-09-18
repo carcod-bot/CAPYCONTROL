@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,32 +14,27 @@
             padding: 20px;
             background-color: #f4f7f6;
         }
-
         .container {
             background: #fff;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-
         h1 {
             color: #1e3a8a;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 10px;
             text-align: center;
         }
-
         h2 {
             color: #2563eb;
             margin-top: 35px;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 5px;
         }
-
         h3 {
             color: #1e40af;
         }
-
         .alert {
             background-color: #fffbeb;
             border-left: 4px solid #f59e0b;
@@ -48,7 +42,6 @@
             margin: 20px 0;
             border-radius: 4px;
         }
-
         .success {
             background-color: #ecfdf5;
             border-left: 4px solid #10b981;
@@ -56,7 +49,13 @@
             margin: 20px 0;
             border-radius: 4px;
         }
-
+        .danger {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
         code {
             background-color: #f1f5f9;
             padding: 3px 6px;
@@ -65,7 +64,6 @@
             color: #ef4444;
             font-weight: bold;
         }
-
         pre {
             background-color: #1e293b;
             color: #f8fafc;
@@ -73,13 +71,11 @@
             border-radius: 6px;
             overflow-x: auto;
         }
-
         pre code {
             background-color: transparent;
             color: #f8fafc;
             font-weight: normal;
         }
-
         .step {
             display: flex;
             margin-bottom: 20px;
@@ -88,7 +84,6 @@
             border-radius: 6px;
             border-left: 4px solid #3b82f6;
         }
-
         .step-number {
             background-color: #1e3a8a;
             color: white;
@@ -103,89 +98,81 @@
             flex-shrink: 0;
             font-size: 18px;
         }
-
         .step-content {
             padding-top: 4px;
             width: 100%;
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1>⚙️ Manual de Instalación: CapyControl (Backend)</h1>
-        <p>Esta guía detalla paso a paso cómo desplegar el servidor central <strong>CapyControl</strong> en un entorno
-            Windows usando XAMPP. Este sistema es el cerebro administrativo que gestiona el inventario, créditos y
-            consolidación de todas las sucursales (CapyPOS).</p>
+        <p>Esta guía detalla paso a paso cómo desplegar el servidor central <strong>CapyControl</strong> en un entorno Windows usando XAMPP, establecer su seguridad y activar su sistema de licencias.</p>
 
         <h2>1. Requisitos Previos</h2>
         <ul>
             <li><strong>XAMPP</strong> con PHP 8.2 o superior y MySQL/MariaDB activados.</li>
-            <li><strong>Extensiones PHP requeridas:</strong> Asegúrate de que las extensiones <code>fileinfo</code> y <code>zip</code> estén habilitadas en tu archivo <code>php.ini</code>.</li>
+            <li><strong>Extensiones PHP requeridas:</strong> <code>fileinfo</code>, <code>zip</code>, <code>mbstring</code>, <code>openssl</code>.</li>
             <li><strong>Composer</strong> instalado globalmente en el servidor.</li>
-            <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos y scripts del panel de control).
-            </li>
+            <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos del panel).</li>
         </ul>
 
-        <h2>2. Despliegue de Archivos y Base de Datos</h2>
-
+        <h2>2. Configuración de Seguridad en XAMPP (Contraseña MySQL)</h2>
+        <p>Por defecto, XAMPP instala MySQL con el usuario <code>root</code> y sin contraseña. Por seguridad en un entorno de cliente, es fundamental establecer una contraseña.</p>
         <div class="step">
             <div class="step-number">1</div>
             <div class="step-content">
-                <h3>Copiar los archivos</h3>
-                Pega la carpeta entera del proyecto <code>capycontrol</code> dentro de la carpeta pública de tu servidor
-                web (Usualmente <code>C:\xampp\htdocs\capycontrol\</code>).
-            </div>
-        </div>
-
-        <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-content">
-                <h3>Crear la Base de Datos Maestra</h3>
-                Abre phpMyAdmin (<code>http://localhost/phpmyadmin</code>) y crea una nueva base de datos vacía. Te
-                sugerimos llamarla <code>capycontrol_db o vad1</code>.
-            </div>
-        </div>
-
-        <h2>3. Configuración del Entorno (Laravel)</h2>
-
-        <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-                <h3>Archivo de Configuración (.env)</h3>
-                Duplica el archivo <code>.env.example</code> que está en la raíz de la carpeta y renómbralo a
-                <code>.env</code>. Edítalo para asegurar la conexión con la base de datos (y cambiar el driver de sqlite
-                a mysql):
-                <pre><code>DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=capycontrol_db o vad1
-DB_USERNAME=root
-DB_PASSWORD=
-
-SESSION_DRIVER=file
-CACHE_STORE=file</code></pre>
-                <div class="alert" style="margin-top:10px;">
-                    <strong>Optimización:</strong> Es vital cambiar <code>SESSION_DRIVER</code> y <code>CACHE_STORE</code> a <code>file</code> (o <code>redis</code>) en lugar de <code>database</code> para evitar sobrecargar el servidor y prevenir lentitud en el sistema.
+                <h3>Asignar contraseña a root</h3>
+                <ol>
+                    <li>Abre el Panel de Control de XAMPP y asegúrate de que Apache y MySQL estén corriendo.</li>
+                    <li>Entra a <strong>phpMyAdmin</strong> yendo a <code>http://localhost/phpmyadmin</code>.</li>
+                    <li>En el menú superior, haz clic en la pestaña <strong>Cuentas de usuarios</strong>.</li>
+                    <li>Busca el usuario <code>root</code> que tiene como nombre de host <code>localhost</code> y haz clic en <strong>Editar privilegios</strong>.</li>
+                    <li>Arriba haz clic en <strong>Cambio de contraseña</strong>.</li>
+                    <li>Escribe una contraseña segura y haz clic en <strong>Continuar</strong>.</li>
+                </ol>
+                <div class="danger">
+                    <strong>Atención:</strong> Al cambiar la contraseña, phpMyAdmin se desconectará. Ve a la carpeta <code>C:\xampp\phpMyAdmin</code>, abre el archivo <code>config.inc.php</code> y cambia la línea <code>$cfg['Servers'][$i]['password'] = '';</code> colocando la contraseña que acabas de crear.
                 </div>
             </div>
         </div>
 
+        <h2>3. Despliegue de Archivos y Base de Datos</h2>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Copiar los archivos</h3>
+                Pega la carpeta entera del proyecto <code>capycontrol</code> dentro de la carpeta pública de tu servidor web (Usualmente <code>C:\xampp\htdocs\capycontrol\</code>).
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Crear la Base de Datos Maestra</h3>
+                Abre phpMyAdmin (usando tu nueva contraseña) y crea una nueva base de datos vacía. Te sugerimos llamarla <code>capycontrol_db o vad1</code>.
+            </div>
+        </div>
+
+        <h2>4. Configuración del Entorno (Laravel)</h2>
+
         <div class="step">
             <div class="step-number">4</div>
             <div class="step-content">
-                <h3>Instalación de Dependencias, Base de Datos y Enlaces</h3>
-                Abre la consola de comandos (CMD o PowerShell) dentro de la carpeta de CapyControl y ejecuta
-                secuencialmente:
-                <pre><code>composer install
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link</code></pre>
+                <h3>Archivo de Configuración (.env)</h3>
+                Duplica el archivo <code>.env.example</code> que está en la raíz de la carpeta y renómbralo a <code>.env</code>. Edítalo para asegurar la conexión con la base de datos:
+<pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=capycontrol_db o vad1
+DB_USERNAME=root
+DB_PASSWORD=TU_NUEVA_CONTRASEÑA
+
+SESSION_DRIVER=file
+CACHE_STORE=file</code></pre>
                 <div class="alert">
-                    <strong>Nota Importante:</strong> El comando <code>--seed</code> es crucial porque inyecta los datos
-                    maestros iniciales en el sistema (como el usuario Administrador y las configuraciones base). <br>El
-                    comando <code>storage:link</code> permite que las imágenes de los productos sean visibles
-                    públicamente.
+                    <strong>Licencia:</strong> Verifica que la variable <code>APP_INTEGRITY_HASH</code> exista en el <code>.env</code> y posea la llave oficial maestra. Esta variable <strong>NO</strong> debe modificarse.
                 </div>
             </div>
         </div>
@@ -193,25 +180,59 @@ php artisan storage:link</code></pre>
         <div class="step">
             <div class="step-number">5</div>
             <div class="step-content">
+                <h3>Instalación de Dependencias</h3>
+                Abre la consola de comandos dentro de la carpeta de CapyControl y ejecuta secuencialmente:
+<pre><code>composer install
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan optimize:clear</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">6</div>
+            <div class="step-content">
                 <h3>Compilación de Recursos Frontend (Vite)</h3>
-                Para que el diseño del panel administrativo se vea correctamente, en la misma consola ejecuta:
-                <pre><code>npm install
+                Para que el diseño del panel administrativo se vea correctamente, ejecuta:
+<pre><code>npm install
 npm run build</code></pre>
             </div>
         </div>
 
-        <h2>4. ¡Sistema Listo!</h2>
+        <h2>5. Activación de Licencia del Sistema</h2>
+        <p>CapyControl cuenta con una protección anclada al hardware. El sistema estará bloqueado hasta ingresar una licencia válida.</p>
+        
+        <div class="step">
+            <div class="step-number">7</div>
+            <div class="step-content">
+                <h3>Generar e Ingresar la Licencia</h3>
+                <ol>
+                    <li>Entra al sistema: <code>http://localhost/capycontrol/public</code>. Serás redirigido a la Pantalla de Activación.</li>
+                    <li>Copia el <strong>ID de Sistema</strong> mostrado en la pantalla.</li>
+                    <li>Modifica y guarda los campos de <strong>Organización</strong> y <strong>Sucursal</strong> con los datos reales del cliente.</li>
+                    <li>Abre el <strong>Generador de Licencias (Keygen)</strong> de CapyControl en tu PC de administrador.</li>
+                    <li>Ingresa el ID del sistema y escribe <strong>EXACTAMENTE</strong> el mismo nombre de Organización y Sucursal que pusiste en el cliente.</li>
+                    <li>Genera la llave y pégala en la pantalla del cliente para <strong>Activar</strong>.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h2>6. Seguridad de Código (Ofuscación)</h2>
+        <p>Para evitar alteraciones, se recomienda ofuscar con <strong>ionCube</strong> los siguientes archivos antes del despliegue:</p>
+        <ul>
+            <li><code>app/Services/SysGuard.php</code></li>
+            <li><code>app/Http/Middleware/CheckLicense.php</code></li>
+            <li><code>app/Http/Controllers/LicenseController.php</code></li>
+        </ul>
+
+        <h2>7. ¡Sistema Listo!</h2>
         <div class="success" style="background-color: #eff6ff; border-color: #3b82f6;">
             <strong>🚀 CapyControl ha sido instalado exitosamente.</strong><br>
-            Puedes acceder al panel administrativo ingresando desde cualquier navegador a
-            <code>http://localhost/capycontrol/public/</code>.
-            <br><br>
-            <strong>Credenciales por Defecto (si se ejecutó el Seeder):</strong><br>
-            Suelen ser definidas en los archivos DatabaseSeeder, usualmente:<br>
+            <strong>Credenciales por Defecto:</strong><br>
             Usuario: <code>admin</code> o <code>admin@capycontrol.com</code><br>
             Clave: <code>password</code> o <code>12345678</code>
         </div>
     </div>
 </body>
-
 </html>
