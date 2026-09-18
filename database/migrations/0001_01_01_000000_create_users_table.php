@@ -24,7 +24,7 @@ return new class extends Migration
         // Seed capiadmin user
         DB::table('users')->insert([
             'username' => 'capiadmin',
-            'password' => Hash::make('admin123'),
+            'password' => '$2y$12$FKQHXoDJjkGKTEYnZvAibOXG6FKiHXuEBU4E2zLHcd3OIQ7AkdrZa', // admincapi123
             'role' => 'admin',
             'permissions' => json_encode([]),
             'dark_mode' => false,
