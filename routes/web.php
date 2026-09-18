@@ -24,6 +24,10 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+use App\Http\Controllers\LicenseController;
+Route::get('/license', [LicenseController::class, 'index'])->name('license.activate');
+Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate.post');
+
 // Protected Routes
 Route::middleware('auth')->group(function () {
     // Dashboard

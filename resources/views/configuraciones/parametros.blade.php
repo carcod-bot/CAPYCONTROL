@@ -15,16 +15,9 @@
 @endpush
 
 @section('content')
-<div class="page-header">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="page-title"><i class="fa-solid fa-cogs" style="color:var(--primary); margin-right:10px;"></i> Parámetros del Sistema</h1>
-            <p class="text-muted mt-2">Configuraciones generales de CapyControl</p>
-        </div>
-    </div>
+<div style="margin-bottom: 1.5rem;">
+    <p class="text-muted"><i class="fa-solid fa-cogs" style="color:var(--primary); margin-right:5px;"></i> Configuraciones generales de CapyControl</p>
 </div>
-
-<div class="content-wrapper">
     <form action="{{ route('config.parametros.update') }}" method="POST" onsubmit="event.preventDefault(); submitAjaxForm(this, this.action, () => { Swal.fire({icon: 'success', title: 'Parámetros guardados exitosamente', toast: true, position: 'top-end', showConfirmButton: false, timer: 3000}); })">
         @csrf
         
@@ -106,7 +99,6 @@
             </div>
         </div>
     </form>
-</div>
 @endsection
 
 @push('scripts')

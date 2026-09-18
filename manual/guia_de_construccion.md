@@ -1182,3 +1182,12 @@ Se cre贸 un sistema completo para gestionar promociones y descuentos din谩micos 
   - **El Bug:** Se solucion贸 un problema estructural global donde los modales de la aplicaci贸n quedaban "atrapados" o recortados dentro de `.main-content` debido a que las animaciones CSS de entrada (e.g. `pageFadeIn` y `opacity`) obligaban al navegador a crear un *Stacking Context*, impidiendo que `position: fixed` se alineara con el Viewport de la pantalla.
   - **El Nuevo Est谩ndar de Construcci贸n:** Para solventar esto y mantener las animaciones limpias, se ha configurado un `@stack('modals')` global en la ra铆z de `app.blade.php` (justo antes de `</body>`).
   - **Regla Obligatoria:** A partir de ahora, **todo el c贸digo HTML de cualquier Modal** en las vistas (como `adjustmentModal`, etc.) **debe estar forzosamente encapsulado** dentro de la directiva `@push('modals') ... @endpush`. Esto asegura que Laravel extraiga el modal del DOM intermedio y lo inserte en la ra铆z de la p谩gina, garantizando una superposici贸n (overlay) perfecta sin heredar opacidades ni transformaciones de sus contenedores padre.
+#### Actualizaciones del 15/09/2026:
+- **Sistema de Licencias Criptogr醘ico:**
+  - Implementaci髇 de un modelo de licenciamiento anclado al hardware (MAC Address) y al nombre de la empresa, inspirado en Capynom.
+  - Creaci髇 de la tabla `system_license` y su respectivo modelo Eloquent.
+  - Creaci髇 del servicio `SysGuard` que valida firmas HMAC locales (usando `APP_INTEGRITY_HASH`) y comprueba el estatus de expiraci髇 de las licencias localmente.
+  - Implementaci髇 de un Middleware Global `CheckLicense` que bloquea rutas cr韙icas y redirige a la vista `/license` en caso de infracci髇.
+  - Creaci髇 de un notificador silencioso que env韆 la telemetr韆 de las activaciones v韆 correo usando PHPMailer.
+  - Creaci髇 de los Keygens paralelos para CapyPOS y CapyControl que emiten JSONs base64 cifrados.
+
