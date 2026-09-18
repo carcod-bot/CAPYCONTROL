@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Instalación - CapyControl</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #2563eb;
+            margin-top: 35px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #1e40af;
+        }
+        .alert {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #ecfdf5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .danger {
+            background-color: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        code {
+            background-color: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #ef4444;
+            font-weight: bold;
+        }
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        pre code {
+            background-color: transparent;
+            color: #f8fafc;
+            font-weight: normal;
+        }
+        .step {
+            display: flex;
+            margin-bottom: 20px;
+            background-color: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .step-number {
+            background-color: #1e3a8a;
+            color: white;
+            min-width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+        .step-content {
+            padding-top: 4px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Manual de Instalación: CapyControl (Backend)</h1>
+        <p>Esta guía detalla paso a paso cómo desplegar el servidor central <strong>CapyControl</strong> en un entorno Windows usando XAMPP, establecer su seguridad y activar su sistema de licencias.</p>
+
+        <h2>1. Requisitos Previos</h2>
+        <ul>
+            <li><strong>XAMPP</strong> con PHP 8.2 o superior y MySQL/MariaDB activados.</li>
+            <li><strong>Extensiones PHP requeridas:</strong> <code>fileinfo</code>, <code>zip</code>, <code>mbstring</code>, <code>openssl</code>.</li>
+            <li><strong>Composer</strong> instalado globalmente en el servidor.</li>
+            <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos del panel).</li>
+        </ul>
+
+        <h2>2. Configuración de Seguridad en XAMPP (Contraseña MySQL)</h2>
+        <p>Por defecto, XAMPP instala MySQL con el usuario <code>root</code> y sin contraseña. Por seguridad en un entorno de cliente, es fundamental establecer una contraseña.</p>
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Asignar contraseña a root</h3>
+                <ol>
+                    <li>Abre el Panel de Control de XAMPP y asegúrate de que Apache y MySQL estén corriendo.</li>
+                    <li>Entra a <strong>phpMyAdmin</strong> yendo a <code>http://localhost/phpmyadmin</code>.</li>
+                    <li>En el menú superior, haz clic en la pestaña <strong>Cuentas de usuarios</strong>.</li>
+                    <li>Busca el usuario <code>root</code> que tiene como nombre de host <code>localhost</code> y haz clic en <strong>Editar privilegios</strong>.</li>
+                    <li>Arriba haz clic en <strong>Cambio de contraseña</strong>.</li>
+                    <li>Escribe una contraseña segura y haz clic en <strong>Continuar</strong>.</li>
+                </ol>
+                <div class="danger">
+                    <strong>Atención:</strong> Al cambiar la contraseña, phpMyAdmin se desconectará. Para solucionarlo y asegurar el sistema, ve a la carpeta <code>C:\xampp\phpMyAdmin</code>, abre el archivo <code>config.inc.php</code> y busca la línea <code>$cfg['Servers'][$i]['auth_type'] = 'config';</code>. Cámbiala a <code>$cfg['Servers'][$i]['auth_type'] = 'cookie';</code>. Guarda el archivo, recarga la página y phpMyAdmin te pedirá tu usuario (root) y la nueva contraseña para entrar de forma segura.
+                </div>
+            </div>
+        </div>
+
+        <h2>3. Despliegue de Archivos y Base de Datos</h2>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Copiar los archivos</h3>
+                Pega la carpeta entera del proyecto <code>capycontrol</code> dentro de la carpeta pública de tu servidor web (Usualmente <code>C:\xampp\htdocs\capycontrol\</code>).
+            </div>
+        </div>
+
+        <h2>4. Configuración e Instalación Automática</h2>
+        <p>Hemos preparado un script ejecutable que automatizará la <strong>creación de la base de datos</strong>, la instalación de dependencias y la compilación de recursos.</p>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>Ejecutar instalar.bat y configurar .env</h3>
+                <ol>
+                    <li>Entra a la carpeta del sistema y haz doble clic en el archivo <code>instalar.bat</code>.</li>
+                    <li>Se abrirá una consola que descargará todas las dependencias. Luego, se pausará mostrando un mensaje de <strong>ACCIÓN REQUERIDA</strong>.</li>
+                    <li>Sin cerrar esa consola, abre el archivo <code>.env</code> en un editor de texto (como el bloc de notas) y configura tu base de datos:
+<pre><code>DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=vad1
+DB_USERNAME=root
+DB_PASSWORD=TU_NUEVA_CONTRASEÑA
+
+SESSION_DRIVER=file
+CACHE_STORE=file</code></pre>
+                    </li>
+                    <li>Guarda y cierra el archivo <code>.env</code>.</li>
+                    <li>Vuelve a la consola negra y presiona <strong>ENTER</strong>. El script continuará y ejecutará automáticamente las migraciones y los enlaces de almacenamiento.</li>
+                </ol>
+                <div class="alert">
+                    <strong>Licencia:</strong> El archivo <code>.env</code> ya viene preconfigurado con tu llave <code>APP_INTEGRITY_HASH</code>. ¡No modifiques esta llave o romperás la validación de la licencia!
+                </div>
+            </div>
+        </div>
+
+        <div class="alert">
+            <strong>Nota:</strong> El script <code>instalar.bat</code> también se encargará automáticamente de compilar todos los recursos visuales del panel (Vite/Node.js) para que no tengas que hacerlo a mano.
+        </div>
+
+        <h2>5. Activación de Licencia del Sistema</h2>
+        <p>CapyControl cuenta con una protección anclada al hardware. El sistema estará bloqueado hasta ingresar una licencia válida.</p>
+        
+        <div class="step">
+            <div class="step-number">7</div>
+            <div class="step-content">
+                <h3>Generar e Ingresar la Licencia</h3>
+                <ol>
+                    <li>Entra al sistema: <code>http://localhost/capycontrol/public</code>. Serás redirigido a la Pantalla de Activación.</li>
+                    <li>Copia el <strong>ID de Sistema</strong> mostrado en la pantalla.</li>
+                    <li>Modifica y guarda los campos de <strong>Organización</strong> y <strong>Sucursal</strong> con los datos reales del cliente.</li>
+                    <li>Abre el <strong>Generador de Licencias (Keygen)</strong> de CapyControl en tu PC de administrador.</li>
+                    <li>Ingresa el ID del sistema y escribe <strong>EXACTAMENTE</strong> el mismo nombre de Organización y Sucursal que pusiste en el cliente.</li>
+                    <li>Genera la llave y pégala en la pantalla del cliente para <strong>Activar</strong>.</li>
+                </ol>
+            </div>
+        </div>
+
+        <h2>6. Seguridad de Código (Ofuscación)</h2>
+        <p>Para evitar alteraciones, se recomienda ofuscar con <strong>ionCube</strong> los siguientes archivos antes del despliegue:</p>
+        <ul>
+            <li><code>app/Services/SysGuard.php</code></li>
+            <li><code>app/Http/Middleware/CheckLicense.php</code></li>
+            <li><code>app/Http/Controllers/LicenseController.php</code></li>
+        </ul>
+
+        <h2>7. ¡Sistema Listo!</h2>
+        <div class="success" style="background-color: #eff6ff; border-color: #3b82f6;">
+            <strong>🚀 CapyControl ha sido instalado exitosamente.</strong><br>
+            <strong>Credenciales por Defecto:</strong><br>
+            Usuario: <code>capiadmin</code><br>
+            Clave: <code>admincapi123</code>
+        </div>
+    </div>
+</body>
+</html>
