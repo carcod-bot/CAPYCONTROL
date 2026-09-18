@@ -29,10 +29,21 @@ if %errorlevel% neq 0 (
 
 call npm --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR CRITICO] Node.js (npm) no esta instalado o no esta en el PATH.
-    echo Por favor, descarga e instala Node.js desde nodejs.org
-    pause
-    exit /b 1
+    echo [AVISO] Node.js no esta instalado. Abriendo el instalador oficial...
+    if exist "manual de instalacion\*node*.msi" (
+        for %%i in ("manual de instalacion\*node*.msi") do (
+            echo Ejecutando: %%i
+            start /wait "" "%%i"
+        )
+        echo Por favor, si Node.js se instalo correctamente, CIERRA ESTA VENTANA y vuelve a abrir el instalar.bat para que reconozca los cambios en el sistema.
+        pause
+        exit /b 1
+    ) else (
+        echo [ERROR CRITICO] Node.js (npm) no esta instalado y no se encontro su instalador en 'manual de instalacion'.
+        echo Por favor, descarga e instala Node.js desde nodejs.org
+        pause
+        exit /b 1
+    )
 )
 
 echo.
