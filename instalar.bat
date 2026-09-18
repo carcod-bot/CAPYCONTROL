@@ -4,6 +4,17 @@ echo =======================================================
 echo     Instalador del Sistema - Preparacion Inicial
 echo =======================================================
 echo.
+echo Verificando extensiones de PHP requeridas...
+php -r "if(!extension_loaded('fileinfo')) exit(1);"
+if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'fileinfo' no esta habilitada en php.ini.
+php -r "if(!extension_loaded('zip')) exit(1);"
+if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'zip' no esta habilitada en php.ini.
+php -r "if(!extension_loaded('mbstring')) exit(1);"
+if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'mbstring' no esta habilitada en php.ini.
+php -r "if(!extension_loaded('openssl')) exit(1);"
+if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'openssl' no esta habilitada en php.ini.
+
+echo.
 echo Creando base de datos automaticamente en XAMPP...
 c:\xampp\mysql\bin\mysql.exe -u root -e "CREATE DATABASE IF NOT EXISTS vad1;" 2>nul
 if %errorlevel% neq 0 (
