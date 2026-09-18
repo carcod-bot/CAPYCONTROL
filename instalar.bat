@@ -39,7 +39,7 @@ if %errorlevel% neq 0 (
         pause
         exit /b 1
     ) else (
-        echo [ERROR CRITICO] Node.js (npm) no esta instalado y no se encontro su instalador en 'manual de instalacion'.
+        echo [ERROR CRITICO] Node.js -npm- no esta instalado y no se encontro su instalador en la carpeta manual de instalacion.
         echo Por favor, descarga e instala Node.js desde nodejs.org
         pause
         exit /b 1
