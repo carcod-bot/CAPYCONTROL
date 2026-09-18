@@ -4,14 +4,46 @@ echo =======================================================
 echo     Instalador del Sistema - Preparacion Inicial
 echo =======================================================
 echo.
+echo Verificando dependencias del sistema...
+
+:: Buscar PHP en XAMPP si no esta en el PATH
+set PHP_BIN=php
+php -v >nul 2>&1
+if %errorlevel% neq 0 (
+    if exist "c:\xampp\php\php.exe" (
+        set PHP_BIN=c:\xampp\php\php.exe
+    ) else (
+        echo [ERROR CRITICO] No se encontro PHP. Instala XAMPP o agregalo al PATH.
+        pause
+        exit /b 1
+    )
+)
+
+call composer --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR CRITICO] Composer no esta instalado o no esta en el PATH.
+    echo Por favor, descarga e instala Composer desde getcomposer.org
+    pause
+    exit /b 1
+)
+
+call npm --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR CRITICO] Node.js (npm) no esta instalado o no esta en el PATH.
+    echo Por favor, descarga e instala Node.js desde nodejs.org
+    pause
+    exit /b 1
+)
+
+echo.
 echo Verificando extensiones de PHP requeridas...
-php -r "if(!extension_loaded('fileinfo')) exit(1);"
+%PHP_BIN% -r "if(!extension_loaded('fileinfo')) exit(1);"
 if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'fileinfo' no esta habilitada en php.ini.
-php -r "if(!extension_loaded('zip')) exit(1);"
+%PHP_BIN% -r "if(!extension_loaded('zip')) exit(1);"
 if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'zip' no esta habilitada en php.ini.
-php -r "if(!extension_loaded('mbstring')) exit(1);"
+%PHP_BIN% -r "if(!extension_loaded('mbstring')) exit(1);"
 if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'mbstring' no esta habilitada en php.ini.
-php -r "if(!extension_loaded('openssl')) exit(1);"
+%PHP_BIN% -r "if(!extension_loaded('openssl')) exit(1);"
 if %errorlevel% neq 0 echo [ADVERTENCIA] Extension 'openssl' no esta habilitada en php.ini.
 
 echo.
