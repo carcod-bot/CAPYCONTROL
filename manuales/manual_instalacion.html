@@ -155,13 +155,17 @@
             </div>
         </div>
 
-        <h2>4. Configuración del Entorno (Laravel)</h2>
+        <h2>4. Configuración e Instalación Automática</h2>
+        <p>Hemos preparado un script ejecutable que automatizará la instalación de dependencias y base de datos.</p>
 
         <div class="step">
             <div class="step-number">4</div>
             <div class="step-content">
-                <h3>Archivo de Configuración (.env)</h3>
-                Duplica el archivo <code>.env.example</code> que está en la raíz de la carpeta y renómbralo a <code>.env</code>. Edítalo para asegurar la conexión con la base de datos:
+                <h3>Ejecutar instalar.bat y configurar .env</h3>
+                <ol>
+                    <li>Entra a la carpeta del sistema y haz doble clic en el archivo <code>instalar.bat</code>.</li>
+                    <li>Se abrirá una consola que descargará todas las dependencias. Luego, se pausará mostrando un mensaje de <strong>ACCIÓN REQUERIDA</strong>.</li>
+                    <li>Sin cerrar esa consola, abre el archivo <code>.env</code> en un editor de texto (como el bloc de notas) y configura tu base de datos:
 <pre><code>DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -171,8 +175,12 @@ DB_PASSWORD=TU_NUEVA_CONTRASEÑA
 
 SESSION_DRIVER=file
 CACHE_STORE=file</code></pre>
+                    </li>
+                    <li>Guarda y cierra el archivo <code>.env</code>.</li>
+                    <li>Vuelve a la consola negra y presiona <strong>ENTER</strong>. El script continuará y ejecutará automáticamente las migraciones y los enlaces de almacenamiento.</li>
+                </ol>
                 <div class="alert">
-                    <strong>Licencia:</strong> Verifica que la variable <code>APP_INTEGRITY_HASH</code> exista en el <code>.env</code> y posea la llave oficial maestra. Esta variable <strong>NO</strong> debe modificarse.
+                    <strong>Licencia:</strong> El archivo <code>.env</code> ya viene preconfigurado con tu llave <code>APP_INTEGRITY_HASH</code>. ¡No modifiques esta llave o romperás la validación de la licencia!
                 </div>
             </div>
         </div>
@@ -180,21 +188,8 @@ CACHE_STORE=file</code></pre>
         <div class="step">
             <div class="step-number">5</div>
             <div class="step-content">
-                <h3>Instalación de Dependencias</h3>
-                Abre la consola de comandos dentro de la carpeta de CapyControl y ejecuta secuencialmente:
-<pre><code>composer install
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
-php artisan optimize:clear</code></pre>
-            </div>
-        </div>
-
-        <div class="step">
-            <div class="step-number">6</div>
-            <div class="step-content">
                 <h3>Compilación de Recursos Frontend (Vite)</h3>
-                Para que el diseño del panel administrativo se vea correctamente, ejecuta:
+                Para que el diseño del panel administrativo se vea correctamente, ejecuta en una consola:
 <pre><code>npm install
 npm run build</code></pre>
             </div>
