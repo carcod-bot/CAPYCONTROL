@@ -132,7 +132,7 @@
                     <li>Escribe una contraseña segura y haz clic en <strong>Continuar</strong>.</li>
                 </ol>
                 <div class="danger">
-                    <strong>Atención:</strong> Al cambiar la contraseña, phpMyAdmin se desconectará. Ve a la carpeta <code>C:\xampp\phpMyAdmin</code>, abre el archivo <code>config.inc.php</code> y cambia la línea <code>$cfg['Servers'][$i]['password'] = '';</code> colocando la contraseña que acabas de crear.
+                    <strong>Atención:</strong> Al cambiar la contraseña, phpMyAdmin se desconectará. Para solucionarlo y asegurar el sistema, ve a la carpeta <code>C:\xampp\phpMyAdmin</code>, abre el archivo <code>config.inc.php</code> y busca la línea <code>$cfg['Servers'][$i]['auth_type'] = 'config';</code>. Cámbiala a <code>$cfg['Servers'][$i]['auth_type'] = 'cookie';</code>. Guarda el archivo, recarga la página y phpMyAdmin te pedirá tu usuario (root) y la nueva contraseña para entrar de forma segura.
                 </div>
             </div>
         </div>
