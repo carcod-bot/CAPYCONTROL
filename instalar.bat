@@ -6,13 +6,17 @@ echo =======================================================
 echo.
 echo Verificando dependencias del sistema...
 
-:: Buscar PHP en XAMPP si no esta en el PATH
-set PHP_BIN=php
-php -v >nul 2>&1
-if %errorlevel% neq 0 (
-    if exist "c:\xampp\php\php.exe" (
-        set PHP_BIN=c:\xampp\php\php.exe
-    ) else (
+:: Priorizar PHP de XAMPP siempre, para evitar conflictos con versiones en el PATH
+:: Limpiar variables de entorno que obliguen a leer otro php.ini
+set PHPRC=
+set PHP_INI_SCAN_DIR=
+if exist "c:\xampp\php\php.exe" (
+    set PHP_BIN=c:\xampp\php\php.exe
+    set "PATH=c:\xampp\php;%PATH%"
+) else (
+    set PHP_BIN=php
+    php -v >nul 2>&1
+    if %errorlevel% neq 0 (
         echo [ERROR CRITICO] No se encontro PHP. Instala XAMPP o agregalo al PATH.
         pause
         exit /b 1
@@ -21,28 +25,43 @@ if %errorlevel% neq 0 (
 
 call composer --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR CRITICO] Composer no esta instalado o no esta en el PATH.
-    echo Por favor, descarga e instala Composer desde getcomposer.org
-    pause
-    exit /b 1
+    if not exist "composer.phar" (
+        echo [AVISO] Composer no esta instalado. Descargando una version local automatica...
+        %PHP_BIN% -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        %PHP_BIN% composer-setup.php
+        %PHP_BIN% -r "unlink('composer-setup.php');"
+    )
+    set COMPOSER_CMD=%PHP_BIN% composer.phar
+) else (
+    set COMPOSER_CMD=composer
 )
 
 call npm --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [AVISO] Node.js no esta instalado. Abriendo el instalador oficial...
-    if exist "manual de instalacion\*node*.msi" (
-        for %%i in ("manual de instalacion\*node*.msi") do (
-            echo Ejecutando: %%i
-            start /wait "" "%%i"
-        )
-        echo Por favor, si Node.js se instalo correctamente, CIERRA ESTA VENTANA y vuelve a abrir el instalar.bat para que reconozca los cambios en el sistema.
-        pause
-        exit /b 1
+    if exist "C:\Program Files\nodejs\npm.cmd" (
+        set "PATH=C:\Program Files\nodejs;%PATH%"
+        echo [OK] Node.js detectado y agregado temporalmente al entorno.
     ) else (
-        echo [ERROR CRITICO] Node.js -npm- no esta instalado y no se encontro su instalador en la carpeta manual de instalacion.
-        echo Por favor, descarga e instala Node.js desde nodejs.org
-        pause
-        exit /b 1
+        echo [AVISO] Node.js no esta instalado. Abriendo el instalador oficial...
+        if exist "manual de instalacion\*node*.msi" (
+            for %%i in ("manual de instalacion\*node*.msi") do (
+                echo Ejecutando: %%i
+                start /wait "" "%%i"
+            )
+            if exist "C:\Program Files\nodejs\npm.cmd" (
+                set "PATH=C:\Program Files\nodejs;%PATH%"
+                echo [OK] Instalacion de Node.js completada.
+            ) else (
+                echo Por favor, si Node.js se instalo correctamente, CIERRA ESTA VENTANA y vuelve a abrir el instalar.bat para que reconozca los cambios.
+                pause
+                exit /b 1
+            )
+        ) else (
+            echo [ERROR CRITICO] Node.js -npm- no esta instalado y no se encontro su instalador en la carpeta manual de instalacion.
+            echo Por favor, descarga e instala Node.js desde nodejs.org
+            pause
+            exit /b 1
+        )
     )
 )
 
@@ -67,8 +86,13 @@ if %errorlevel% neq 0 (
 )
 
 echo.
+echo Preparando entorno limpio para dependencias de PHP...
+if exist "vendor" (
+    echo Eliminando dependencias previas para evitar advertencias visuales...
+    rmdir /s /q vendor
+)
 echo Instalando dependencias de PHP (por favor espere)...
-call composer install --optimize-autoloader --no-dev
+call %COMPOSER_CMD% install --optimize-autoloader --no-dev --ignore-platform-req=php
 
 echo.
 echo Instalando dependencias de Frontend (Node.js)...
@@ -92,15 +116,15 @@ pause >nul
 
 echo.
 echo Ejecutando migraciones de la base de datos...
-call php artisan migrate --seed --force
+call %PHP_BIN% artisan migrate --seed --force
 
 echo.
 echo Creando enlaces de almacenamiento...
-call php artisan storage:link
+call %PHP_BIN% artisan storage:link
 
 echo.
 echo Limpiando cache del sistema...
-call php artisan optimize:clear
+call %PHP_BIN% artisan optimize:clear
 
 echo.
 echo =======================================================

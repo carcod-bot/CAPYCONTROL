@@ -214,6 +214,25 @@ CACHE_STORE=file</code></pre>
             Usuario: <code>capiadmin</code><br>
             Clave: <code>admincapi123</code>
         </div>
+        <h2>🛠️ Solución de Problemas Frecuentes</h2>
+        <div class="alert" style="background-color: #fff1f2; border-left-color: #e11d48;">
+            <h3>Error: "No se encontró la extensión mysqli", "Class Pdo\Mysql not found", o "The zip extension is missing"</h3>
+            <p>Esto ocurre cuando XAMPP trae extensiones desactivadas por defecto o si las rutas están desconfiguradas al copiar XAMPP de otra PC.</p>
+            <ol>
+                <li>En el Panel de XAMPP, haz clic en el botón <strong>Config</strong> de Apache y abre <code>PHP (php.ini)</code>.</li>
+                <li>Busca las siguientes tres líneas y quítales el punto y coma (<code>;</code>) del principio si lo tienen:
+                    <ul>
+                        <li><code>extension=mysqli</code></li>
+                        <li><code>extension=pdo_mysql</code></li>
+                        <li><code>extension=zip</code></li>
+                    </ul>
+                    <em>(Nota: Si alguna de estas líneas no existe en tu archivo, simplemente escríbela tú mismo en una línea nueva).</em>
+                </li>
+                <li>Busca la línea <code>extension_dir="ext"</code>. Si dice solo "ext", cámbiala por la ruta completa: <code>extension_dir="C:\xampp\php\ext"</code>.</li>
+                <li><strong>Guarda el archivo</strong> y <strong>reinicia Apache</strong>.</li>
+            </ol>
+            <strong>Nota extra:</strong> Si cambiaste la carpeta de XAMPP de ubicación o de computadora, recuerda hacer doble clic en el archivo <code>setup_xampp.bat</code> que está dentro de <code>C:\xampp\</code> para que las rutas internas se arreglen automáticamente.
+        </div>
     </div>
 </body>
 </html>
