@@ -113,8 +113,6 @@
         <ul>
             <li><strong>XAMPP</strong> con PHP 8.2 o superior y MySQL/MariaDB activados.</li>
             <li><strong>Extensiones PHP requeridas:</strong> <code>fileinfo</code>, <code>zip</code>, <code>mbstring</code>, <code>openssl</code>.</li>
-            <li><strong>Composer</strong> instalado globalmente en el servidor.</li>
-            <li><strong>Node.js y NPM</strong> instalados (para compilar los estilos del panel).</li>
         </ul>
 
         <h2>2. Configuración de Seguridad en XAMPP (Contraseña MySQL)</h2>
@@ -156,7 +154,7 @@
                 <h3>Ejecutar instalar.bat y configurar .env</h3>
                 <ol>
                     <li>Entra a la carpeta del sistema y haz doble clic en el archivo <code>instalar.bat</code>.</li>
-                    <li>Se abrirá una consola que descargará todas las dependencias. Luego, se pausará mostrando un mensaje de <strong>ACCIÓN REQUERIDA</strong>.</li>
+                    <li>Se abrirá una consola que verificará PHP y creará la base de datos automáticamente. Luego, se pausará mostrando un mensaje de <strong>ACCIÓN REQUERIDA</strong>.</li>
                     <li>Sin cerrar esa consola, abre el archivo <code>.env</code> en un editor de texto (como el bloc de notas) y configura tu base de datos:
 <pre><code>DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -178,7 +176,7 @@ CACHE_STORE=file</code></pre>
         </div>
 
         <div class="alert">
-            <strong>Nota:</strong> El script <code>instalar.bat</code> también se encargará automáticamente de compilar todos los recursos visuales del panel (Vite/Node.js) para que no tengas que hacerlo a mano.
+            <strong>Nota:</strong> Como se está entregando la carpeta preconstruida, no necesitas instalar Composer ni Node.js. El script <code>instalar.bat</code> es ultra rápido y se encargará exclusivamente de la base de datos y migraciones.
         </div>
 
         <h2>5. Activación de Licencia del Sistema</h2>
