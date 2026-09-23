@@ -200,6 +200,7 @@
             <button class="modal-close" onclick="closeModal('editRegisterModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <form id="editRegisterForm" onsubmit="event.preventDefault(); submitEditRegister();">
+            <input type="hidden" name="_method" value="PUT">
             <input type="hidden" id="editRegisterId">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="form-group">
@@ -335,8 +336,6 @@
     function submitEditRegister() {
         const id = document.getElementById('editRegisterId').value;
         const form = document.getElementById('editRegisterForm');
-        const formData = new FormData(form);
-        formData.append('_method', 'PUT');
 
         submitAjaxForm(form, `{{ url('/pos-control/registers') }}/${id}`, () => {
             closeModal('editRegisterModal');
