@@ -1286,12 +1286,17 @@ class PosIntegrationController extends Controller
                                            ->where('status', 'open')
                                            ->first();
                     if (!$existing) {
+                        $lastTurn = CashSession::where('cash_register_id', $registerId)
+                            ->max('turn_number') ?? 0;
+                            
                         CashSession::create([
                             'user_id' => $userId,
                             'cash_register_id' => $registerId,
-                            'opened_at' => $payload['opened_at'],
+                            'opened_at' => $payload['opened_at'] ?? now(),
                             'status' => 'open',
-                            'initial_balance' => $payload['initial_balance'] ?? 0
+                            'turn_number' => $lastTurn + 1,
+                            'opening_amount' => $payload['opening_amount'] ?? $payload['initial_balance'] ?? 0,
+                            'expected_amount' => $payload['opening_amount'] ?? $payload['initial_balance'] ?? 0
                         ]);
                     }
                 } elseif ($type === 'close') {
