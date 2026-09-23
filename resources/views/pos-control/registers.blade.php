@@ -338,7 +338,7 @@
         const formData = new FormData(form);
         formData.append('_method', 'PUT');
 
-        submitAjaxForm(form, `/capycontrol/public/pos-control/registers/${id}`, () => {
+        submitAjaxForm(form, `{{ url('/pos-control/registers') }}/${id}`, () => {
             closeModal('editRegisterModal');
             window.location.reload();
         });
@@ -346,7 +346,7 @@
 
     function deleteRegister() {
         const id = document.getElementById('editRegisterId').value;
-        deleteAjax(`/capycontrol/public/pos-control/registers/${id}`, () => {
+        deleteAjax(`{{ url('/pos-control/registers') }}/${id}`, () => {
             closeModal('editRegisterModal');
             window.location.reload();
         });
@@ -397,7 +397,7 @@
         document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr>';
         openModal('historyModal');
 
-        fetch(`/capycontrol/public/pos-control/registers/${registerId}/sessions`, {
+        fetch(`{{ url('/pos-control/registers') }}/${registerId}/sessions`, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
@@ -439,7 +439,7 @@
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`/capycontrol/public/pos-control/registers/${id}/align`, {
+                fetch(`{{ url('/pos-control/registers') }}/${id}/align`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
