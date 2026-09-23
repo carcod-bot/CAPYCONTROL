@@ -1279,7 +1279,7 @@ class PosIntegrationController extends Controller
 
                 $type = $payload['type'] ?? '';
                 $userId = $payload['user_id'] ?? null;
-                $registerId = $payload['register_id'] ?? null;
+                $registerId = $payload['register_id'] ?? $payload['cash_register_id'] ?? null;
 
                 if ($type === 'open') {
                     $existing = CashSession::where('user_id', $userId)
