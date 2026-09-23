@@ -43,7 +43,7 @@
             <div class="topbar-inner">
                 <div class="topbar-left">
                     <a href="{{ route('home') }}" class="topbar-logo">
-                        <img src="http://localhost/capynom/public/img/logo.png" alt="Logo">
+                        <img src="{{ asset('img/logo.png') }}" alt="Logo">
                         <span><span style="color: var(--text-main);">Capy</span><span style="color: var(--primary);">control</span></span>
                     </a>
                     <nav class="topbar-nav">
