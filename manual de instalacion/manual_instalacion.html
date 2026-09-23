@@ -231,6 +231,17 @@ CACHE_STORE=file</code></pre>
             </ol>
             <strong>Nota extra:</strong> Si cambiaste la carpeta de XAMPP de ubicación o de computadora, recuerda hacer doble clic en el archivo <code>setup_xampp.bat</code> que está dentro de <code>C:\xampp\</code> para que las rutas internas se arreglen automáticamente.
         </div>
+
+        <div class="alert" style="background-color: #fff1f2; border-left-color: #e11d48; margin-top: 20px;">
+            <h3>Error: "Composer detected issues in your platform: Your Composer dependencies require a PHP version >= 8.4.1"</h3>
+            <p>Esto ocurre si la carpeta <code>vendor</code> fue construida originalmente en una PC de desarrollo con una versión de PHP más moderna que la del cliente (ej. PHP 8.4 vs PHP 8.2). El sistema se bloquea por seguridad.</p>
+            <p><strong>Solución:</strong> Abre una consola (CMD) dentro de la carpeta del sistema y pega exactamente los siguientes 4 comandos uno por uno para reconstruir las librerías a la medida de la PC del cliente:</p>
+            <pre><code>c:\xampp\php\php.exe -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+c:\xampp\php\php.exe composer-setup.php
+c:\xampp\php\php.exe -r "unlink('composer-setup.php');"
+c:\xampp\php\php.exe composer.phar update</code></pre>
+            <p>Una vez termine, vuelve a ejecutar el <code>instalar.bat</code> y funcionará perfectamente.</p>
+        </div>
     </div>
 </body>
 </html>
