@@ -1,8 +1,8 @@
 {
   "name": "CapyControl",
   "short_name": "CapyControl",
-  "start_url": "/capycontrol/public/",
-  "scope": "/capycontrol/public/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e3a8a",

@@ -1,8 +1,8 @@
 const CACHE_NAME = 'v4_cache_capycontrol';
 const urlsToCache = [
-  '/',
-  '/favicon.ico',
-  '/manifest.json'
+  './',
+  './favicon.ico',
+  './manifest.json'
 ];
 
 self.addEventListener('install', function(event) {
