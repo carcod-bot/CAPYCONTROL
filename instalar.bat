@@ -23,48 +23,6 @@ if exist "c:\xampp\php\php.exe" (
     )
 )
 
-call composer --version >nul 2>&1
-if %errorlevel% neq 0 (
-    if not exist "composer.phar" (
-        echo [AVISO] Composer no esta instalado. Descargando una version local automatica...
-        %PHP_BIN% -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-        %PHP_BIN% composer-setup.php
-        %PHP_BIN% -r "unlink('composer-setup.php');"
-    )
-    set COMPOSER_CMD=%PHP_BIN% composer.phar
-) else (
-    set COMPOSER_CMD=composer
-)
-
-call npm --version >nul 2>&1
-if %errorlevel% neq 0 (
-    if exist "C:\Program Files\nodejs\npm.cmd" (
-        set "PATH=C:\Program Files\nodejs;%PATH%"
-        echo [OK] Node.js detectado y agregado temporalmente al entorno.
-    ) else (
-        echo [AVISO] Node.js no esta instalado. Abriendo el instalador oficial...
-        if exist "manual de instalacion\*node*.msi" (
-            for %%i in ("manual de instalacion\*node*.msi") do (
-                echo Ejecutando: %%i
-                start /wait "" "%%i"
-            )
-            if exist "C:\Program Files\nodejs\npm.cmd" (
-                set "PATH=C:\Program Files\nodejs;%PATH%"
-                echo [OK] Instalacion de Node.js completada.
-            ) else (
-                echo Por favor, si Node.js se instalo correctamente, CIERRA ESTA VENTANA y vuelve a abrir el instalar.bat para que reconozca los cambios.
-                pause
-                exit /b 1
-            )
-        ) else (
-            echo [ERROR CRITICO] Node.js -npm- no esta instalado y no se encontro su instalador en la carpeta manual de instalacion.
-            echo Por favor, descarga e instala Node.js desde nodejs.org
-            pause
-            exit /b 1
-        )
-    )
-)
-
 echo.
 echo Verificando extensiones de PHP requeridas...
 %PHP_BIN% -r "if(!extension_loaded('fileinfo')) exit(1);"
@@ -84,20 +42,6 @@ if %errorlevel% neq 0 (
 ) else (
     echo Base de datos 'vad1' lista.
 )
-
-echo.
-echo Preparando entorno limpio para dependencias de PHP...
-if exist "vendor" (
-    echo Eliminando dependencias previas para evitar advertencias visuales...
-    rmdir /s /q vendor
-)
-echo Instalando dependencias de PHP (por favor espere)...
-call %COMPOSER_CMD% install --optimize-autoloader --no-dev --ignore-platform-req=php
-
-echo.
-echo Instalando dependencias de Frontend (Node.js)...
-call npm install
-call npm run build
 
 echo.
 echo =======================================================
