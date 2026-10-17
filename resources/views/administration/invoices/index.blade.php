@@ -152,26 +152,39 @@
         </div>
     </div>
 </div>
+@endsection
 
+@push('modals')
 <!-- Invoice Modal -->
 <div id="invoiceModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 400px; padding: 2rem;">
-        <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
-            <button class="modal-close" onclick="closeModal('invoiceModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-content" style="max-width: 440px; padding: 1.5rem; border-radius: 20px;">
+        <div class="modal-header" style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-receipt" style="color: var(--primary);"></i> Detalle de Factura
+            </h3>
+            <button class="modal-close" onclick="closeModal('invoiceModal')" title="Cerrar"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div id="invoiceModalBody" style="display: flex; justify-content: center;">
+        
+        <div id="invoiceModalBody" style="width: 100%; display: flex; justify-content: center; overflow-y: auto; max-height: calc(85vh - 140px); padding: 4px 2px; flex: 1;">
             <!-- Fetched content will go here -->
         </div>
-        <div style="text-align: center; margin-top: 20px;">
-            <button class="btn btn-secondary" onclick="closeModal('invoiceModal')">Cerrar</button>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); flex-shrink: 0;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('invoiceModal')">
+                <i class="fa-solid fa-xmark"></i> Cerrar
+            </button>
+            <button type="button" class="btn btn-primary" onclick="printCurrentModalInvoice()">
+                <i class="fa-solid fa-print"></i> Imprimir
+            </button>
         </div>
     </div>
 </div>
-
-@endsection
+@endpush
 
 @push('scripts')
 <script>
+    let currentInvoiceId = null;
+
     $(document).ready(function() {
         $('.select2').select2({ width: '100%' });
         
@@ -201,9 +214,11 @@
     });
 
     function viewInvoice(id) {
+        currentInvoiceId = id;
+        document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('open'));
         const url = `{{ url('admin/invoices') }}/${id}`;
         
-        document.getElementById('invoiceModalBody').innerHTML = '<div style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br>Cargando factura...</div>';
+        document.getElementById('invoiceModalBody').innerHTML = '<div style="text-align:center; padding: 30px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><br><br>Cargando factura...</div>';
         document.getElementById('invoiceModal').classList.add('open');
 
         fetch(url)
@@ -212,7 +227,7 @@
                 document.getElementById('invoiceModalBody').innerHTML = html;
             })
             .catch(error => {
-                document.getElementById('invoiceModalBody').innerHTML = '<div style="text-align:center; color: var(--danger);"><i class="fa-solid fa-circle-exclamation fa-2x"></i><br>Error cargando la factura.</div>';
+                document.getElementById('invoiceModalBody').innerHTML = '<div style="text-align:center; color: var(--danger); padding: 25px;"><i class="fa-solid fa-circle-exclamation fa-2x"></i><br><br>Error cargando la factura.</div>';
                 console.error('Error fetching invoice:', error);
             });
     }
@@ -222,10 +237,17 @@
     }
 
     function printInvoice(id) {
-        const printWindow = window.open(`{{ url('admin/invoices') }}/${id}`, '_blank', 'width=400,height=600');
+        document.querySelectorAll('.action-dropdown').forEach(d => d.classList.remove('open'));
+        const printWindow = window.open(`{{ url('admin/invoices') }}/${id}`, '_blank', 'width=420,height=650');
         printWindow.onload = function() {
             printWindow.print();
         };
+    }
+
+    function printCurrentModalInvoice() {
+        if (currentInvoiceId) {
+            printInvoice(currentInvoiceId);
+        }
     }
 </script>
 @endpush

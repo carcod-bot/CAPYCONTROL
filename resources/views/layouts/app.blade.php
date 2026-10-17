@@ -298,6 +298,15 @@
             }
         });
 
+        // Teleport all modals directly to body to prevent stacking context or overflow traps
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+            });
+        });
+
         // Global AJAX Helper
         function showGlobalLoader() {
             document.getElementById('globalLoaderApp').style.display = 'flex';
