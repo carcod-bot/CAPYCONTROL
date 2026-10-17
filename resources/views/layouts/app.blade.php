@@ -8,21 +8,20 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1e3a8a">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('libs/poppins/poppins.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/fontawesome/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}?v={{ time() + 600 }}">
     <!-- jQuery and Select2 -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('libs/jquery/jquery-3.7.1.min.js') }}"></script>
+    <link href="{{ asset('libs/select2/css/select2.min.css') }}" rel="stylesheet" />
+    <script src="{{ asset('libs/select2/js/select2.min.js') }}"></script>
     <!-- Flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+    <link rel="stylesheet" href="{{ asset('libs/flatpickr/flatpickr.min.css') }}">
+    <script src="{{ asset('libs/flatpickr/flatpickr.min.js') }}"></script>
+    <script src="{{ asset('libs/flatpickr/l10n/es.js') }}"></script>
     <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="{{ asset('libs/sweetalert2/sweetalert2.min.css') }}">
+    <script src="{{ asset('libs/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @stack('styles')
     <script>
         if ('serviceWorker' in navigator) {

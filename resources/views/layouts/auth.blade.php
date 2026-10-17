@@ -7,8 +7,8 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1e3a8a">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ asset('libs/poppins/poppins.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/boxicons/css/boxicons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <style>
         .auth-split-layout {
