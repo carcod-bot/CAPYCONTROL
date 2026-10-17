@@ -74,7 +74,7 @@ class PosIntegrationController extends Controller
             return response()->json([
                 'success'          => false,
                 'needs_opening'    => true,
-                'user_role'        => $user ? $user->role : 'cashier',
+                'user_role'        => $user ? ($user->isAdmin() || $user->hasPermission('pos_control.sessions') ? 'supervisor' : $user->role) : 'cashier',
                 'register'         => $register ? ['id' => $register->id, 'number' => $register->number, 'name' => $register->name] : null,
                 'free_registers'   => $allFreeRegisters->values(),
                 'message'          => 'Sin turno abierto.',
@@ -136,7 +136,7 @@ class PosIntegrationController extends Controller
         return response()->json([
             'success'   => true,
             'status'    => 'open',
-            'user_role' => optional(User::find($userId))->role ?? 'cashier',
+            'user_role' => optional(User::find($userId))->isAdmin() || optional(User::find($userId))->hasPermission('pos_control.sessions') ? 'supervisor' : (optional(User::find($userId))->role ?? 'cashier'),
             'session'   => [
                 'id'               => $session->id,
                 'cash_register_id' => $session->cash_register_id,
@@ -179,20 +179,25 @@ class PosIntegrationController extends Controller
         ]);
 
         // --- CASHIER: needs supervisor authorization ---
-        if (!$user->isAdmin()) {
+        if (!$user->isAdmin() && !$user->hasPermission('pos_control.sessions')) {
             $request->validate([
                 'supervisor_username' => 'required|string',
                 'supervisor_password' => 'required|string',
             ]);
 
-            $supervisor = User::where('username', $request->supervisor_username)
-                ->where('role', 'admin')
-                ->first();
+            $supervisor = User::where('username', $request->supervisor_username)->first();
 
             if (!$supervisor || !Hash::check($request->supervisor_password, $supervisor->password)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Credenciales del supervisor incorrectas o el usuario no es administrador.',
+                    'message' => 'Credenciales del supervisor incorrectas.',
+                ], 403);
+            }
+
+            if (!$supervisor->isAdmin() && !$supervisor->hasPermission('pos_control.sessions')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El usuario no tiene permisos para autorizar.',
                 ], 403);
             }
         }
@@ -254,7 +259,7 @@ class PosIntegrationController extends Controller
             'session_id'  => $session->id,
             'turn_number' => $session->turn_number,
             'user'        => $session->user->name,
-            'user_role'   => $session->user->role ?? 'cashier',
+            'user_role'   => optional($session->user)->isAdmin() || optional($session->user)->hasPermission('pos_control.sessions') ? 'supervisor' : (optional($session->user)->role ?? 'cashier'),
             'register'    => $register ? $register->name : 'N/A',
             'pos_config'  => $posConfig
         ], 200);
@@ -880,9 +885,9 @@ class PosIntegrationController extends Controller
                 'payment_method_id' => $method->id,
                 'name' => $method->description,
                 'currency_symbol' => $method->currency ? $method->currency->symbol : '$',
-                'expected_base' => ($totalLocal * $exchangeRate) / $baseRate, // Optional backward compatibility if needed
-                'expected_local' => $totalLocal, // This is the EXACT amount the cashier needs to count in this currency
-                'exchange_rate' => $exchangeRate,
+                'expected_base' => (float)(($totalLocal * $exchangeRate) / $baseRate), // Optional backward compatibility if needed
+                'expected_local' => (float)$totalLocal, // This is the EXACT amount the cashier needs to count in this currency
+                'exchange_rate' => (float)$exchangeRate,
             ];
         }
 
@@ -915,20 +920,25 @@ class PosIntegrationController extends Controller
         ]);
 
         // --- CASHIER: needs supervisor authorization ---
-        if (!$user->isAdmin()) {
+        if (!$user->isAdmin() && !$user->hasPermission('pos_control.sessions')) {
             $request->validate([
                 'supervisor_username' => 'required|string',
                 'supervisor_password' => 'required|string',
             ]);
 
-            $supervisor = User::where('username', $request->supervisor_username)
-                ->where('role', 'admin')
-                ->first();
+            $supervisor = User::where('username', $request->supervisor_username)->first();
 
             if (!$supervisor || !Hash::check($request->supervisor_password, $supervisor->password)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Credenciales del supervisor incorrectas o el usuario no es administrador.',
+                    'message' => 'Credenciales del supervisor incorrectas.',
+                ], 403);
+            }
+
+            if (!$supervisor->isAdmin() && !$supervisor->hasPermission('pos_control.sessions')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El usuario no tiene permisos para autorizar.',
                 ], 403);
             }
         }
