@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Capycontrol - @yield('title', 'Dashboard')</title>
-    <link rel="icon" href="{{ secure_asset('favicon.ico') }}">
-    <link rel="manifest" href="{{ secure_asset('manifest.json') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1e3a8a">
-    <link rel="stylesheet" href="{{ secure_asset('libs/poppins/poppins.css') }}">
-    <link rel="stylesheet" href="{{ secure_asset('libs/fontawesome/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ secure_asset('css/style.css') }}?v={{ time() + 600 }}">
+    <link rel="stylesheet" href="{{ asset('libs/poppins/poppins.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/fontawesome/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v={{ time() + 600 }}">
     <!-- jQuery and Select2 -->
-    <script src="{{ secure_asset('libs/jquery/jquery-3.7.1.min.js') }}"></script>
-    <link href="{{ secure_asset('libs/select2/css/select2.min.css') }}" rel="stylesheet" />
-    <script src="{{ secure_asset('libs/select2/js/select2.min.js') }}"></script>
+    <script src="{{ asset('libs/jquery/jquery-3.7.1.min.js') }}"></script>
+    <link href="{{ asset('libs/select2/css/select2.min.css') }}" rel="stylesheet" />
+    <script src="{{ asset('libs/select2/js/select2.min.js') }}"></script>
     <!-- Flatpickr -->
-    <link rel="stylesheet" href="{{ secure_asset('libs/flatpickr/flatpickr.min.css') }}">
-    <script src="{{ secure_asset('libs/flatpickr/flatpickr.min.js') }}"></script>
-    <script src="{{ secure_asset('libs/flatpickr/l10n/es.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('libs/flatpickr/flatpickr.min.css') }}">
+    <script src="{{ asset('libs/flatpickr/flatpickr.min.js') }}"></script>
+    <script src="{{ asset('libs/flatpickr/l10n/es.js') }}"></script>
     <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="{{ secure_asset('libs/sweetalert2/sweetalert2.min.css') }}">
-    <script src="{{ secure_asset('libs/sweetalert2/sweetalert2.all.min.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('libs/sweetalert2/sweetalert2.min.css') }}">
+    <script src="{{ asset('libs/sweetalert2/sweetalert2.all.min.js') }}"></script>
     @stack('styles')
     <script>
         if ('serviceWorker' in navigator) {

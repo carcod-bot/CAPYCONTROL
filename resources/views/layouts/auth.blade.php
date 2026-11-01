@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capycontrol - Ingreso</title>
-    <link rel="icon" href="{{ secure_asset('favicon.ico') }}">
-    <link rel="manifest" href="{{ secure_asset('manifest.json') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
     <meta name="theme-color" content="#1e3a8a">
-    <link rel="stylesheet" href="{{ secure_asset('libs/poppins/poppins.css') }}">
-    <link rel="stylesheet" href="{{ secure_asset('libs/boxicons/css/boxicons.min.css') }}">
-    <link rel="stylesheet" href="{{ secure_asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/poppins/poppins.css') }}">
+    <link rel="stylesheet" href="{{ asset('libs/boxicons/css/boxicons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <style>
         .auth-split-layout {
             display: flex;
