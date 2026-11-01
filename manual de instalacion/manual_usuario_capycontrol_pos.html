@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario — CapyControl y CapyPOS</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 16mm 15mm 18mm 15mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+            color: #1e293b;
+            line-height: 1.5;
+            font-size: 10.2pt;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        /* Cover Page */
+        .cover {
+            min-height: 258mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
+            color: #ffffff;
+            padding: 28mm 22mm;
+            border-radius: 12px;
+            page-break-after: always;
+        }
+        .cover-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 18px;
+        }
+        .cover-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .cover-brand img {
+            height: 52px;
+            width: auto;
+            background: #ffffff;
+            padding: 6px 10px;
+            border-radius: 10px;
+        }
+        .cover-badge {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 9pt;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .cover-center {
+            margin: auto 0;
+            padding: 30px 0;
+        }
+        .cover-subtitle-top {
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            font-size: 10pt;
+            margin-bottom: 12px;
+        }
+        .cover-title {
+            font-size: 30pt;
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0 0 18px 0;
+            color: #ffffff;
+        }
+        .cover-title span {
+            color: #60a5fa;
+        }
+        .cover-desc {
+            font-size: 12pt;
+            color: #e2e8f0;
+            max-width: 90%;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .cover-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .cover-pill {
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            color: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 9.5pt;
+            font-weight: 600;
+        }
+        .cover-footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            color: #cbd5e1;
+        }
+
+        /* Headings */
+        .part-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: #ffffff;
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin: 0 0 16px 0;
+            page-break-before: always;
+        }
+        .part-banner .part-label {
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #bfdbfe;
+            font-weight: 700;
+        }
+        .part-banner h1 {
+            margin: 4px 0 4px 0;
+            font-size: 19pt;
+            color: #ffffff;
+            border: none;
+            padding: 0;
+        }
+        .part-banner p {
+            margin: 0;
+            color: #e0f2fe;
+            font-size: 9.8pt;
+        }
+
+        h2 {
+            color: #1e3a8a;
+            font-size: 13.8pt;
+            border-bottom: 2px solid #dbeafe;
+            padding-bottom: 5px;
+            margin-top: 18px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+        h3 {
+            color: #1d4ed8;
+            font-size: 11pt;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+        p {
+            margin: 0 0 8px 0;
+        }
+        ul, ol {
+            margin: 0 0 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 4px;
+        }
+
+        /* Cards & Grids */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+            break-inside: avoid;
+        }
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 11px 14px;
+            margin-bottom: 10px;
+            break-inside: avoid;
+        }
+        .card-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 10.2pt;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Callouts / Alerts */
+        .callout {
+            padding: 10px 13px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 9.5pt;
+            break-inside: avoid;
+        }
+        .callout-info {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            color: #1e3a8a;
+        }
+        .callout-warn {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+        .callout-success {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+        .callout-danger {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 14px 0;
+            font-size: 9.3pt;
+            break-inside: avoid;
+        }
+        th {
+            background: #1e3a8a;
+            color: #ffffff;
+            text-align: left;
+            padding: 7px 9px;
+            font-weight: 700;
+        }
+        td {
+            padding: 7px 9px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        /* Keyboard key badge */
+        .kbd {
+            display: inline-block;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 1px 6px;
+            border-radius: 5px;
+            font-family: Consolas, 'Courier New', monospace;
+            font-size: 8.5pt;
+            font-weight: 700;
+            box-shadow: 0 2px 0 #0f172a;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 8pt;
+            font-weight: 700;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #dcfce7; color: #15803d; }
+        .badge-amber { background: #fef3c7; color: #b45309; }
+        .badge-red { background: #fee2e2; color: #b91c1c; }
+
+        /* Step list */
+        .step-box {
+            display: flex;
+            gap: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #2563eb;
+            border-radius: 8px;
+            padding: 9px 13px;
+            margin-bottom: 9px;
+            break-inside: avoid;
+        }
+        .step-num {
+            background: #1e3a8a;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 9pt;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Table of contents */
+        .toc-page {
+            page-break-after: always;
+        }
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc-list li {
+            padding: 4.5px 10px;
+            border-bottom: 1px dashed #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 9.5pt;
+            color: #1e293b;
+        }
+        .toc-list li.toc-part {
+            background: #eff6ff;
+            color: #1e3a8a;
+            font-weight: 800;
+            border-bottom: 2px solid #bfdbfe;
+            margin-top: 8px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== PORTADA ==================== -->
+    <div class="cover">
+        <div class="cover-top">
+            <div class="cover-brand">
+                <img src="file:///C:/xampp/htdocs/capycontrol/public/img/logo.png" alt="Logo CapyControl">
+                <div>
+                    <div style="font-size: 16pt; font-weight: 800; letter-spacing: -0.5px;">Capy<span style="color:#60a5fa;">core</span></div>
+                    <div style="font-size: 8.5pt; color: #cbd5e1;">Suite de Gestión Comercial y Punto de Venta</div>
+                </div>
+            </div>
+            <div class="cover-badge">Manual Oficial de Usuario</div>
+        </div>
+
+        <div class="cover-center">
+            <div class="cover-subtitle-top">Guía Operativa y Administrativa</div>
+            <h1 class="cover-title">Manual de Uso:<br><span>CapyControl</span> &amp; <span>CapyPOS</span></h1>
+            <p class="cover-desc">
+                Guía completa para Administradores, Supervisores y Cajeros sobre el manejo del panel central de administración e inventario (<strong>CapyControl</strong>) y la terminal de facturación rápida híbrida/offline (<strong>CapyPOS</strong>).
+            </p>
+            <div class="cover-pills">
+                <div class="cover-pill">📦 Control de Inventario y Lotes</div>
+                <div class="cover-pill">💱 Multi-Moneda y Pagos Mixtos</div>
+                <div class="cover-pill">🏷️ Promociones Inteligentes</div>
+                <div class="cover-pill">🤝 Cuentas por Cobrar y Créditos</div>
+                <div class="cover-pill">⚡ Punto de Venta Híbrido / Offline</div>
+                <div class="cover-pill">🧾 Modo Fiscal y No Fiscal</div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>Dirigido a: <strong>Personal Administrativo, Supervisores y Cajeros</strong></div>
+            <div>Versión 2026 · Español</div>
+        </div>
+    </div>
+
+    <!-- ==================== ÍNDICE DE CONTENIDO ==================== -->
+    <div class="toc-page">
+        <h2>📑 Índice General del Manual</h2>
+        <p>Este documento está dividido en tres bloques principales para facilitar la consulta según el rol de cada usuario dentro de la tienda:</p>
+
+        <ul class="toc-list">
+            <li class="toc-part"><span>INTRODUCCIÓN AL ECOSISTEMA CAPYCORE</span><span>Sección 0</span></li>
+            <li><span>0.1. ¿Cómo se conectan CapyControl y CapyPOS?</span><span>Visión General</span></li>
+            <li><span>0.2. Acceso al Sistema, Modo Oscuro y Recomendaciones Básicas</span><span>Acceso</span></li>
+
+            <li class="toc-part"><span>PARTE I: MANUAL DE USO DE CAPYCONTROL (ADMINISTRACIÓN)</span><span>Backoffice</span></li>
+            <li><span>1. Dashboard Principal y Alertas en Tiempo Real</span><span>Módulo 1</span></li>
+            <li><span>2. Gestión de Inventario (Departamentos, Categorías, Marcas, Proveedores)</span><span>Módulo 2</span></li>
+            <li><span>3. Catálogo de Productos, Precios Masivos, Lotes y Etiquetas</span><span>Módulo 2</span></li>
+            <li><span>4. Productos Devueltos y Configuración de IVA / Códigos</span><span>Módulo 2</span></li>
+            <li><span>5. Motor de Promociones y Descuentos Dinámicos</span><span>Módulo 3</span></li>
+            <li><span>6. Finanzas: Monedas, Tasas de Cambio y Métodos de Pago</span><span>Módulo 4</span></li>
+            <li><span>7. Clientes, Cuentas por Cobrar y Niveles de Crédito</span><span>Módulo 4</span></li>
+            <li><span>8. Control POS: Gestión de Cajas, Alineación y Monitoreo</span><span>Módulo 5</span></li>
+            <li><span>9. Administración: Cuadre General, Declaraciones y Facturas</span><span>Módulo 6</span></li>
+            <li><span>10. Configuraciones: Datos de Empresa, Modo Fiscal, Usuarios y Roles</span><span>Módulo 7</span></li>
+
+            <li class="toc-part"><span>PARTE II: MANUAL DE USO DE CAPYPOS (PUNTO DE VENTA)</span><span>Cajeros</span></li>
+            <li><span>11. Inicio de Sesión y Apertura de Turno de Caja</span><span>Operación POS</span></li>
+            <li><span>12. Pantalla de Ventas y Tabla de Atajos Rápidos (F2 a F12)</span><span>Operación POS</span></li>
+            <li><span>13. Proceso de Cobro (F8): Pagos Mixtos, Monedas, Descuentos y Crédito</span><span>Operación POS</span></li>
+            <li><span>14. Facturas en Espera (F7 / F9), Clientes (F12) y Abonos (F6)</span><span>Operación POS</span></li>
+            <li><span>15. Devoluciones / Notas de Crédito (F10) y Opciones de Caja (F11)</span><span>Operación POS</span></li>
+            <li><span>16. Arqueos Parciales (Corte X), Cierre de Turno y Reporte Z</span><span>Cierre de Caja</span></li>
+            <li><span>17. Modo Offline (Sin Red) y Solución de Preguntas Frecuentes</span><span>Soporte</span></li>
+        </ul>
+
+        <div class="callout callout-info" style="margin-top: 18px;">
+            <strong>💡 Consejo rápido de lectura:</strong>
+            <ul>
+                <li>Si eres <strong>Administrador o Encargado de Tienda</strong>, revisa la <strong>Parte I (CapyControl)</strong> y la sección de cierres/supervisión de la Parte II.</li>
+                <li>Si eres <strong>Cajero(a)</strong>, puedes ir directamente a la <strong>Parte II (CapyPOS)</strong> donde encontrarás todos los pasos de facturación, cobros mixtos, atajos de teclado y cierre de turno.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ==================== INTRODUCCIÓN ==================== -->
+    <h2>0. Introducción al Ecosistema: CapyControl + CapyPOS</h2>
+    <p>El sistema se compone de dos aplicaciones diseñadas para trabajar en equipo dentro de tu tienda:</p>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">🏢 1. CapyControl (Panel Administrativo)</div>
+            <p>Es el "cerebro" del negocio. Desde aquí los administradores y supervisores cargan productos, ajustan precios y tasas de cambio, crean promociones, controlan el stock, gestionan créditos de clientes, auditan las cajas y crean usuarios/roles.</p>
+        </div>
+        <div class="card">
+            <div class="card-title">🖥️ 2. CapyPOS (Punto de Venta en Caja)</div>
+            <p>Es la pantalla rápida de facturación para los cajeros. Funciona con teclado físico o pantalla táctil, permite pagos mixtos en varias monedas y sigue facturando incluso si se cae la red local gracias a su <strong>Modo Híbrido/Offline</strong>.</p>
+        </div>
+    </div>
+
+    <h3>Flujo de Trabajo Diario Recomendado</h3>
+    <div class="step-box">
+        <div class="step-num">1</div>
+        <div><strong>Al iniciar el día (En CapyControl):</strong> Verifica y actualiza la <strong>Tasa de Cambio</strong> en <em>Finanzas → Monedas</em>, revisa si hay ajustes de inventario o precios pendientes y presiona <strong>Alinear todas las cajas</strong> en <em>Control POS → Gestión de Cajas</em>.</div>
+    </div>
+    <div class="step-box">
+        <div class="step-num">2</div>
+        <div><strong>Apertura de Caja (En CapyPOS o CapyControl):</strong> El cajero inicia sesión en <strong>CapyPOS</strong>, selecciona su caja asignada e ingresa el <strong>Fondo de Caja (Monto Inicial)</strong> con autorización del supervisor.</div>
+    </div>
+    <div class="step-box">
+        <div class="step-num">3</div>
+        <div><strong>Operación de Ventas (En CapyPOS):</strong> El cajero escanea productos, aplica cobros simples o mixtos (<span class="kbd">F8</span>), recibe abonos de crédito (<span class="kbd">F6</span>) y realiza retiros o arqueos parciales (<span class="kbd">F11</span>) según sea necesario.</div>
+    </div>
+    <div class="step-box">
+        <div class="step-num">4</div>
+        <div><strong>Cierre de Turno y Cuadre (En CapyPOS y CapyControl):</strong> Al finalizar su jornada, el cajero presiona el botón de salida, elige <strong>Declarar y Cerrar Turno</strong> e introduce el efectivo contado. El administrador revisa el resultado en <em>Administración → Cuadre General</em>.</div>
+    </div>
+
+    <!-- ==================== PARTE I: CAPYCONTROL ==================== -->
+    <div class="part-banner">
+        <div class="part-label">Parte I · Administración y Backoffice</div>
+        <h1>Manual de Uso de CapyControl</h1>
+        <p>Gestión de inventario, precios, finanzas, promociones, créditos, monitoreo de cajas y configuración general.</p>
+    </div>
+
+    <h2>1. Acceso, Barra Superior y Dashboard Principal</h2>
+    <p>Para entrar a <strong>CapyControl</strong>, abre el navegador e ingresa a la dirección del servidor (por ejemplo, <code>http://localhost/capycontrol/public</code>). Introduce tu <strong>Usuario</strong> y <strong>Contraseña</strong>.</p>
+    <ul>
+        <li><strong>Modo Oscuro Instantáneo:</strong> En la esquina superior derecha encontrarás el botón con el icono de Luna/Sol (🌙/☀️). Al pulsarlo, toda la interfaz cambia suavemente entre tema claro y oscuro sin recargar la página.</li>
+        <li><strong>Indicadores del Dashboard:</strong> Al entrar verás 4 tarjetas clave en tiempo real:
+            <ol>
+                <li><strong>Ventas del Día:</strong> Total facturado en la jornada actual.</li>
+                <li><strong>Tickets Emitidos:</strong> Cantidad de facturas procesadas hoy.</li>
+                <li><strong>Cuentas por Cobrar:</strong> Monto total adeudado por clientes a crédito.</li>
+                <li><strong>Turnos Activos:</strong> Cantidad de cajas registradoras abiertas en este momento.</li>
+            </ol>
+        </li>
+        <li><strong>Gráfico y Monitores Rápidos:</strong> Debajo verás la curva de ventas de los últimos 7 días, las <strong>Últimas 5 Ventas</strong> en vivo y el panel de <strong>Alerta de Stock Crítico</strong> (muestra automáticamente cualquier producto con <strong>10 unidades o menos</strong>).</li>
+    </ul>
+
+    <h2>2. Módulo de Inventario: Estructura y Clasificación</h2>
+    <p>Antes de registrar productos, es recomendable tener organizada la estructura de tu tienda desde el menú superior <strong>Inventario</strong>:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="25%">Submódulo</th>
+                <th width="75%">¿Para qué sirve y cómo se usa?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Departamentos</strong><br><span class="badge badge-blue">Nivel 1</span></td>
+                <td>Son las áreas generales de la tienda (ej. <em>Víveres y Despensa, Refrigerados, Bebidas, Limpieza, Cuidado Personal</em>). Haz clic en <strong>Nuevo Departamento</strong>, escribe su nombre y descripción, y guarda.</td>
+            </tr>
+            <tr>
+                <td><strong>Categorías</strong><br><span class="badge badge-blue">Nivel 2</span></td>
+                <td>Subdividen a cada departamento (ej. dentro de <em>Bebidas</em> puedes tener <em>Bebidas Frías</em> e <em>Infusiones</em>). Al crear una categoría, selecciona a qué <strong>Departamento</strong> pertenece.</td>
+            </tr>
+            <tr>
+                <td><strong>Marcas</strong></td>
+                <td>Permite registrar las marcas comerciales de tus productos. Si al crear un producto no eliges marca, el sistema le asignará automáticamente la marca <strong>"Genérico"</strong>.</td>
+            </tr>
+            <tr>
+                <td><strong>Proveedores</strong></td>
+                <td>Registra a tus distribuidores para llevar trazabilidad de quién suministró cada lote de mercancía y filtrar ajustes o promociones por proveedor.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Catálogo de Productos, Ajustes Masivos y Lotes</h2>
+    <h3>3.1. Crear o Editar un Producto (<em>Inventario → Productos</em>)</h3>
+    <ol>
+        <li>Haz clic en el botón <strong>+ Nuevo Producto</strong>.</li>
+        <li>Completa los datos principales:
+            <ul>
+                <li><strong>Nombre y Descripción:</strong> Nombre comercial claro que aparecerá en el POS y en el ticket.</li>
+                <li><strong>Código de Barras (EAN):</strong> Puedes usar el lector de código de barras directamente sobre este campo.</li>
+                <li><strong>Código Privado (Interno):</strong> Se genera automáticamente de forma correlativa (o puedes escribirlo manualmente si así lo configuraste).</li>
+                <li><strong>Categoría:</strong> Al seleccionar la categoría, el sistema vincula el <strong>Departamento</strong> automáticamente.</li>
+                <li><strong>Precio (USD / Base):</strong> Precio de venta expresado en la moneda base del sistema.</li>
+                <li><strong>Tamaño y Fotografía:</strong> Clasificación de tamaño (pequeño, mediano, grande) e imagen opcional (hasta 2 MB).</li>
+            </ul>
+        </li>
+        <li>Presiona <strong>Guardar</strong>.</li>
+    </ol>
+
+    <h3>3.2. Ajuste Masivo de Precios</h3>
+    <p>Dentro de <em>Inventario → Productos</em>, el botón de <strong>Ajuste Masivo de Precios</strong> te permite subir o bajar precios en segundos:</p>
+    <ul>
+        <li>Puedes filtrar por <strong>Departamento, Categoría, Marca, Proveedor</strong> o seleccionar productos específicos de la tabla.</li>
+        <li>Elige si deseas aplicar un <strong>Aumento</strong> o <strong>Descuento</strong>, ya sea en <strong>Porcentaje (%)</strong> o en <strong>Monto Fijo ($)</strong>.</li>
+        <li>Todo ajuste masivo queda registrado automáticamente en el historial de auditoría del sistema.</li>
+    </ul>
+
+    <h3>3.3. Ajustes de Inventario y Conteo por Lotes (<em>Inventario → Ajustes y Conteo</em>)</h3>
+    <p>Para cargar mercancía nueva, dar de baja productos dañados o cuadrar el stock físico:</p>
+    <ul>
+        <li><strong>Entrada (IN):</strong> Suma unidades al stock. Permite registrar número de lote, proveedor, marca y <strong>fecha de vencimiento</strong>.</li>
+        <li><strong>Salida (OUT):</strong> Resta unidades del inventario (ej. merma, vencimiento o consumo interno).</li>
+        <li><strong>Conteo / Fijar (SET):</strong> Reemplaza la cantidad actual por el conteo físico real encontrado en tienda.</li>
+        <li><strong>Ciclo de Vida del Lote:</strong> Puedes consultar el historial de cualquier lote y editar sus datos si hubo un error de transcripción.</li>
+    </ul>
+
+    <h3>3.4. Productos Devueltos e Impresión de Etiquetas</h3>
+    <ul>
+        <li><strong>Productos Devueltos (<em>Inventario → Productos Devueltos</em>):</strong> Cada vez que un cajero procesa una devolución en CapyPOS, los artículos aparecen aquí en estado <em>"Pendiente de Revisión"</em>. El administrador decide si <strong>Reingresarlos al Stock</strong> (crea automáticamente un lote con prefijo <code>DEV-</code> y suma el stock) o <strong>Desecharlos</strong> (si el producto está averiado).</li>
+        <li><strong>Impresiones (<em>Inventario → Impresiones</em>):</strong> Busca productos por nombre o código, agrégalos a la lista y genera plantillas listas para imprimir habladores de precios o etiquetas de códigos de barras.</li>
+        <li><strong>Configuración de Inventario e IVA (<em>Inventario → Configuración</em>):</strong> Define el número inicial de los códigos internos, el porcentaje o monto del IVA y si tus precios base <strong>ya incluyen IVA</strong> (<em>IVA Incluido</em>).</li>
+    </ul>
+
+    <h2>4. Módulo de Promociones y Descuentos</h2>
+    <p>Accede desde <em>Inventario → Promociones</em> para crear ofertas automáticas que CapyPOS aplicará sin que el cajero tenga que sacar cuentas:</p>
+    <ol>
+        <li>Haz clic en <strong>Nueva Promoción</strong> y asígnale un nombre (ej. <em>"10% en Bebidas"</em> o <em>"Descuento Pago en Divisas"</em>).</li>
+        <li>Selecciona el <strong>Tipo de Descuento</strong>: <em>Porcentaje (%)</em> o <em>Monto Fijo ($)</em> y su valor.</li>
+        <li>Elige el <strong>Nivel de Aplicación</strong>:
+            <ul>
+                <li><strong>Por Artículo / Inventario:</strong> Aplica a un <em>Producto</em> específico, una <em>Categoría</em>, un <em>Departamento</em>, una <em>Marca</em> o un <em>Proveedor</em>. Si un producto coincide con varias ofertas, CapyPOS aplicará automáticamente la de mayor beneficio para el cliente.</li>
+                <li><strong>Por Finanzas / Forma de Pago:</strong> Aplica a una <em>Moneda</em> o a un <em>Método de Pago</em> específico al momento de cobrar en caja.</li>
+            </ul>
+        </li>
+        <li>Define la <strong>Fecha de Inicio y Fin</strong> (o déjala abierta) y activa/desactiva la promoción con un clic cuando quieras.</li>
+    </ol>
+
+    <h2>5. Módulo de Finanzas: Monedas, Pagos y Créditos</h2>
+    <h3>5.1. Monedas y Métodos de Pago (<em>Finanzas → Monedas y Métodos de Pago</em>)</h3>
+    <ul>
+        <li><strong>Moneda Base vs. Moneda Local:</strong>
+            <ul>
+                <li><strong>Moneda Base (<code>is_base</code>):</strong> Es la moneda en la que están fijados los precios de tus productos (usualmente <strong>USD $</strong> con tasa <code>1.0000</code>).</li>
+                <li><strong>Moneda Predeterminada / Local (<code>is_default</code>):</strong> Es la moneda de curso local (ej. <strong>Bolívares Bs</strong>), cuya tasa de cambio indica cuántos Bolívares equivalen a 1 USD.</li>
+            </ul>
+        </li>
+        <li><strong>Métodos de Pago:</strong> Dentro de cada moneda puedes crear sus vías de pago (<em>Efectivo Bs, Pago Móvil, Punto de Venta, Efectivo USD, Zelle, Crédito</em>) configurando opciones clave:
+            <ul>
+                <li><strong>Denominación Real (Efectivo Físico):</strong> Actívalo solo para billetes/efectivo físico (permite hacer retiros de efectivo en caja).</li>
+                <li><strong>Permite Vuelto:</strong> Indica si el cajero puede dar cambio con ese método.</li>
+                <li><strong>Auto-Declarar:</strong> Si se activa (ej. para transferencias o puntos de venta verificados), el sistema concilia su monto automáticamente al cerrar turno sin pedirle al cajero que cuente billetes.</li>
+                <li><strong>Es Crédito:</strong> Marca este método como venta financiada a crédito (requiere seleccionar un cliente con cupo disponible).</li>
+            </ul>
+        </li>
+    </ul>
+
+    <h3>5.2. Clientes, Cuentas por Cobrar y Niveles de Crédito</h3>
+    <ul>
+        <li><strong>Clientes (<em>Finanzas → Clientes</em>):</strong> Registra cédula/RIF, nombre, teléfono, dirección, nivel de crédito y su <strong>Límite de Crédito ($)</strong>.</li>
+        <li><strong>Cuentas por Cobrar (<em>Finanzas → Cuentas por Cobrar</em>):</strong> Muestra todos los clientes con saldo pendiente. Al entrar al detalle de un cliente verás cada factura a crédito, el cronograma de cuotas, los abonos realizados y qué cajero/caja recibió cada pago.</li>
+        <li><strong>Niveles de Crédito (<em>Finanzas → Niveles de Crédito</em>):</strong> Permite automatizar la fidelización definiendo cuántas compras requiere un cliente para subir de nivel, qué porcentaje o monto de inicial debe pagar en caja, en cuántas cuotas se divide su compra (semanal, quincenal o mensual) y en qué porcentaje aumenta su límite automáticamente.</li>
+    </ul>
+
+    <h2>6. Módulo de Control POS y Administración</h2>
+    <h3>6.1. Gestión de Cajas y el Botón "Alinear Cajas" (<em>Control POS → Gestión de Cajas</em>)</h3>
+    <p>Aquí registras cada computadora que funcionará como caja (Número de caja, Nombre, Ubicación, <strong>Dirección IP</strong> y <strong>Hostname</strong>).</p>
+    <ul>
+        <li>Si <strong>CapyPOS</strong> está instalado en la <strong>misma computadora</strong> que CapyControl, coloca la IP <code>127.0.0.1</code>. Si está en otra PC de la red local, coloca la IP local de esa caja (ej. <code>192.168.1.15</code>).</li>
+    </ul>
+
+    <div class="callout callout-warn">
+        <strong>🔄 ¡MUY IMPORTANTE! ¿Cuándo debes presionar "Alinear Cajas"?</strong><br>
+        Cada vez que crees un <strong>nuevo Usuario o Rol</strong>, cambies una contraseña, modifiques precios o actualices la tasa de cambio y quieras que la caja lo tenga de inmediato, ve a <strong>Control POS → Gestión de Cajas</strong> y haz clic en <strong>Alinear todas las cajas</strong> (o en el botón Alinear de la caja específica). Esto sincroniza al instante la base de datos local del POS.
+    </div>
+
+    <h3>6.2. Monitoreo de Cajas y Operaciones Autorizadas</h3>
+    <ul>
+        <li><strong>Monitoreo de Cajas:</strong> Permite ver qué cajas tienen turno abierto en este instante, quién es el cajero activo, cuánto lleva vendido y abrir o cerrar turnos remotamente desde la oficina.</li>
+        <li><strong>Operaciones Autorizadas:</strong> Registro inmutable de seguridad que muestra cada vez que un supervisor autorizó una devolución, apertura de gaveta, retiro o corte fiscal en una caja.</li>
+    </ul>
+
+    <h3>6.3. Cuadre General, Declaraciones y Facturas (<em>Menú Administración</em>)</h3>
+    <ul>
+        <li><strong>Cuadre General:</strong> Revisa todos los turnos cerrados y abiertos. Si un cajero olvidó cerrar su turno al irse, un administrador puede usar el botón <strong>Cierre Forzado</strong> (el sistema mostrará dinámicamente solo los métodos de pago que tuvieron movimiento en ese turno).</li>
+        <li><strong>Reporte de Declaraciones:</strong> Compara lado a lado el <em>Monto Esperado por el Sistema</em> frente al <em>Monto Declarado por el Cajero</em> y resalta en verde o rojo cualquier sobrante o faltante.</li>
+        <li><strong>Buscar Facturas:</strong> Permite localizar cualquier venta por número de ticket, rango de fechas, cliente, cajero o incluso por <strong>nombre/código de barras de un producto</strong> contenido en la factura. Puedes abrir cada factura en formato <strong>Ticket Térmico</strong> y reimprimirla. Las facturas que provienen de una devolución muestran un distintivo amarillo indicando el ticket de origen.</li>
+    </ul>
+
+    <h2>7. Módulo de Configuraciones: Parámetros, Usuarios y Roles</h2>
+    <ul>
+        <li><strong>Parámetros (<em>Configuraciones → Parámetros</em>):</strong>
+            <ul>
+                <li>Configura los datos del encabezado fiscal/comercial: <strong>Nombre de la Empresa, RIF, Dirección y Sucursal</strong>.</li>
+                <li><strong>Modalidad de Impresión (Modo Fiscal vs. No Fiscal):</strong> Si desactivas el modo fiscal, CapyPOS funcionará en modo genérico/tickets sin exigir conexión física con impresora fiscal. Si lo activas, CapyPOS se conectará con el puente fiscal TFHKA para emitir facturas fiscales, Notas de Crédito y Reportes X/Z.</li>
+            </ul>
+        </li>
+        <li><strong>Usuarios y Roles (<em>Configuraciones → Usuarios y Roles</em>):</strong>
+            <ul>
+                <li>En la pestaña <strong>Roles y Permisos</strong> puedes crear perfiles a la medida (ej. <em>Cajero, Supervisor, Almacenista</em>) encendiendo o apagando interruptores por módulo:
+                    <ul>
+                        <li><code>Acceso a CapyPOS</code>: Indispensable para usar la caja registradora.</li>
+                        <li><code>Abrir / Cerrar Turnos</code>: Convierte al usuario en <strong>Supervisor de Caja</strong> dentro de CapyPOS (puede abrir/cerrar turnos y autorizar operaciones sin pedir clave a otro administrador).</li>
+                    </ul>
+                </li>
+                <li>En la pestaña <strong>Usuarios</strong> creas el usuario, le asignas su <strong>Rol Base</strong> y, si lo deseas, le marcas <strong>Permisos Adicionales</strong> individuales. <em>(Recuerda presionar <strong>Alinear Cajas</strong> después de crear o editar un usuario).</em></li>
+            </ul>
+        </li>
+    </ul>
+
+    <!-- ==================== PARTE II: CAPYPOS ==================== -->
+    <div class="part-banner">
+        <div class="part-label">Parte II · Terminal de Facturación Rápida</div>
+        <h1>Manual de Uso de CapyPOS</h1>
+        <p>Guía práctica paso a paso para Cajeros y Supervisores en el Punto de Venta.</p>
+    </div>
+
+    <h2>8. Inicio de Sesión y Apertura de Turno en Caja</h2>
+    <div class="step-box">
+        <div class="step-num">1</div>
+        <div>
+            <strong>Iniciar Sesión:</strong> Ingresa a <strong>CapyPOS</strong> (<code>http://localhost/capypos/public</code>). Escribe tu usuario y contraseña usando tu teclado físico o el <strong>Teclado Virtual en Pantalla</strong> (cuenta con tecla <span class="kbd">↑ Shift</span> para mayúsculas y símbolos).
+        </div>
+    </div>
+    <div class="step-box">
+        <div class="step-num">2</div>
+        <div>
+            <strong>Pantalla de "Abrir Turno de Caja":</strong> Si no tienes un turno abierto, aparecerá una ventana solicitando:
+            <ul>
+                <li><strong>Caja Registradora:</strong> Si tu PC tiene su IP/Hostname asociada, la caja aparecerá seleccionada automáticamente; de lo contrario, elígela de la lista.</li>
+                <li><strong>Monto Inicial (Fondo de Caja):</strong> Escribe la cantidad de dinero base con la que recibes la gaveta (o déjalo en <code>0.00</code> si inicias sin fondo).</li>
+                <li><strong>Autorización del Supervisor:</strong> Si tu usuario es Cajero, el supervisor debe escribir su usuario y contraseña para autorizar la apertura. (Si el supervisor ya te abrió el turno desde su oficina en CapyControl, solo presiona el botón <strong>Verificar</strong>).</li>
+            </ul>
+        </div>
+    </div>
+
+    <h2>9. Pantalla Principal de Ventas y Atajos Rápidos</h2>
+    <p>Una vez abierto el turno, el cursor estará siempre listo en la casilla de código para que puedas pasar los productos por el lector de código de barras sin tocar el mouse.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="16%">Tecla / Botón</th>
+                <th width="26%">Acción</th>
+                <th width="58%">Descripción de Uso para el Cajero</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="kbd">F2</span></td>
+                <td><strong>Buscar Producto</strong></td>
+                <td>Abre el buscador por nombre o descripción. Incluye teclado táctil en pantalla. <em>Tip: Mantener presionado el botón de borrar medio segundo limpia toda la barra de búsqueda.</em></td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F4</span></td>
+                <td><strong>Cantidad</strong></td>
+                <td>Abre el teclado numérico para indicar cuántas unidades (o peso en kg, ej. <code>0.500</code>) se van a agregar del producto.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F6</span></td>
+                <td><strong>Cobro Crédito</strong></td>
+                <td>Permite buscar a un cliente que tiene deuda pendiente y registrar un <strong>Abono</strong> parcial o total en caja.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F7</span></td>
+                <td><strong>Espera (Suspender)</strong></td>
+                <td>Pone la cuenta actual en espera y limpia la pantalla para atender rápidamente al siguiente cliente de la fila.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F8</span></td>
+                <td><strong>COBRAR</strong></td>
+                <td>Abre la ventana de facturación y pagos (simples, mixtos o a crédito) para finalizar la venta.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F9</span></td>
+                <td><strong>Recuperar Espera</strong></td>
+                <td>Muestra todas las cuentas que dejaste en espera con <span class="kbd">F7</span> (y las enviadas remotamente a caja) para retomarlas con un clic.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F10</span></td>
+                <td><strong>Devolver / Reiniciar</strong></td>
+                <td>Permite vaciar el carrito actual o procesar una <strong>Devolución / Nota de Crédito</strong> de una factura anterior.</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F11</span></td>
+                <td><strong>Opciones de Caja</strong></td>
+                <td>Acceso a <strong>Retiro de Efectivo</strong>, <strong>Declarar (Arqueo Parcial / Corte X)</strong> y funciones fiscales (Abrir Gaveta, Reporte X, Reporte Z).</td>
+            </tr>
+            <tr>
+                <td><span class="kbd">F12</span></td>
+                <td><strong>Clientes</strong></td>
+                <td>Busca y asigna un cliente a la factura actual o registra un cliente nuevo en segundos.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>10. Cómo Cobrar una Venta (<span class="kbd">F8</span>) y Usar Pagos Mixtos</h2>
+    <p>Cuando hayas escaneado todos los artículos del cliente, presiona el botón verde <strong>COBRAR (<span class="kbd">F8</span>)</strong>:</p>
+    <ol>
+        <li><strong>Revisión del Total y Descuentos Automáticos:</strong>
+            <ul>
+                <li>El panel derecho muestra siempre el total en <strong>Moneda Base ($)</strong> y su conversión exacta en <strong>Moneda Local (Bs)</strong>.</li>
+                <li>Si algún producto tiene promoción activa, verás el ahorro descontado automáticamente en el renglón <em>Descuento</em>.</li>
+                <li>Si la tienda tiene activa una promoción por <strong>Moneda o Método de Pago</strong>, apenas selecciones esa moneda/método en la ventana de cobro verás cómo el <em>Total a Pagar</em> se reduce en vivo.</li>
+            </ul>
+        </li>
+        <li><strong>Pago Simple (Una sola forma de pago):</strong>
+            <ul>
+                <li>Elige la <strong>Moneda</strong> (ej. Bolívares o USD) y el <strong>Método de Pago</strong> (ej. Efectivo, Pago Móvil, Punto de Venta).</li>
+                <li>El sistema sugiere automáticamente el monto exacto. Si el cliente entrega un billete mayor, escribe el monto recibido (acepta tanto punto como coma decimal o el teclado numérico en pantalla) y el sistema calculará el <strong>Vuelto / Cambio</strong> exacto.</li>
+            </ul>
+        </li>
+        <li><strong>Pago Mixto (Combinar varias monedas o métodos):</strong>
+            <ul>
+                <li>Ejemplo: El cliente paga $5 en Efectivo USD y el resto por Pago Móvil en Bolívares.</li>
+                <li>Selecciona <em>USD → Efectivo</em>, escribe <code>5</code> y presiona <strong>Añadir Pago</strong>.</li>
+                <li>Luego cambia a <em>Bolívares → Pago Móvil</em>; el sistema te mostrará automáticamente el saldo restante exacto en Bolívares. Presiona <strong>Añadir Pago</strong> y luego <strong>Confirmar / Facturar</strong>.</li>
+            </ul>
+        </li>
+        <li><strong>Venta a Crédito (Financiada):</strong>
+            <ul>
+                <li>Primero debes haber seleccionado al cliente con <span class="kbd">F12</span> (no puede ser "CLIENTE DE CONTADO").</li>
+                <li>En la ventana de cobro selecciona el método <strong>Crédito</strong>. Si el nivel del cliente exige una inicial, el POS te indicará cuánto debe abonar hoy y cargará el resto a su cuenta por cobrar validando su límite disponible.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>11. Funciones Especiales durante el Turno</h2>
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title">🤝 Cobro de Créditos / Abonos (<span class="kbd">F6</span>)</div>
+            <p>Cuando un cliente viene a pagar una deuda pendiente: presiona <span class="kbd">F6</span>, busca al cliente por nombre o cédula, elige en qué moneda y método de pago está entregando el dinero e ingresa el monto. El dinero ingresa a tu turno de caja y rebaja la deuda del cliente inmediatamente.</p>
+        </div>
+        <div class="card">
+            <div class="card-title">⏸️ Poner en Espera (<span class="kbd">F7</span>) y Recuperar (<span class="kbd">F9</span>)</div>
+            <p>Si un cliente olvidó buscar un producto en el pasillo, presiona <span class="kbd">F7</span>. La venta actual se guarda en memoria y la pantalla queda limpia para cobrarle a otras personas. Cuando el cliente regrese, pulsa <span class="kbd">F9</span> y haz clic en <strong>Recuperar</strong>.</p>
+        </div>
+    </div>
+
+    <h3>Devoluciones y Notas de Crédito (<span class="kbd">F10</span>)</h3>
+    <ul>
+        <li>Si solo deseas limpiar los productos que estás escaneando en este momento, usa la opción de <strong>Reiniciar Venta Actual</strong>.</li>
+        <li>Para hacer la <strong>Devolución de una Factura cobrada</strong>:
+            <ol>
+                <li>Ingresa el número de ticket de la factura original y las credenciales del supervisor.</li>
+                <li>Selecciona qué productos y qué cantidades está devolviendo el cliente.</li>
+                <li>El sistema generará el saldo a favor (Nota de Crédito) para aplicarlo en la nueva compra de reemplazo. <em>Importante: Por control administrativo, la nueva compra debe ser por un monto igual o mayor al saldo devuelto (no se entrega efectivo de vuelto sobre una nota de crédito).</em></li>
+            </ol>
+        </li>
+    </ul>
+
+    <h2>12. Opciones de Caja (<span class="kbd">F11</span>), Arqueos Parciales y Cierre de Turno</h2>
+    <h3>12.1. Menú de Opciones (<span class="kbd">F11</span>)</h3>
+    <ul>
+        <li><strong>Retiro de Efectivo:</strong> Si hay demasiado efectivo acumulado en la gaveta, un supervisor puede autorizar un retiro indicando el método de efectivo físico y el monto retirado.</li>
+        <li><strong>Declarar (Arqueo Parcial / Corte X):</strong> Permite contar y retirar el dinero acumulado hasta cierta hora del día <strong>sin cerrar el turno</strong>. Al procesar un Arqueo Parcial, los montos esperados en caja se reinician a cero para que en las horas siguientes no se mezclen con el dinero ya entregado.</li>
+        <li><strong>Botones Fiscales (Abrir Gaveta, Reporte X, Reporte Z):</strong> Aparecen únicamente cuando la tienda opera en <em>Modo Fiscal</em>. Cualquier uso de estos botones pide autorización de supervisor y queda registrado en CapyControl.</li>
+    </ul>
+
+    <h3>12.2. Cómo Cerrar el Turno o Salir (Botón Rojo de Apagado ⏻)</h3>
+    <p>Al presionar el icono rojo de apagado en la esquina superior derecha de CapyPOS, verás <strong>3 opciones distintas</strong>:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="30%">Opción de Salida</th>
+                <th width="70%">¿Cuándo debes usarla?</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. Declarar y Cerrar Turno</strong><br><span class="badge badge-green">Cierre con Conteo</span></td>
+                <td>Úsala al terminar tu jornada laboral cuando vas a contar y entregar el dinero de tu turno. Ingresa los montos contados en cada moneda/método; el sistema cerrará tu turno y enviará el cuadre a CapyControl.</td>
+            </tr>
+            <tr>
+                <td><strong>2. Cierre Directo (Sin Declarar)</strong><br><span class="badge badge-amber">Cierre Rápido</span></td>
+                <td>Cierra el turno inmediatamente sin pedir conteo de billetes (ideal si ya hiciste arqueos parciales previos o si el conteo lo hará administración desde el Cuadre General).</td>
+            </tr>
+            <tr>
+                <td><strong>3. Solo Salir del Sistema</strong><br><span class="badge badge-blue">Pausa Temporal</span></td>
+                <td>Cierra tu sesión en pantalla (por ejemplo, para ir a almorzar o bloquear la pantalla), pero <strong>tu turno de caja sigue abierto</strong> para cuando vuelvas a entrar.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-danger">
+        <strong>⚠️ Diferencia Crítica entre "Cerrar Turno" y "Reporte Z Fiscal":</strong><br>
+        <ul>
+            <li>El <strong>Cierre de Turno</strong> es interno del sistema y se hace cada vez que cambia el cajero (ej. turno mañana y turno tarde).</li>
+            <li>El <strong>Reporte Z Fiscal</strong> (<span class="kbd">F11 → Reporte Z</span>) es el cierre diario definitivo de la impresora fiscal y <strong>SOLO debe emitirse una vez al final de todo el día laboral</strong>, ya que puede englobar varios turnos de cajeros.</li>
+        </ul>
+    </div>
+
+    <h2>13. Operación Offline (Sin Red) y Solución de Problemas Frecuentes</h2>
+    <ul>
+        <li><strong>¿Qué pasa si se cae el Wi-Fi o la red local mientras estoy cobrando?</strong><br>
+            ¡No detengas la fila! <strong>CapyPOS</strong> cambia automáticamente a su base de datos local en menos de 2 segundos. Puedes seguir buscando productos, clientes, aplicando promociones y emitiendo tickets (con prefijo <code>OFF-</code>). En cuanto vuelva la conexión, el servicio automático en segundo plano subirá todas las ventas y sesiones a CapyControl sin duplicar facturas ni descuadrar el inventario.</li>
+        <li><strong>"Usuario o contraseña incorrectos" en el POS después de crear un usuario nuevo:</strong><br>
+            Entra a <strong>CapyControl → Control POS → Gestión de Cajas</strong> y presiona el botón <strong>Alinear todas las cajas</strong> para enviar los nuevos usuarios y roles a la caja.</li>
+        <li><strong>"Este PC no está autorizado para la Caja":</strong><br>
+            Verifica en <strong>CapyControl → Control POS → Gestión de Cajas</strong> que la dirección IP o el Hostname configurados en esa caja coincidan con los de la computadora (recuerda usar <code>127.0.0.1</code> si CapyPOS y CapyControl están en la misma PC).</li>
+        <li><strong>Error de conexión con la Impresora Fiscal (Puerto 8080 o Puerto COM):</strong><br>
+            Si usas impresora fiscal y aparece un aviso de conexión con el puerto 8080, asegúrate de que el puente fiscal esté abierto ejecutando <code>iniciar_puente.bat</code> en la carpeta <code>puente_tfhka</code> y que el cable USB/Serial de la impresora esté bien conectado.</li>
+    </ul>
+
+</body>
+</html>
