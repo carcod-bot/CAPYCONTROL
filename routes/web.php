@@ -22,7 +22,7 @@ Route::get('/run-migrations', function () {
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 use App\Http\Controllers\LicenseController;
 Route::get('/license', [LicenseController::class, 'index'])->name('license.activate');
