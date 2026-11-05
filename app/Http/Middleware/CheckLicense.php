@@ -11,8 +11,13 @@ class CheckLicense
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Prevent redirect loops on license, login, and logout routes
-        if ($request->is('license*') || $request->is('api/license*') || $request->is('login*') || $request->is('logout*')) {
+        // Prevent redirect loops on license routes
+        if ($request->is('license*')) {
+            return $next($request);
+        }
+
+        // If trying to logout, let them pass
+        if ($request->is('logout') && $request->isMethod('post')) {
             return $next($request);
         }
 
